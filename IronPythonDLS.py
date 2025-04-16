@@ -3,25 +3,21 @@ import sys
 import clr
 
 sys.path.append(
+    #This path should be changed if ran on other devices.
     r"C:\Windows\Microsoft.NET\assembly\GAC_64\Newport.DLS.CommandInterface\v4.0_1.0.1.0__90ac4f829985d2bf")
 clr.AddReference("Newport.DLS.CommandInterface.dll")
 
 import System
 from CommandInterfaceDLS import *
 
-instrument = "COM5"  # Change this to the port the DLS is connected to
+instrument = "COM5"  # Change this to the port the DLS is connected to.
 myDLS = DLS()
 result = myDLS.OpenInstrument(instrument)
-c = 299792458  # Speed of light in m/s
+c = 299792458 # m/s
 """ 
     If you need to add a function to the document, you can look at the DL Controller Users Manual
-    or look uncomment the dir(myDLS) command 
+    and look at dir(myDLS) 
 """
-# print(dir(myDLS))
-# if result == 0:
-#     print('Open port COM5 => Succesful')
-
-# This uses a function from CommandInterfaceDLS to find the version
 
 """
 This function is run on startup.

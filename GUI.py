@@ -8,7 +8,7 @@ import random
 ironpython_executable = r"C:\Users\jarod\IronPython3.4\ipy.exe"
 script_path = r"C:\Users\jarod\OneDrive\Documents\School\Jaar 3\Bachelorproject\IronPythonDLS.py"
 
-class MainWindow(QMainWindow):
+class DLSWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Delayline GUI")
@@ -79,40 +79,10 @@ class MainWindow(QMainWindow):
         hbox4.addWidget(gotoref_button)
 
 
-        hbox5 = QHBoxLayout()
-
-        # Add file uploader
-        file_upload_button = QPushButton("Upload File")
-        file_upload_button.clicked.connect(self.showFileDialog)
-
-        vbox = QVBoxLayout()
-        runscript_button = QPushButton("Run Script")
-        runscript_button.clicked.connect(lambda: self.RunContent(self.text_display.toPlainText(), "forward"))
-
-        runscript_backwards_button = QPushButton("Run Script Backwards")
-        runscript_backwards_button.clicked.connect(lambda: self.RunContent(self.text_display.toPlainText(), "backwards"))
-
-        runscript_random_button = QPushButton("Run Script Random")
-        runscript_random_button.clicked.connect(lambda: self.RunContent(self.text_display.toPlainText(), "random"))
-
-        vbox.addWidget(runscript_button)
-        vbox.addWidget(runscript_backwards_button)
-        vbox.addWidget(runscript_random_button)
-        hbox5.addLayout(vbox)
-        hbox5.addWidget(file_upload_button)
-
-
-        self.file_label = QLabel("No file selected", self)
-        hbox5.addWidget(self.file_label)
-
-        self.text_display = QTextEdit()
-        self.text_display.setReadOnly(True)
-        hbox5.addWidget(self.text_display)
-
+        
         layout.addLayout(hbox2)
         layout.addLayout(hbox3)
         layout.addLayout(hbox4)
-        layout.addLayout(hbox5)
 
     def run_script(self, argument):
         try:
@@ -230,45 +200,6 @@ class MainWindow(QMainWindow):
         return content
     
     def RunContent(self, content, orientation):
-        # Split the content into lines
-        lines = content.splitlines()
-        parsed_content = []
-
-        
-
-
-        for line in lines:
-            # Split each line by commas
-            items = line.split(",")
-            for item in items:
-                item = item.strip()  # Remove any surrounding whitespace
-                if item:  # Ensure the item is not empty
-                    letters = ""
-                    numbers = ""
-                    for char in item:
-                        if char.isdigit() or char == "." or char == "-":  # Include '-' for negative numbers
-                            numbers += char  # Collect numeric characters, decimal points, and negative signs
-                        else:
-                            letters += char  # Collect alphabetic characters
-                    if numbers:  # Check if numbers exist and convert to float
-                        try:
-                            parsed_content.append((letters.strip(), float(numbers)))
-                        except ValueError:
-                            # Handle invalid numbers gracefully
-                            parsed_content.append((letters.strip(), None))
-                    else:
-                        parsed_content.append((letters.strip(), None))  # If no numbers, append None
-
-
-        if parsed_content == []:
-            self.show_error_message("No file was uploaded.")
-            return
-
-        if orientation == 'backwards':
-            parsed_content.reverse()
-
-        if orientation == 'random':
-            random.shuffle(parsed_content)
 
         ref = self.run_script("GetReference")
         position = self.run_script("GetPosition")
@@ -276,7 +207,7 @@ class MainWindow(QMainWindow):
         ref = float(ref.decode('utf-8').strip())
         position = float(position.decode('utf-8').strip())
 
-        for item in parsed_content:
+        for item in content:
             if ref + item[1] < 0:
                 self.show_error_message(f"Reference point is out of range.{item[1]}")
                 return
@@ -289,7 +220,7 @@ class MainWindow(QMainWindow):
             self.update_delay_bar(ref*1000)
 
         last_item = 0
-        for item in parsed_content:
+        for item in content:
             barvalue = self.delay_bar.value()
             pos = item[1]
             pos = pos - last_item # Adjust value to be centered at reference point (t_0)
@@ -306,12 +237,12 @@ class MainWindow(QMainWindow):
                 self.update_delay_bar(barvalue + pos/1000)
             last_item = item[1]
 
-        return parsed_content
+        return content
 
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    window = MainWindow()
+    window = DLSWindow()
     window.show()
     result = subprocess.Popen(
         [ironpython_executable, script_path, "GetPosition"],
