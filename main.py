@@ -2,57 +2,79 @@ import sys
 from camera import *
 import numpy as np
 
+#stores the 2d arrays of each delay measurement
+blocks = []
+#stores the probe spectra of each delay measurement
+probe_spectrum_avg = []
+probe_spectrum_median = []
+#Stores the array of each delay delta_A
+delta_A_matrix_avg = []
+delta_A_matrix_median = []
+
+#The probe_spectrum for the first functioning pixel is found by probespectrum[0][0]. 
+#The delta_a for the first funcioning pixel is found by delta_A_matrix[0][0]
+#The whole probe_spectrum or delta_A for the first measurement can be requestion by probe_sprectrum[0] or delta_A_matrix[0]
+
 def repeat_measurement():
+    """
+    Loops over all delay_stages 
+    """
     number_of_shots = int(sys.argv[1])
     number_of_delays = int(sys.argv[2])
 
-    blocks = []
     for i in range(number_of_delays):
        block_buffer = camera(number_of_shots, i)
-       
        block_2d_array = np.array(block_buffer).reshape(number_of_shots, 1088)
-
        blocks.append(block_2d_array)
-    
-    return blocks
 
-# Collects the data from one picture in a given range for a given block. Standard range is the full length 
-def get_picture(block, scan_idx, start_pixel = 0, end_pixel = 1088):
-    PIXEL = 1088
-    start = scan_idx * PIXEL + start_pixel
-    end = scan_idx * PIXEL + end_pixel
-
-    scan_result = block[scan_idx, start:end]
-    return scan_result
-
-# Calculates the delta A for each pixel of a given block in the given range
 def delta_a_block(block, start_pixel = 12, end_pixel = 1086):
-    PIXEL = 1088
+    """
+    Splits the shots based on pump_off/pump_on state
+    and calcutates the probe spectrum and delta A for a given block
+    """
     pump_off = []
     pump_on = []
 
+    #Splits the mshots based on pump_off/pump_on state
     for i in range(int(sys.argv[1])):
         if block[i, 2] < 49152:
             pump_off.append(block[i, start_pixel: end_pixel])
         else:
             pump_on.append(block[i, start_pixel: end_pixel])
 
-    avg_pump_off = np.mean(pump_off, axis=0)  # Average across rows (scans) for pump_off
+    #Calculates average pump_off and pump_on across rows
+    pump_off_avg = np.mean(pump_off, axis=0)  
+    pump_on_avg = np.mean(pump_on, axis=0)
+    #Calculates median pump_off and pump_on acorss rows
+    pump_off_median = np.median(pump_off, axis=0)
+    pump_on_median = np.median(pump_on, axis = 0)
 
-    avg_pump_on = np.mean(pump_on, axis=0)  # Average across rows (scans) for pump_on
+    #Append probe_spectrum
+    probe_spectrum_avg.append(pump_off_avg)
+    probe_spectrum_median.append(pump_off_median)
 
-    # Print or return the results (optional)
-    print(f"Avg Pump Off: {avg_pump_off}")
-    print(f"Avg Pump On: {avg_pump_on}")
-
+    #calculates delta A
     with np.errstate(divide='ignore', invalid='ignore'):
-        delta_A_block = -np.log(np.divide(avg_pump_on, avg_pump_off))
+        delta_A_avg = -np.log(np.divide(pump_on_avg, pump_off_avg))
+        delta_A_median = -np.log(np.divide(pump_on_median, pump_off_median))
 
-    
-    print(delta_A_block)
+    # Save delta A
+    delta_A_matrix_avg.append(delta_A_avg)
+    delta_A_matrix_median.append(delta_A_median)
 
+def display_probe(probe_spectrum):
+    """
+    Plots the probe_spectrum
+    """
+    plt.plot(probe_spectrum)
+    plt.show()
 
 # Run main()
 if __name__ == "__main__":
-    blocks = repeat_measurement()
-    delta_a_block(blocks)
+    repeat_measurement()
+    delta_a_block(blocks[0])
+    delta_a_block(blocks[1])
+    print(probe_spectrum_avg[1][28])
+    print(probe_spectrum_median[1][28])
+    print(delta_A_matrix_avg[1][28])
+    print(delta_A_matrix_median[1][28])
