@@ -10,7 +10,7 @@ clr.AddReference("Newport.DLS.CommandInterface.dll")
 import System
 from CommandInterfaceDLS import *
 
-instrument = "COM5"  # Change this to the port the DLS is connected to.
+instrument = "COM6"  # Change this to the port the DLS is connected to.
 myDLS = DLS()
 result = myDLS.OpenInstrument(instrument)
 c = 299792458 # m/s

@@ -4,20 +4,21 @@ from PySide6.QtGui import *
 import sys
 import subprocess
 import random
-from camera_gui import *
+from main import *
+from camera import *
 
-ironpython_executable = r"C:\Users\jarod\IronPython3.4\ipy.exe"
-script_path = r"C:\Users\jarod\OneDrive\Documents\School\Jaar 3\Bachelorproject\IronPythonDLS.py"
+ironpython_executable = r"C:\Users\PC026453\Documents\TA-Programming\IronPython 3.4\ipy.exe"
+script_path = r"C:\Users\PC026453\Documents\TA-Programming\IronPythonDLS.py"
 
 class DLSWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Delayline GUI")
-
+        print("I exist")
         # Central widget
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
-
+        
         # Layouts
         layout = QVBoxLayout()
         central_widget.setLayout(layout)
@@ -34,10 +35,12 @@ class DLSWindow(QMainWindow):
 
         move_neg_button = QPushButton("Move -100ps")
         move_neg_button.clicked.connect(self.Move_back_click)
+        move_neg_button.clicked.connect(self.Submitted)
         hbox.addWidget(move_neg_button)
 
         move_pos_button = QPushButton("Move +100ps")
         move_pos_button.clicked.connect(self.Move_click)
+        move_pos_button.clicked.connect(self.Submitted)
         hbox.addWidget(move_pos_button)
 
         layout.addLayout(hbox)
@@ -130,9 +133,7 @@ class DLSWindow(QMainWindow):
 
     def GoToReference(self):
         self.run_script("GoToReference")
-
     
-
     def LabelChange(self):
         selected = self.delay_unit.currentText()
         if selected == "ns":
@@ -200,7 +201,7 @@ class DLSWindow(QMainWindow):
                 self.show_error_message(f"Failed to load file: {e}")
         return content
     
-    def RunContent(self, content):
+    def RunMeasurement(self, content, number_of_shots):
 
         ref = self.run_script("GetReference")
         position = self.run_script("GetPosition")
@@ -209,12 +210,27 @@ class DLSWindow(QMainWindow):
         position = float(position.decode('utf-8').strip())
 
         for item in content:
-            if ref + item[1] < 0:
-                self.show_error_message(f"Reference point is out of range.{item[1]}")
-                return
-            if ref + item[1] > 8672:
-                self.show_error_message(f"Reference point is out of range.{item[1]}")
-                return
+            if item[0]  == 'ns' or item[0] == 'nanosecond' or item[0] == 'nanoseconds':
+                if ref + item[1] < 0:
+                    self.show_error_message(f"Reference point is out of range. {item[1]}")
+                    return
+                if ref + item[1] > 8.672:
+                    self.show_error_message(f"Reference point is out of range. {item[1]}")
+                    return
+            elif item[0] == 'ps' or item[0] == 'picosecond' or item[0] == 'picoseconds':
+                if ref + item[1] < 0:
+                    self.show_error_message(f"Reference point is out of range. {item[1]}")
+                    return
+                if ref + item[1] > 8672:
+                    self.show_error_message(f"Reference point is out of range. {item[1]}")
+                    return
+            elif item[0] == 'fs' or item[0] == 'femtosecond' or item[0] == 'femtoseconds':
+                if ref + item[1] < 0:
+                    self.show_error_message(f"Reference point is out of range. {item[1]}")
+                    return
+                if ref + item[1] > 8672000:
+                    self.show_error_message(f"Reference point is out of range. {item[1]}")
+                    return
 
         if round(ref, 3) != round(position, 3):
             self.run_script("GoToReference")
@@ -223,35 +239,36 @@ class DLSWindow(QMainWindow):
         last_item = 0
         for item in content:
             barvalue = self.delay_bar.value()
+            unit = item[0].lower()
             pos = item[1]
-            pos = pos - last_item # Adjust value to be centered at reference point (t_0)
+
+            # Convert position to nanoseconds
+            if unit in ['ps', 'picosecond', 'picoseconds']:
+                pos /= 1000
+            elif unit in ['fs', 'femtosecond', 'femtoseconds']:
+                pos /= 1000000
+
+            # Adjust position relative to the last item
+            pos -= last_item
+
             print(f"pos: {pos}, last_item: {last_item}, item: {item}, barvalue: {barvalue}")
 
-            if item[0] == 'ns' or item[0] == 'nanosecond' or item[0] == 'nanoseconds':
-                self.run_script(f"MoveRelative {pos}")
-                self.update_delay_bar(barvalue + pos*1000)
-            elif item[0] == 'ps' or item[0] == 'picosecond' or item[0] == 'picoseconds':
-                self.run_script(f"MoveRelative {pos/1000}")
-                self.update_delay_bar(barvalue + pos)
-            elif item[0] == 'fs' or item[0] == 'femtosecond' or item[0] == 'femtoseconds':
-                self.run_script(f"MoveRelative {pos/1000000}")
-                self.update_delay_bar(barvalue + pos/1000)
+            # Move and update delay bar
+            self.run_script(f"MoveRelative {pos}")
+            self.update_delay_bar(barvalue + pos * 1000)
 
-            if item[1] != last_item:
-                print(f"Moving to {item[1]}")
-                shots = ShotDelayApp.shots_input.text()
-                delays = len(content)
-                try:
-                    subprocess.run(
-                        [sys.executable, "main.py", shots, delays],
-                        check=True
-                    )
-                    ShotDelayApp.status_label.setText("Script ran successfully.")
-                except subprocess.CalledProcessError as e:
-                    ShotDelayApp.status_label.setText(f"Error running script: {e}")
-            last_item = item[1]
+            print(f"Delay is {item[1]}")
+            camera(number_of_shots, content.index(item))
 
-        return
+            # Update last_item for the next iteration
+            if unit in ['ns', 'nanosecond', 'nanoseconds']:
+                last_item = item[1]
+            elif unit in ['ps', 'picosecond', 'picoseconds']:
+                last_item = item[1] / 1000
+            elif unit in ['fs', 'femtosecond', 'femtoseconds']:
+                last_item = item[1] / 1000000
+
+        return 
 
 
 if __name__ == "__main__":

@@ -4,16 +4,19 @@ from PySide6.QtGui import *
 import subprocess
 import sys
 import random
+from GUI import DLSWindow
+
 
 class ShotDelayApp(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Camera Interface")
+        self.DLSWindow = DLSWindow()
         self.setup_ui()
 
     def setup_ui(self):
         self.layout = QVBoxLayout()
-
+        print("Setting up UI")
         # Main layout as a grid
         self.grid_layout = QGridLayout()
 
@@ -44,18 +47,21 @@ class ShotDelayApp(QWidget):
 
         # Script execution buttons
         vbox = QVBoxLayout()
-        runscript_button = QPushButton("Run Script")
-        runscript_button.clicked.connect(lambda: self.RunContent(self.text_display.toPlainText(), "forward"))
+        self.runscript_button = QPushButton("Run Script")
+        self.runscript_button.clicked.connect(lambda: self.RunContent(self.text_display.toPlainText(), "forward"))
+        self.runscript_button.setEnabled(False)
 
-        runscript_backwards_button = QPushButton("Run Script Backwards")
-        runscript_backwards_button.clicked.connect(lambda: self.RunContent(self.text_display.toPlainText(), "backwards"))
+        self.runscript_backwards_button = QPushButton("Run Script Backwards")
+        self.runscript_backwards_button.clicked.connect(lambda: self.RunContent(self.text_display.toPlainText(), "backwards"))
+        self.runscript_backwards_button.setEnabled(False)
 
-        runscript_random_button = QPushButton("Run Script Random")
-        runscript_random_button.clicked.connect(lambda: self.RunContent(self.text_display.toPlainText(), "random"))
+        self.runscript_random_button = QPushButton("Run Script Random")
+        self.runscript_random_button.clicked.connect(lambda: self.RunContent(self.text_display.toPlainText(), "random"))
+        self.runscript_random_button.setEnabled(False)
 
-        vbox.addWidget(runscript_button)
-        vbox.addWidget(runscript_backwards_button)
-        vbox.addWidget(runscript_random_button)
+        vbox.addWidget(self.runscript_button)
+        vbox.addWidget(self.runscript_backwards_button)
+        vbox.addWidget(self.runscript_random_button)
 
         # File label and text display
         self.file_label = QLabel("No file selected", self)
@@ -88,6 +94,15 @@ class ShotDelayApp(QWidget):
         # Connect signals
         self.shots_input.textChanged.connect(self.validate_inputs)
 
+    def show_error_message(self, error_message):
+        msgbox = QMessageBox()
+        msgbox.setWindowTitle("Error")
+        msgbox.setText("An error occurred:")
+        msgbox.setInformativeText(error_message)
+        msgbox.setIcon(QMessageBox.Critical)
+        msgbox.setStandardButtons(QMessageBox.Ok)
+        msgbox.exec()
+
 
     def showFileDialog(self):
         fileName, _ = QFileDialog.getOpenFileName(self, "Select a .txt File", "", "Text Files (*.txt);;All Files (*)")
@@ -103,7 +118,7 @@ class ShotDelayApp(QWidget):
     def RunContent(self, content, orientation):
         lines = content.splitlines()
         parsed_content = []
-
+        print("Myes")
         for line in lines:
             items = line.split(",")
             for item in items:
@@ -133,14 +148,14 @@ class ShotDelayApp(QWidget):
 
         if orientation == 'random':
             random.shuffle(parsed_content)
-
-        number_delays = len(parsed_content)
-        return parsed_content, number_delays
+            
+        self.DLSWindow.RunMeasurement(parsed_content, int(self.shots_input.text()))
+        return parsed_content
 
     def validate_inputs(self):
         try:
             shots = int(self.shots_input.text())
-            valid = shots > 0
+            valid = shots > 0 and self.text_display.toPlainText() != ""
         except ValueError:
             valid = False
         self.runscript_button.setEnabled(valid)
@@ -148,16 +163,17 @@ class ShotDelayApp(QWidget):
         self.runscript_random_button.setEnabled(valid)
 
     def run_external_script(self):
-        shots = self.shots_input.text()
-        _, delays = self.RunContent(self.text_display.toPlainText(), "forward")
-        try:
-            subprocess.run(
-                [sys.executable, "main.py", shots, delays],
-                check=True
-            )
-            self.status_label.setText("Script ran successfully!")
-        except subprocess.CalledProcessError as e:
-            self.status_label.setText(f"Error running script: {e}")
+            shots = self.shots_input.text()
+            delays = self.delays_input.text()
+            try:
+                subprocess.run(
+                    [sys.executable, "main.py", shots, delays],
+                    check=True
+                )
+                self.status_label.setText("Script ran successfully!")
+            except subprocess.CalledProcessError as e:
+                self.status_label.setText(f"Error running script: {e}")
+
 
 if __name__ == "__main__":
     app = QApplication([])

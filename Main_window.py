@@ -2,8 +2,8 @@ import sys
 from PySide6.QtWidgets import *
 from PySide6.QtCore import *
 from PySide6.QtGui import *
-from GUI import DLSWindow  # Import the MainWindow class from GUI.py
-from camera_gui import ShotDelayApp
+from GUI import *
+from camera_gui import *
 import random
 
 
@@ -16,7 +16,8 @@ class MainApp(QMainWindow):
         # Create a QTabWidget
         self.tabs = QTabWidget()
         self.setCentralWidget(self.tabs)
-
+        shot_delay_app = ShotDelayApp()
+        print(hasattr(shot_delay_app, 'runscript_button'))  # Check if the button exists
         # Add tabs    
         self.tabs.addTab(ShotDelayApp(), "Shot Delay App")
         self.tabs.addTab(DLSWindow(), "DLS Window")
