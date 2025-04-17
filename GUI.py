@@ -4,6 +4,7 @@ from PySide6.QtGui import *
 import sys
 import subprocess
 import random
+from camera_gui import *
 
 ironpython_executable = r"C:\Users\jarod\IronPython3.4\ipy.exe"
 script_path = r"C:\Users\jarod\OneDrive\Documents\School\Jaar 3\Bachelorproject\IronPythonDLS.py"
@@ -199,7 +200,7 @@ class DLSWindow(QMainWindow):
                 self.show_error_message(f"Failed to load file: {e}")
         return content
     
-    def RunContent(self, content, orientation):
+    def RunContent(self, content):
 
         ref = self.run_script("GetReference")
         position = self.run_script("GetPosition")
@@ -235,9 +236,22 @@ class DLSWindow(QMainWindow):
             elif item[0] == 'fs' or item[0] == 'femtosecond' or item[0] == 'femtoseconds':
                 self.run_script(f"MoveRelative {pos/1000000}")
                 self.update_delay_bar(barvalue + pos/1000)
+
+            if item[1] != last_item:
+                print(f"Moving to {item[1]}")
+                shots = ShotDelayApp.shots_input.text()
+                delays = len(content)
+                try:
+                    subprocess.run(
+                        [sys.executable, "main.py", shots, delays],
+                        check=True
+                    )
+                    ShotDelayApp.status_label.setText("Script ran successfully.")
+                except subprocess.CalledProcessError as e:
+                    ShotDelayApp.status_label.setText(f"Error running script: {e}")
             last_item = item[1]
 
-        return content
+        return
 
 
 if __name__ == "__main__":
