@@ -174,3 +174,27 @@ cython_debug/
 .pypirc
 camera_output0.csv
 camera_output1.csv
+IronPythonDLS.py
+IronPython 3.4/IKVM.Reflection.dll
+IronPython 3.4/ipy.exe
+IronPython 3.4/ipy32.exe
+IronPython 3.4/ipyc.exe
+IronPython 3.4/ipyw.exe
+IronPython 3.4/ipyw32.exe
+IronPython 3.4/IronPython.dll
+IronPython 3.4/IronPython.Modules.dll
+IronPython 3.4/LICENSE
+IronPython 3.4/Microsoft.Dynamic.dll
+IronPython 3.4/Microsoft.Scripting.dll
+IronPython 3.4/README.md
+IronPython 3.4/System.Buffers.dll
+IronPython 3.4/System.Memory.dll
+IronPython 3.4/System.Numerics.Vectors.dll
+IronPython 3.4/System.Runtime.CompilerServices.Unsafe.dll
+IronPython 3.4/DLLs/IronPython.SQLite.dll
+IronPython 3.4/DLLs/IronPython.Wpf.dll
+IronPython 3.4/Scripts/easy_install-3.4.exe
+IronPython 3.4/Scripts/easy_install.exe
+IronPython 3.4/Scripts/pip.exe
+IronPython 3.4/Scripts/pip3.4.exe
+IronPython 3.4/Scripts/pip3.exe

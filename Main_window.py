@@ -26,4 +26,4 @@ if __name__ == "__main__":
     app = QApplication([])
     main_app = MainApp()
     main_app.show()
-    app.exec_()
+    app.exec()
