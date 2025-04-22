@@ -27,38 +27,61 @@ def repeat_measurement():
        block_2d_array = np.array(block_buffer).reshape(number_of_shots, 1088)
        blocks.append(block_2d_array)
 
-def delta_a_block(block, start_pixel = 12, end_pixel = 1086):
+def reject_outliers(block, percentage=50):
     """
-    Splits the shots based on pump_off/pump_on state
-    and calcutates the probe spectrum and delta A for a given block
+    Returns an array that contains only the rows
+    whose average lies inside the chosen percentage bound
+    around the mean.
     """
-    pump_off = []
-    pump_on = []
-    print(len(block))
-    #Splits the mshots based on pump_off/pump_on state
-    for i in range(len(block)):
-        if block[i, 2] < 49152:
-            pump_off.append(block[i, start_pixel: end_pixel])
-        else:
-            pump_on.append(block[i, start_pixel: end_pixel])
 
-    #Calculates average pump_off and pump_on across rows
-    pump_off_avg = np.mean(pump_off, axis=0)  
-    pump_on_avg = np.mean(pump_on, axis=0)
-    #Calculates median pump_off and pump_on across rows
+    if percentage >= 100:
+        return np.array(block)   
+
+    #Calculate overal average of the block
+    average = np.mean(block)
+
+    #Calculate the average of each row
+    row_sums = np.sum(block, axis=1)
+    row_averages = row_sums / len(block[0])
+
+    #Create a list with acceptable rows
+    allowed_deviation = (percentage / 100.0) * average
+    good_shots = []
+    for i, row in enumerate(block):
+        if abs(row_averages[i] - average) <= allowed_deviation:
+            good_shots.append(row)
+
+    #Turn the list back into a NumPy array and return it
+    clean_block = np.array(good_shots)
+
+    return clean_block
+
+def delta_a_block(block, start_pixel=12, end_pixel=1086, percentage = 50):
+    #Boolean masks for pump state
+    pump_off = block[block[:, 2] < 49152,  start_pixel:end_pixel]
+    pump_on  = block[block[:, 2] >= 49152, start_pixel:end_pixel]
+
+    n_pairs = min(len(pump_off), len(pump_on))
+    if n_pairs == 0:
+        raise ValueError("No pump_off/pump_on pairs found.")
+
+    #Pair shots and compute delta A
+    with np.errstate(divide='ignore', invalid='ignore'):
+        delta_A = -np.log(np.divide(pump_on[:n_pairs], pump_off[:n_pairs]))
+
+    #Reject outlier delta A values
+    delta_A_clean = reject_outliers(delta_A, percentage=percentage)
+
+    #Average and median delta_A
+    delta_A_avg = np.mean(delta_A_clean, axis=0)
+    delta_A_median = np.median(delta_A_clean, axis=0)
+
+    # Probe spectra from pump‑off state
+    pump_off_avg = np.mean(pump_off, axis=0)
     pump_off_median = np.median(pump_off, axis=0)
-    pump_on_median = np.median(pump_on, axis = 0)
 
-    #Append probe_spectrum
     probe_spectrum_avg.append(pump_off_avg)
     probe_spectrum_median.append(pump_off_median)
-
-    #Calculates delta A
-    with np.errstate(divide='ignore', invalid='ignore'):
-        delta_A_avg = -np.log(np.divide(pump_on_avg, pump_off_avg))
-        delta_A_median = -np.log(np.divide(pump_on_median, pump_off_median))
-
-    # Save delta A
     delta_A_matrix_avg.append(delta_A_avg)
     delta_A_matrix_median.append(delta_A_median)
 
