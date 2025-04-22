@@ -1,6 +1,7 @@
 from PySide6.QtWidgets import *
 from PySide6.QtCore import *
 from PySide6.QtGui import *
+import pyqtgraph as pg
 import subprocess
 import sys
 import random
@@ -12,6 +13,9 @@ class ShotDelayApp(QWidget):
         super().__init__()
         self.setWindowTitle("Camera Interface")
         self.DLSWindow = DLSWindow()
+        self.DLSWindow.progress_updated.connect(self.update_progress_bar)
+        self.DLSWindow.measurement_data_updated.connect(self.update_graph, self.avg_med_toggle)
+        
         self.setup_ui()
 
     def setup_ui(self):
@@ -21,11 +25,37 @@ class ShotDelayApp(QWidget):
         self.grid_layout = QGridLayout()
 
         # Blank spaces for top-left, top-right, and bottom-left quarters
-        self.grid_layout.addWidget(QWidget(), 0, 0)  # Top-left
         self.grid_layout.addWidget(QWidget(), 0, 1)  # Top-right
         self.grid_layout.addWidget(QWidget(), 1, 0)  # Bottom-left
 
         # Bottom-right quarter layout
+        top_left_layout = QVBoxLayout()
+        self.dA_avg_graph = pg.PlotWidget()
+        top_left_layout.addWidget(self.dA_avg_graph)
+        self.dA_avg_graph.setTitle("Delta A Graph")
+        self.dA_avg_graph.setLabel('left', 'Delta A')
+        self.dA_avg_graph.setLabel('bottom', 'Delay (ps)')
+
+        self.delaytimes = []
+        self.dA_inputs_avg = []
+        self.dA_inputs_med = []
+
+        # Plot the initial graph based on the combobox selection
+
+
+        self.dA_avg_graph.setBackground('w')
+        self.dA_avg_graph.getAxis('bottom').setLogMode(True)
+
+        self.dA_Combobox = QComboBox()
+        self.dA_Combobox.addItems(["Average", "Median"])
+        self.dA_Combobox.setCurrentText("Average")
+        self.dA_Combobox.currentIndexChanged.connect(self.avg_med_toggle)
+        top_left_layout.addWidget(self.dA_Combobox)
+        if self.dA_Combobox.currentText() == "Average":
+            self.dA_avg_graph.plot(self.delaytimes, self.dA_inputs_avg, symbol='o', pen=None)
+        elif self.dA_Combobox.currentText() == "Median":
+            self.dA_avg_graph.plot(self.delaytimes, self.dA_inputs_med, symbol='o', pen=None)
+
         bottom_right_layout = QVBoxLayout()
 
         # Form layout for shots and delays input
@@ -39,7 +69,7 @@ class ShotDelayApp(QWidget):
         self.status_label.setAlignment(Qt.AlignCenter)
 
         # File upload and script execution layout
-        hbox5 = QHBoxLayout()
+        hbox = QHBoxLayout()
 
         # File upload button
         file_upload_button = QPushButton("Upload File")
@@ -67,23 +97,28 @@ class ShotDelayApp(QWidget):
         self.file_label = QLabel("No file selected", self)
         self.text_display = QTextEdit()
         self.text_display.setReadOnly(True)
-
+        self.progress_bar = QProgressBar()
+        self.progress_bar.setRange(0, 8672)
+        self.progress_bar.setValue(0)
+        self.progress_bar.setFormat("/8672")
         # Add widgets to hbox5
-        hbox5.addLayout(vbox)
-        hbox5.addWidget(file_upload_button)
-        hbox5.addWidget(self.file_label)
+        hbox.addLayout(vbox)
+        hbox.addWidget(file_upload_button)
+        hbox.addWidget(self.file_label)
+    
 
         # Add widgets to the bottom-right layout
         bottom_right_layout.addLayout(self.form_layout)
         bottom_right_layout.addWidget(self.status_label)
-        bottom_right_layout.addLayout(hbox5)
+        bottom_right_layout.addLayout(hbox)
         bottom_right_layout.addWidget(self.text_display)
+        bottom_right_layout.addWidget(self.progress_bar)
 
         # Add the bottom-right layout to the grid layout
         spacer1 = QSpacerItem(400, 400)
         spacer2 = QSpacerItem(400, 400)
         spacer3 = QSpacerItem(400, 400)
-        self.grid_layout.addItem(spacer1, 0, 0)
+        self.grid_layout.addItem(top_left_layout, 0, 0)
         self.grid_layout.addItem(spacer2, 0, 1)
         self.grid_layout.addItem(spacer3, 1, 0)
         self.grid_layout.addLayout(bottom_right_layout, 1, 1)  # Bottom-right
@@ -93,6 +128,11 @@ class ShotDelayApp(QWidget):
 
         # Connect signals
         self.shots_input.textChanged.connect(self.validate_inputs)
+
+    def update_progress_bar(self, value):
+        """Update the local progress bar with the value from DLSWindow."""
+        self.progress_bar.setValue(value/1000)
+        self.progress_bar.setFormat(f"{round(value)}/8672")
 
     def show_error_message(self, error_message):
         msgbox = QMessageBox()
@@ -161,6 +201,31 @@ class ShotDelayApp(QWidget):
         self.runscript_button.setEnabled(valid)
         self.runscript_backwards_button.setEnabled(valid)
         self.runscript_random_button.setEnabled(valid)
+
+    def update_graph(self, delaytimes, dA_inputs_avg, dA_inputs_med):
+        """Update the graph with new delaytimes and dA_inputs."""
+        self.delaytimes = delaytimes
+        self.dA_inputs_avg = dA_inputs_avg
+        self.dA_inputs_med = dA_inputs_med
+
+        # Clear the graph and re-plot with new data
+        if self.dA_Combobox.currentText() == "Average":
+            self.dA_avg_graph.clear()
+            self.dA_avg_graph.plot(self.delaytimes, dA_inputs_avg, symbol='o', pen=None)
+        if self.dA_Combobox.currentText() == "Median":
+            self.dA_avg_graph.clear()
+            self.dA_avg_graph.plot(self.delaytimes, dA_inputs_med, symbol='o', pen=None)
+    
+    def avg_med_toggle(self):
+        """Toggle between average and median."""
+
+        if self.dA_Combobox.currentText() == "Average":
+            self.dA_avg_graph.clear()
+            self.dA_avg_graph.plot(self.delaytimes, self.dA_inputs_avg, symbol='o')
+        elif self.dA_Combobox.currentText() == "Median":
+            self.dA_avg_graph.clear()
+            self.dA_avg_graph.plot(self.delaytimes, self.dA_inputs_med, symbol='o')
+
 
     def run_external_script(self):
             shots = self.shots_input.text()

@@ -34,9 +34,9 @@ def delta_a_block(block, start_pixel = 12, end_pixel = 1086):
     """
     pump_off = []
     pump_on = []
-
+    print(len(block))
     #Splits the mshots based on pump_off/pump_on state
-    for i in range(int(sys.argv[1])):
+    for i in range(len(block)):
         if block[i, 2] < 49152:
             pump_off.append(block[i, start_pixel: end_pixel])
         else:
@@ -45,7 +45,7 @@ def delta_a_block(block, start_pixel = 12, end_pixel = 1086):
     #Calculates average pump_off and pump_on across rows
     pump_off_avg = np.mean(pump_off, axis=0)  
     pump_on_avg = np.mean(pump_on, axis=0)
-    #Calculates median pump_off and pump_on acorss rows
+    #Calculates median pump_off and pump_on across rows
     pump_off_median = np.median(pump_off, axis=0)
     pump_on_median = np.median(pump_on, axis = 0)
 
@@ -53,7 +53,7 @@ def delta_a_block(block, start_pixel = 12, end_pixel = 1086):
     probe_spectrum_avg.append(pump_off_avg)
     probe_spectrum_median.append(pump_off_median)
 
-    #calculates delta A
+    #Calculates delta A
     with np.errstate(divide='ignore', invalid='ignore'):
         delta_A_avg = -np.log(np.divide(pump_on_avg, pump_off_avg))
         delta_A_median = -np.log(np.divide(pump_on_median, pump_off_median))
@@ -61,6 +61,8 @@ def delta_a_block(block, start_pixel = 12, end_pixel = 1086):
     # Save delta A
     delta_A_matrix_avg.append(delta_A_avg)
     delta_A_matrix_median.append(delta_A_median)
+
+    return probe_spectrum_avg, probe_spectrum_median, delta_A_matrix_avg, delta_A_matrix_median
 
 def display_probe(probe_spectrum):
     """

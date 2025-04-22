@@ -4,7 +4,7 @@ from PySide6.QtCore import *
 from PySide6.QtGui import *
 from GUI import *
 from camera_gui import *
-import random
+
 
 
 class MainApp(QMainWindow):
