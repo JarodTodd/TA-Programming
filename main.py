@@ -27,7 +27,7 @@ def repeat_measurement():
        block_2d_array = np.array(block_buffer).reshape(number_of_shots, 1088)
        blocks.append(block_2d_array)
 
-def reject_outliers(block, percentage=50):
+def reject_outliers(block, percentage=50, range_start = 0, range_end = None):
     """
     Returns an array that contains only the rows
     whose average lies inside the chosen percentage bound
@@ -35,14 +35,18 @@ def reject_outliers(block, percentage=50):
     """
 
     if percentage >= 100:
-        return np.array(block)   
+        return np.array(block)
+    if (range_end == None):
+        block_region = block
+    else:
+        block_region = block[:,range_start:range_end]
 
     #Calculate overal average of the block
-    average = np.mean(block)
+    average = np.mean(block_region)
 
     #Calculate the average of each row
-    row_sums = np.sum(block, axis=1)
-    row_averages = row_sums / len(block[0])
+    row_sums = np.sum(block_region, axis=1)
+    row_averages = row_sums / len(block_region[0])
 
     #Create a list with acceptable rows
     allowed_deviation = (percentage / 100.0) * average
@@ -51,9 +55,8 @@ def reject_outliers(block, percentage=50):
         if abs(row_averages[i] - average) <= allowed_deviation:
             good_shots.append(row)
 
-    #Turn the list back into a NumPy array and return it
+    #Turn the list back into a NumPy array and return
     clean_block = np.array(good_shots)
-
     return clean_block
 
 def delta_a_block(block, start_pixel=12, end_pixel=1086, percentage = 50):
