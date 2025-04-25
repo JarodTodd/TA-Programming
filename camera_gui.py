@@ -2,19 +2,22 @@ from PySide6.QtWidgets import *
 from PySide6.QtCore import *
 from PySide6.QtGui import *
 import pyqtgraph as pg
-import subprocess
 import sys
-import random
-from GUI import DLSWindow
+from GUI import *
 
 
 class ShotDelayApp(QWidget):
+    trigger_worker_run = Signal(str, str, int)
+
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Camera Interface")
         self.DLSWindow = DLSWindow()
+        self.Worker = Measurementworker()
+        self.Worker.start()
         self.DLSWindow.progress_updated.connect(self.update_progress_bar)
-        self.DLSWindow.measurement_data_updated.connect(self.update_graph, self.avg_med_toggle)
+        self.Worker.measurement_data_updated.connect(self.update_graph, self.avg_med_toggle)
+        self.trigger_worker_run.connect(self.Worker.parse_and_run)
         
         self.setup_ui()
 
@@ -78,15 +81,15 @@ class ShotDelayApp(QWidget):
         # Script execution buttons
         vbox = QVBoxLayout()
         self.runscript_button = QPushButton("Run Script")
-        self.runscript_button.clicked.connect(lambda: self.RunContent(self.text_display.toPlainText(), "forward"))
+        self.runscript_button.clicked.connect(lambda: self.trigger_worker_run.emit(self.text_display.toPlainText(), "forward", int(self.shots_input.text())))
         self.runscript_button.setEnabled(False)
 
         self.runscript_backwards_button = QPushButton("Run Script Backwards")
-        self.runscript_backwards_button.clicked.connect(lambda: self.RunContent(self.text_display.toPlainText(), "backwards"))
+        self.runscript_backwards_button.clicked.connect(lambda: self.trigger_worker_run.emit(self.text_display.toPlainText(), "backward", int(self.shots_input.text())))
         self.runscript_backwards_button.setEnabled(False)
 
         self.runscript_random_button = QPushButton("Run Script Random")
-        self.runscript_random_button.clicked.connect(lambda: self.RunContent(self.text_display.toPlainText(), "random"))
+        self.runscript_random_button.clicked.connect(lambda: self.trigger_worker_run.emit(self.text_display.toPlainText(), "random", int(self.shots_input.text())))
         self.runscript_random_button.setEnabled(False)
 
         vbox.addWidget(self.runscript_button)
@@ -96,7 +99,7 @@ class ShotDelayApp(QWidget):
         # File label and text display
         self.file_label = QLabel("No file selected", self)
         self.text_display = QTextEdit()
-        self.text_display.setReadOnly(True)
+        self.text_display.setReadOnly(False)
         self.progress_bar = QProgressBar()
         self.progress_bar.setRange(0, 8672)
         self.progress_bar.setValue(0)
@@ -155,42 +158,6 @@ class ShotDelayApp(QWidget):
             except Exception as e:
                 self.show_error_message(f"Failed to load file: {e}")
 
-    def RunContent(self, content, orientation):
-        lines = content.splitlines()
-        parsed_content = []
-        print("Myes")
-        for line in lines:
-            items = line.split(",")
-            for item in items:
-                item = item.strip()
-                if item:
-                    letters = ""
-                    numbers = ""
-                    for char in item:
-                        if char.isdigit() or char == "." or char == "-":
-                            numbers += char
-                        else:
-                            letters += char
-                    if numbers:
-                        try:
-                            parsed_content.append((letters.strip(), float(numbers)))
-                        except ValueError:
-                            parsed_content.append((letters.strip(), None))
-                    else:
-                        parsed_content.append((letters.strip(), None))
-
-        if not parsed_content:
-            self.show_error_message("No file was uploaded.")
-            return
-
-        if orientation == 'backwards':
-            parsed_content.reverse()
-
-        if orientation == 'random':
-            random.shuffle(parsed_content)
-            
-        self.DLSWindow.RunMeasurement(parsed_content, int(self.shots_input.text()))
-        return parsed_content
 
     def validate_inputs(self):
         try:
@@ -221,23 +188,11 @@ class ShotDelayApp(QWidget):
 
         if self.dA_Combobox.currentText() == "Average":
             self.dA_avg_graph.clear()
-            self.dA_avg_graph.plot(self.delaytimes, self.dA_inputs_avg, symbol='o')
+            self.dA_avg_graph.plot(self.delaytimes, self.dA_inputs_avg, symbol='o', pen=None)
         elif self.dA_Combobox.currentText() == "Median":
             self.dA_avg_graph.clear()
-            self.dA_avg_graph.plot(self.delaytimes, self.dA_inputs_med, symbol='o')
+            self.dA_avg_graph.plot(self.delaytimes, self.dA_inputs_med, symbol='o', pen=None)
 
-
-    def run_external_script(self):
-            shots = self.shots_input.text()
-            delays = self.delays_input.text()
-            try:
-                subprocess.run(
-                    [sys.executable, "main.py", shots, delays],
-                    check=True
-                )
-                self.status_label.setText("Script ran successfully!")
-            except subprocess.CalledProcessError as e:
-                self.status_label.setText(f"Error running script: {e}")
 
 
 if __name__ == "__main__":

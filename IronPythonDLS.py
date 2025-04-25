@@ -1,5 +1,5 @@
 import sys
-
+import time
 import clr
 
 sys.path.append(
@@ -33,6 +33,7 @@ def StartUp():
     if errorcode == "00000":
         if state == "0A" or state == "0B" or state == "0D":
             myDLS.IE()  # Initializing
+            time.sleep(2)
             myDLS.OR()  # Homing
             position = myDLS.PA_Get()
             state = state

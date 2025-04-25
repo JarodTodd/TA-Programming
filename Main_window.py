@@ -5,8 +5,6 @@ from PySide6.QtGui import *
 from GUI import *
 from camera_gui import *
 
-
-
 class MainApp(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -16,11 +14,14 @@ class MainApp(QMainWindow):
         # Create a QTabWidget
         self.tabs = QTabWidget()
         self.setCentralWidget(self.tabs)
-        shot_delay_app = ShotDelayApp()
-        print(hasattr(shot_delay_app, 'runscript_button'))  # Check if the button exists
+
+        self.shot_delay_app = ShotDelayApp()
+        self.dls_window = DLSWindow()
+
         # Add tabs    
-        self.tabs.addTab(ShotDelayApp(), "Shot Delay App")
-        self.tabs.addTab(DLSWindow(), "DLS Window")
+        self.tabs.addTab(self.shot_delay_app, "Shot Delay App")
+        self.tabs.addTab(self.dls_window, "DLS Window")
+
 
 
 if __name__ == "__main__":

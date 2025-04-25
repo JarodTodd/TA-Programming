@@ -19,8 +19,8 @@ def repeat_measurement():
     """
     Loops over all delay_stages 
     """
-    number_of_shots = int(sys.argv[1])
-    number_of_delays = int(sys.argv[2])
+    number_of_shots = int(100)
+    number_of_delays = int(5)
 
     for i in range(number_of_delays):
        block_buffer = camera(number_of_shots, i)
@@ -57,9 +57,10 @@ def reject_outliers(block, percentage=50, range_start = 0, range_end = None):
 
     #Turn the list back into a NumPy array and return
     clean_block = np.array(good_shots)
+
     return clean_block
 
-def delta_a_block(block, start_pixel=12, end_pixel=1086, percentage = 50):
+def delta_a_block(block, start_pixel=12, end_pixel=1086, percentage = 110):
     #Boolean masks for pump state
     pump_off = block[block[:, 2] < 49152,  start_pixel:end_pixel]
     pump_on  = block[block[:, 2] >= 49152, start_pixel:end_pixel]
@@ -87,7 +88,7 @@ def delta_a_block(block, start_pixel=12, end_pixel=1086, percentage = 50):
     probe_spectrum_median.append(pump_off_median)
     delta_A_matrix_avg.append(delta_A_avg)
     delta_A_matrix_median.append(delta_A_median)
-
+    
     return probe_spectrum_avg, probe_spectrum_median, delta_A_matrix_avg, delta_A_matrix_median
 
 def display_probe(probe_spectrum):
@@ -106,3 +107,4 @@ if __name__ == "__main__":
     print(probe_spectrum_median[1][28])
     print(delta_A_matrix_avg[1][28])
     print(delta_A_matrix_median[1][28])
+    display_probe(probe_spectrum_avg[1])
