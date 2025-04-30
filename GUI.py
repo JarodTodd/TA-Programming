@@ -23,7 +23,7 @@ class DLSWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Delayline GUI")
-        self.worker_thread = Measurementworker("", "", 1)
+        self.worker_thread = Measurementworker("", "", 0)
         self.worker_thread.measurement_data_updated.connect(self.handle_measurement_data)
         self.worker_thread.update_delay_bar_signal.connect(self.update_delay_bar)
         self.worker_thread.error_occurred.connect(self.show_error_message)
@@ -269,24 +269,26 @@ class Measurementworker(QThread):
         """
         Called from the GUI thread.  Stores parameters and kicks off self.run().
         """
+
         self._content = content
         self._orientation = orientation
         self._shots = shots
         self.start()
 
     def run(self):
-        try:
-            parsed = self.parse_script_content(self._content, self._orientation)
-            if not parsed:
-                self.error_occurred.emit("No valid script content parsed.")
-                return
-            
-            self.process.start()
+        if self._orientation != "":
+            try:
+                parsed = self.parse_script_content(self._content, self._orientation)
+                if not parsed:
+                    self.error_occurred.emit("No valid script content parsed.")
+                    return
+                
+                self.process.start()
 
-            self._run_measurement_loop(parsed, self._shots)  # Call the measurement loop
-        
-        except Exception as e:
-            self.error_occurred.emit(str(e))
+                self._run_measurement_loop(parsed, self._shots)  # Call the measurement loop
+            
+            except Exception as e:
+                self.error_occurred.emit(str(e))
 
     def _run_measurement_loop(self, content: list[dict], shots: int) -> None:
         """
@@ -296,8 +298,9 @@ class Measurementworker(QThread):
         self.counter = 0
         self.last_item = 0
         ref = self.get_reference_value()
+        self.barvalue = ref * 1000
         position = self.get_position_value()
-        print(f"Reference: {ref}, Position: {position}")
+
 
         if not self.validate_reference_and_position(ref, position, content):
             return
@@ -306,6 +309,7 @@ class Measurementworker(QThread):
             self.move_to_reference(ref)
 
         for item in content:
+            print(item)
             if self.isInterruptionRequested():  # allow user to abort
                 break
 
@@ -333,7 +337,7 @@ class Measurementworker(QThread):
     def handle_process_output(self):
         stdout_line = self.process.readAllStandardOutput().data().decode('utf-8').strip()
         if stdout_line:
-            print(f"Decoded output: {stdout_line}")  # Debugging
+
 
             try:
                 if "Reference position" in stdout_line:
@@ -354,8 +358,6 @@ class Measurementworker(QThread):
 
                 else:
                     print("Output does not match expected format.")
-                    
-                # Emit a signal when position updates
 
 
             except (ValueError, IndexError) as e:
@@ -405,31 +407,6 @@ class Measurementworker(QThread):
         elif orientation == 'random':
             random.shuffle(parsed_content)
         return parsed_content
-
-    @Slot(list, int)
-    def RunMeasurement(self, content, number_of_shots):
-
-        # Step 1: Get reference value
-        ref = self.get_reference_value()
-
-        # Step 2: Get position value
-        position = self.get_position_value()
-
-
-        print(f"Reference: {ref}, Position: {position}")
-
-        # Step 3: Validate reference and position
-        if not self.validate_reference_and_position(ref, position, content):
-            return
-
-        # Step 4: Move to reference position if needed
-        if round(ref, 3) != round(position, 3):
-            self.move_to_reference(ref)
-        # Step 5: Process each item in the content
-        print("Signal emitted to process content.")
-        self.process_content_signal.emit(content, ref, number_of_shots)
-        
-
     
     def stop(self):
         self._is_running = False  # Safely stop the loop
@@ -466,15 +443,14 @@ class Measurementworker(QThread):
             QCoreApplication.processEvents()  # Wait for the position to update
         self.update_delay_bar_signal.emit(ref * 1000)
 
+
     @Slot(list, float, int)
     def process_content(self, blk, ref, number_of_shots):
         blocks = []
         delaytimes = []
         dA_inputs_avg = []
         dA_inputs_med = []
-        barvalue = ref * 1000
-        print("A")
-        print(blk)
+        
         unit = blk[0].lower()
         pos = blk[1]
 
@@ -484,10 +460,10 @@ class Measurementworker(QThread):
             pos /= 1000000
 
         pos -= self.last_item
-        barvalue = ref + pos * 1000
-
+        self.barvalue += pos * 1000
+        print(self.barvalue, pos, self.last_item)
         self.run_script(f"MoveRelative {pos}")
-        self.update_delay_bar_signal.emit(barvalue)
+        self.update_delay_bar_signal.emit(self.barvalue)
 
         # Simulate measurement
         time.sleep(2)

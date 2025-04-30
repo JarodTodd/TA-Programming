@@ -12,8 +12,7 @@ class ShotDelayApp(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Camera Interface")
-        self.DLSWindow = DLSWindow()
-        self.DLSWindow.progress_updated.connect(self.update_progress_bar)
+        self.DLSWindow = DLSWindow()  
         self.setup_ui()
 
     def setup_ui(self):
@@ -127,11 +126,13 @@ class ShotDelayApp(QWidget):
 
         # Connect signals
         self.shots_input.textChanged.connect(self.validate_inputs)
+        self.text_display.textChanged.connect(self.validate_inputs)
 
 
     def update_progress_bar(self, value):
         """Update the local progress bar with the value from DLSWindow."""
-        self.progress_bar.setValue(value/1000)
+        print("Updating progress bar with value:", value)
+        self.progress_bar.setValue(value)
         self.progress_bar.setFormat(f"{round(value)}/8672")
 
     def show_error_message(self, error_message):
@@ -194,6 +195,7 @@ class ShotDelayApp(QWidget):
         self.worker = Measurementworker(content, orientation, shots)
         self.worker.measurement_data_updated.connect(self.update_graph)
         self.worker.error_occurred.connect(self.show_error_message)  # Optional error handler
+        self.worker.update_delay_bar_signal.connect(self.update_progress_bar)
         self.worker.start()
 
 
