@@ -51,7 +51,7 @@ def move_cursor(event):
     global vline_pl2
 
     pixel_value = int(round(event.xdata))
-
+    
     #https://www.geeksforgeeks.org/find-the-nearest-value-and-the-index-of-numpy-array/
     delay_value = event.ydata
     delay_idx = int(np.abs(delay_times - delay_value).argmin())

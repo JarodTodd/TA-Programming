@@ -14,11 +14,11 @@ class ShotDelayApp(QWidget):
         self.setWindowTitle("Camera Interface")
         self.DLSWindow = DLSWindow()
         self.Worker = Measurementworker()
-        self.Worker.start()
+        
         self.DLSWindow.progress_updated.connect(self.update_progress_bar)
         self.Worker.measurement_data_updated.connect(self.update_graph, self.avg_med_toggle)
         self.trigger_worker_run.connect(self.Worker.parse_and_run)
-        
+        self.Worker.start()
         self.setup_ui()
 
     def setup_ui(self):
@@ -78,24 +78,6 @@ class ShotDelayApp(QWidget):
         file_upload_button = QPushButton("Upload File")
         file_upload_button.clicked.connect(self.showFileDialog)
 
-        # Script execution buttons
-        vbox = QVBoxLayout()
-        self.runscript_button = QPushButton("Run Script")
-        self.runscript_button.clicked.connect(lambda: self.trigger_worker_run.emit(self.text_display.toPlainText(), "forward", int(self.shots_input.text())))
-        self.runscript_button.setEnabled(False)
-
-        self.runscript_backwards_button = QPushButton("Run Script Backwards")
-        self.runscript_backwards_button.clicked.connect(lambda: self.trigger_worker_run.emit(self.text_display.toPlainText(), "backward", int(self.shots_input.text())))
-        self.runscript_backwards_button.setEnabled(False)
-
-        self.runscript_random_button = QPushButton("Run Script Random")
-        self.runscript_random_button.clicked.connect(lambda: self.trigger_worker_run.emit(self.text_display.toPlainText(), "random", int(self.shots_input.text())))
-        self.runscript_random_button.setEnabled(False)
-
-        vbox.addWidget(self.runscript_button)
-        vbox.addWidget(self.runscript_backwards_button)
-        vbox.addWidget(self.runscript_random_button)
-
         # File label and text display
         self.file_label = QLabel("No file selected", self)
         self.text_display = QTextEdit()
@@ -104,6 +86,25 @@ class ShotDelayApp(QWidget):
         self.progress_bar.setRange(0, 8672)
         self.progress_bar.setValue(0)
         self.progress_bar.setFormat("/8672")
+
+        # Script execution buttons
+        vbox = QVBoxLayout()
+        self.runscript_button = QPushButton("Run Script")
+        self.runscript_button.clicked.connect(lambda: self.start_measurement(self.text_display.toPlainText(), "forward", int(self.shots_input.text())))
+        self.runscript_button.setEnabled(False)
+
+        self.runscript_backwards_button = QPushButton("Run Script Backwards")
+        self.runscript_backwards_button.clicked.connect(lambda: self.start_measurement(self.text_display.toPlainText(), "backward", int(self.shots_input.text())))
+        self.runscript_backwards_button.setEnabled(False)
+
+        self.runscript_random_button = QPushButton("Run Script Random")
+        self.runscript_random_button.clicked.connect(lambda: self.start_measurement(self.text_display.toPlainText(), "random", int(self.shots_input.text())))
+        self.runscript_random_button.setEnabled(False)
+
+        vbox.addWidget(self.runscript_button)
+        vbox.addWidget(self.runscript_backwards_button)
+        vbox.addWidget(self.runscript_random_button)
+
         # Add widgets to hbox5
         hbox.addLayout(vbox)
         hbox.addWidget(file_upload_button)
@@ -131,6 +132,7 @@ class ShotDelayApp(QWidget):
 
         # Connect signals
         self.shots_input.textChanged.connect(self.validate_inputs)
+
 
     def update_progress_bar(self, value):
         """Update the local progress bar with the value from DLSWindow."""
@@ -193,6 +195,11 @@ class ShotDelayApp(QWidget):
             self.dA_avg_graph.clear()
             self.dA_avg_graph.plot(self.delaytimes, self.dA_inputs_med, symbol='o', pen=None)
 
+    def start_measurement(self, text, orientation, shots):
+        self.worker = Measurementworker()
+        self.worker.measurement_data_updated.connect(self.update_graph)
+        self.worker.error_occurred.connect(self.show_error_message)  # Optional error handler
+        self.worker.start()
 
 
 if __name__ == "__main__":
