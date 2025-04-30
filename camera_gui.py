@@ -13,12 +13,7 @@ class ShotDelayApp(QWidget):
         super().__init__()
         self.setWindowTitle("Camera Interface")
         self.DLSWindow = DLSWindow()
-        self.Worker = Measurementworker()
-        
         self.DLSWindow.progress_updated.connect(self.update_progress_bar)
-        self.Worker.measurement_data_updated.connect(self.update_graph, self.avg_med_toggle)
-        self.trigger_worker_run.connect(self.Worker.parse_and_run)
-        self.Worker.start()
         self.setup_ui()
 
     def setup_ui(self):
@@ -195,8 +190,8 @@ class ShotDelayApp(QWidget):
             self.dA_avg_graph.clear()
             self.dA_avg_graph.plot(self.delaytimes, self.dA_inputs_med, symbol='o', pen=None)
 
-    def start_measurement(self, text, orientation, shots):
-        self.worker = Measurementworker()
+    def start_measurement(self, content, orientation, shots):
+        self.worker = Measurementworker(content, orientation, shots)
         self.worker.measurement_data_updated.connect(self.update_graph)
         self.worker.error_occurred.connect(self.show_error_message)  # Optional error handler
         self.worker.start()

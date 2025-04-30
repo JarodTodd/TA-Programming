@@ -23,7 +23,7 @@ class DLSWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Delayline GUI")
-        self.worker_thread = Measurementworker()
+        self.worker_thread = Measurementworker("", "", 1)
         self.worker_thread.measurement_data_updated.connect(self.handle_measurement_data)
         self.worker_thread.update_delay_bar_signal.connect(self.update_delay_bar)
         self.worker_thread.error_occurred.connect(self.show_error_message)
@@ -249,13 +249,14 @@ class Measurementworker(QThread):
     update_probe = Signal(list, list)
     process_content_signal = Signal(list, float, int)
 
-    def __init__(self, parent=None):
-        super().__init__(parent)
+    def __init__(self, content, orientation, shots):
+        super().__init__()
 
-        self._content: list = []
-        self._orientation: str = ""
-        self._shots: int = 1
-        self.process = QProcess(self)
+        self._content = content
+        self._orientation: str = orientation
+        self._shots: int = shots
+        self.process = QProcess()
+        self.process.moveToThread(self)
         self.process.setProgram(ironpython_executable)
         self.process.setArguments([script_path, "GetReference"])
         self.process.readyReadStandardOutput.connect(self.handle_process_output)
@@ -292,10 +293,8 @@ class Measurementworker(QThread):
         Example loop that calls your existing RunMeasurement() and streams data.
         Modify freely to match your real-world needs.
         """
-        acc_x: list[float] = []
-        acc_y: list[float] = []
-        acc_err: list[float] = []
-
+        self.counter = 0
+        self.last_item = 0
         ref = self.get_reference_value()
         position = self.get_position_value()
         print(f"Reference: {ref}, Position: {position}")
@@ -310,18 +309,12 @@ class Measurementworker(QThread):
             if self.isInterruptionRequested():  # allow user to abort
                 break
 
-            result = self.process_content(item, ref, shots)  # hardware I/O – heavy stuff
-            x, y, err = result["x"], result["y"], result["err"]
-
-            acc_x.extend(x)
-            acc_y.extend(y)
-            acc_err.extend(err)
-
-            # live update in the GUI
-            self.measurement_data_updated.emit(acc_x, acc_y, acc_err)
+            result = self.process_content(item, ref, shots)
+            self.counter += 1  # hardware I/O – heavy stuff
+            
 
         # Clean-up
-        self._proc.close()
+        self.process.close()
 
 
     @Slot(str)
@@ -479,11 +472,9 @@ class Measurementworker(QThread):
         delaytimes = []
         dA_inputs_avg = []
         dA_inputs_med = []
-        last_item = 0
         barvalue = ref * 1000
-        counter = 0
         print("A")
-
+        print(blk)
         unit = blk[0].lower()
         pos = blk[1]
 
@@ -492,7 +483,7 @@ class Measurementworker(QThread):
         elif unit in ['fs', 'femtosecond', 'femtoseconds']:
             pos /= 1000000
 
-        pos -= last_item
+        pos -= self.last_item
         barvalue = ref + pos * 1000
 
         self.run_script(f"MoveRelative {pos}")
@@ -500,26 +491,26 @@ class Measurementworker(QThread):
 
         # Simulate measurement
         time.sleep(2)
-        block_buffer = camera(number_of_shots, counter)
+        block_buffer = camera(number_of_shots, self.counter)
         block_2d_array = np.array(block_buffer).reshape(number_of_shots, 1088)
         blocks.append(block_2d_array)
 
         if unit in ['ns', 'nanosecond', 'nanoseconds']:
-            last_item = blk[1]
+            self.last_item = blk[1]
         elif unit in ['ps', 'picosecond', 'picoseconds']:
-            last_item = blk[1] / 1000
+            self.last_item = blk[1] / 1000
         elif unit in ['fs', 'femtosecond', 'femtoseconds']:
-            last_item = blk[1] / 1000000
+            self.last_item = blk[1] / 1000000
 
         probe_avg, probe_med, dA_avg, dA_med = delta_a_block(block_2d_array)
         self.update_probe.emit(probe_avg[0], probe_med[0])  # Emit probe data incrementally
         dA_average = np.mean(dA_avg, axis=0)
         dA_median = np.median(dA_med, axis=0)
 
-        delaytimes.append(last_item) # Convert to picoseconds for display
+        delaytimes.append(self.last_item) # Convert to picoseconds for display
         dA_inputs_avg.append(np.mean(dA_average))
         dA_inputs_med.append(np.median(dA_median))
-        counter += 1
+
 
         return blocks
 
