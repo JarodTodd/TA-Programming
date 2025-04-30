@@ -200,12 +200,51 @@ def drag_do(event):
 
 #Stops the dragging actions when button is released
 def drag_stop(event):
-    if event.inaxes is not ax_heatmap:
-        return
     
-    global drag_status
+    global drag_status, draggable_pltline
     
     drag_status = 0
+    draggable_pltline = None
+
+draggable_pltline = None
+def drag_secondairy_plots(event):
+    if event.inaxes is not ax_plot1 and event.inaxes is not ax_plot2:
+        return
+    
+    global vline_pl1, vline_pl2, draggable_pltline
+    
+    x = event.xdata
+
+    if event.inaxes is ax_plot1:
+        if vline_pl1 is not None and abs(vline_pl1.get_xdata()[0]-x) < 0.01:
+            draggable_pltline = 'plt1'
+    elif event.inaxes is ax_plot2:
+        if vline_pl2 is not None and abs(vline_pl2.get_xdata()[0]-x) < 0.1:
+            draggable_pltline = 'plt2'
+
+def drag_secondary_do(event):
+    global vline_heatmap, hline_heatmap
+
+    if draggable_pltline is None:
+        return
+    if event.inaxes not in [ax_plot1, ax_plot2]:
+        return
+
+    x = event.xdata
+
+    if draggable_pltline == 'plt1':  # moving delay time
+        delay_idx = int(np.abs(delay_times - x).argmin())
+        if hline_heatmap is not None:
+            hline_heatmap.set_ydata([delay_times[delay_idx], delay_times[delay_idx]])
+
+    elif draggable_pltline == 'plt2':  # moving pixel index
+        pixel_value = int(round(x))
+        if vline_heatmap is not None:
+            vline_heatmap.set_xdata([pixel_value, pixel_value])
+
+    secondary_plots_update()
+    fig.canvas.draw_idle()
+
 
 # Start events
 # cid = fig.canvas.mpl_connect('button_press_event', secondary_plots)
@@ -214,6 +253,8 @@ cid = fig.canvas.mpl_connect('button_press_event', cursor_position)
 cid = fig.canvas.mpl_connect('button_press_event', drag)
 cid = fig.canvas.mpl_connect('button_release_event', drag_stop)
 cid = fig.canvas.mpl_connect('motion_notify_event', drag_do)
+cid = fig.canvas.mpl_connect('motion_notify_event', drag_secondairy_plots)
+cid = fig.canvas.mpl_connect('motion_notify_event', drag_secondary_do)
 
 plt.tight_layout()
 plt.show()
