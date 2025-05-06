@@ -3,12 +3,12 @@ import sys
 import numpy as np
 import matplotlib.pyplot as plt
 
-from PySide6.QtCore    import QTimer
+from PySide6.QtCore    import QTimer, QObject
 from PySide6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 
 
-class TAPlotWidget(QWidget):
+class TAPlotWidget(QObject):
 
     def __init__(self, delay_times, pixel_indexes, parent=None):
         super().__init__(parent)
@@ -18,33 +18,34 @@ class TAPlotWidget(QWidget):
         self.pixel_indexes  = np.asarray(pixel_indexes)
         self.delta_A_matrix = np.zeros((delay_times.size, pixel_indexes.size))
 
-        # create figure area 
-        self.canvas = FigureCanvasQTAgg(plt.Figure(figsize=(8, 9)))
-        self.fig    = self.canvas.figure
-        self.ax_heatmap, self.ax_plot1, self.ax_plot2 = (
-            self.fig.subplots(
-                3, 1,
-                gridspec_kw={"height_ratios": [2, 1, 1]},
-            )
-        )
-        lay = QVBoxLayout(self)
-        lay.addWidget(self.canvas)
+        # ─────────── canvas / axes ───────────
+        self.canvas_heatmap = FigureCanvasQTAgg(plt.Figure(figsize=(6, 4), constrained_layout=True))
+        self.fig_h          = self.canvas_heatmap.figure
+        self.ax_heatmap     = self.fig_h.add_subplot(111)
 
-        # create heatmap
+        self.canvas_plot1   = FigureCanvasQTAgg(plt.Figure(figsize=(6, 2.5), constrained_layout=True))
+        self.fig_p1         = self.canvas_plot1.figure
+        self.ax_plot1       = self.fig_p1.add_subplot(111)
+
+        self.canvas_plot2   = FigureCanvasQTAgg(plt.Figure(figsize=(6, 2.5), constrained_layout=True))
+        self.fig_p2         = self.canvas_plot2.figure
+        self.ax_plot2       = self.fig_p2.add_subplot(111)
+
+        # ─────────── heat‑map ───────────
         self.c = self.ax_heatmap.pcolormesh(
             self.pixel_indexes,
             self.delay_times,
             self.delta_A_matrix,
             shading="auto",
         )
-        self.fig.colorbar(self.c, ax=self.ax_heatmap, label="ΔA")
+        self.fig_h.colorbar(self.c, ax=self.ax_heatmap, label="ΔA")
         self.ax_heatmap.set(
-            title="TA heat‑map",
+            title="TA heat-map",
             xlabel="Pixel index",
             ylabel="Delay time",
         )
 
-        # create secondary plots 
+        # ─────────── secondary plots ───────────
         (self.plot1,) = self.ax_plot1.plot([], [], marker="o")
         self.ax_plot1.set(
             xlabel="Delay time",
@@ -70,15 +71,18 @@ class TAPlotWidget(QWidget):
         self.draggable_pltline = None
 
         # Matplotlib events
-        self.canvas.mpl_connect("motion_notify_event", self.cursor)
-        self.canvas.mpl_connect("button_press_event",  self.position_pointer)
-        self.canvas.mpl_connect("button_press_event",  self.drag_heatmap_enable)
-        self.canvas.mpl_connect("button_release_event", self.drag_stop)
-        self.canvas.mpl_connect("motion_notify_event", self.drag_heatmap_do)
-        self.canvas.mpl_connect("button_press_event", self.drag_secondairy_enable)
-        self.canvas.mpl_connect("motion_notify_event", self.drag_secondary_do)
+        # heat‑map canvas
+        self.canvas_heatmap.mpl_connect("motion_notify_event", self.cursor)
+        self.canvas_heatmap.mpl_connect("button_press_event",  self.position_pointer)
+        self.canvas_heatmap.mpl_connect("button_press_event",  self.drag_heatmap_enable)
+        self.canvas_heatmap.mpl_connect("button_release_event", self.drag_stop)
+        self.canvas_heatmap.mpl_connect("motion_notify_event", self.drag_heatmap_do)
 
-        self.fig.tight_layout()
+        # secondary canvases
+        for canvas in (self.canvas_plot1, self.canvas_plot2):
+            canvas.mpl_connect("button_press_event",  self.drag_secondairy_enable)
+            canvas.mpl_connect("motion_notify_event",  self.drag_secondary_do)
+            canvas.mpl_connect("button_release_event", self.drag_stop)
 
     # update delta_A matrix and refresh plots
     def update_row(self, row_idx: int, new_values):
@@ -92,7 +96,9 @@ class TAPlotWidget(QWidget):
         self.ax_plot1.set_ylim(self.delta_A_matrix.min(), self.delta_A_matrix.max())
         self.ax_plot2.set_ylim(self.delta_A_matrix.min(), self.delta_A_matrix.max())
 
-        self.fig.canvas.draw_idle()
+        self.fig_h.canvas.draw_idle()
+        self.fig_p1.canvas.draw_idle()
+        self.fig_p2.canvas.draw_idle()
 
     # update secondary plots when heatmap cross-hair is moved
     def secondary_plots_update(self):
@@ -118,7 +124,8 @@ class TAPlotWidget(QWidget):
         self.vline_pl1 = self.ax_plot1.axvline(self.delay_times[delay_idx], color="lightgrey")
         self.vline_pl2 = self.ax_plot2.axvline(pixel_value, color="lightgrey")
 
-        self.fig.canvas.draw_idle()
+        self.fig_p1.canvas.draw_idle()
+        self.fig_p2.canvas.draw_idle()
 
     # current position of the mouse cursor for the heatmap
     def cursor(self, event):
@@ -132,7 +139,7 @@ class TAPlotWidget(QWidget):
             if self.hline_cursor :
                 self.hline_cursor .remove()
                 self.hline_cursor  = None
-            self.fig.canvas.draw_idle()
+            self.fig_h.canvas.draw_idle()
             return
 
         pixel_value = event.xdata
@@ -158,7 +165,7 @@ class TAPlotWidget(QWidget):
         else:
             self.draggable_line = None
 
-        self.fig.canvas.draw_idle()
+        self.fig_h.canvas.draw_idle()
 
     # draw cross-hair lines on heatmap for selected pixel and delay
     def position_pointer(self, event):
@@ -178,6 +185,7 @@ class TAPlotWidget(QWidget):
         self.vline_heatmap = self.ax_heatmap.axvline(pixel_value, color="red")
 
         # update secondary plots for new pixel and delay values
+        self.fig_h.canvas.draw_idle()
         self.secondary_plots_update()
 
     # enable dragging for heatmap on mouse-button press
@@ -207,13 +215,13 @@ class TAPlotWidget(QWidget):
         if self.vline_heatmap is not None and self.draggable_line == 'v':
             self.vline_heatmap.set_xdata([pixel_value, pixel_value])
         if self.hline_heatmap is not None and self.draggable_line == 'h':
-            self.hline_heatmap.set_ydata([delay_times[delay_idx], delay_times[delay_idx]])
+            self.hline_heatmap.set_ydata([self.delay_times[delay_idx], self.delay_times[delay_idx]])
         if self.hline_heatmap is not None and self.vline_heatmap is not None and self.draggable_line == 'hv':
             self.vline_heatmap.set_xdata([pixel_value, pixel_value])
-            self.hline_heatmap.set_ydata([delay_times[delay_idx], delay_times[delay_idx]])
+            self.hline_heatmap.set_ydata([self.delay_times[delay_idx], self.delay_times[delay_idx]])
 
         self.secondary_plots_update()
-        self.fig.canvas.draw_idle()
+        self.fig_h.canvas.draw_idle()
 
     # determine if and which verticle lines in secondary plots are draggable
     def drag_secondairy_enable(self, event):
@@ -247,6 +255,7 @@ class TAPlotWidget(QWidget):
                 self.vline_heatmap.set_xdata([pixel_value] * 2)
 
         self.secondary_plots_update()
+        self.fig_h.canvas.draw_idle()
 
     # stop dragging when mouse button is released
     def drag_stop(self, _event):
@@ -260,17 +269,24 @@ if __name__ == "__main__":
 
     app = QApplication(sys.argv)
     win = QMainWindow()
-    widget = TAPlotWidget(delay_times, pixel_indexes)
-    win.setCentralWidget(widget)
+    widgets = TAPlotWidget(delay_times, pixel_indexes)
+
+    # put the three canvases in a single window vertically
+    central = QWidget()
+    vbox = QVBoxLayout(central)
+    vbox.addWidget(widgets.canvas_heatmap)
+    vbox.addWidget(widgets.canvas_plot1)
+    vbox.addWidget(widgets.canvas_plot2)
+    win.setCentralWidget(central)
     win.resize(900, 850)
     win.show()
 
     # simulate one new measurement row per 10 second 
     def _fake_measurement():
-        zeros = np.where(np.all(widget.delta_A_matrix == 0, axis=1))[0]
+        zeros = np.where(np.all(widgets.delta_A_matrix == 0, axis=1))[0]
         if zeros.size:
             row = zeros[0]
-            widget.update_row(
+            widgets.update_row(
                 row,
                 np.random.uniform(-0.002, 0.006, size=pixel_indexes.size),
             )
@@ -281,4 +297,4 @@ if __name__ == "__main__":
     timer.timeout.connect(_fake_measurement)
     timer.start(10000)  # 1 s per fake cycle
 
-    app.exec()
+    sys.exit(app.exec())
