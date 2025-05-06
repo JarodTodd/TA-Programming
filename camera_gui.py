@@ -4,7 +4,8 @@ from PySide6.QtGui import *
 import pyqtgraph as pg
 import sys
 from WorkerThread import *
-
+import numpy as np                      
+from cursor_plot import TAPlotWidget
 
 class ShotDelayApp(QWidget):
     trigger_worker_run = Signal(str, str, int)
@@ -21,24 +22,30 @@ class ShotDelayApp(QWidget):
         # Main layout as a grid
         self.grid_layout = QGridLayout()
 
-        # Blank spaces for top-left, top-right, and bottom-left quarters
-        self.grid_layout.addWidget(QWidget(), 0, 1)  # Top-right
-        self.grid_layout.addWidget(QWidget(), 1, 0)  # Bottom-left
-
-        # Bottom-right quarter layout
+        # Bottom-righ quarter layout
         top_left_layout = QVBoxLayout()
-        self.dA_avg_graph = pg.PlotWidget()
-        top_left_layout.addWidget(self.dA_avg_graph)
-        self.dA_avg_graph.setTitle("Delta A Graph")
-        self.dA_avg_graph.setLabel('left', 'Delta A')
-        self.dA_avg_graph.setLabel('bottom', 'Delay (ps)')
-        self.dA_avg_graph.setBackground('w')
-        self.dA_avg_graph.showGrid(x=True, y=True)
+        top_right_layout = QVBoxLayout()
+        bottom_left_layout = QVBoxLayout()
+        
+
+        # TAPlotWidget 
+        delay_times   = np.array([-0.2, 0.0, 0.2, 0.5, 1.0])
+        pixel_indexes = np.arange(10)
+        self.ta_widgets = TAPlotWidget(delay_times, pixel_indexes)
+        top_left_layout.addWidget(self.ta_widgets.canvas_heatmap)
+        top_right_layout.addWidget(self.ta_widgets.canvas_plot1)
+        bottom_left_layout.addWidget(self.ta_widgets.canvas_plot2)
+
+        # old dA_graph 
+        # self.dA_avg_graph = pg.PlotWidget()
+        # top_left_layout.addWidget(self.dA_avg_graph)
+        # self.dA_avg_graph.setTitle("Delta A Graph")
+        # self.dA_avg_graph.setLabel('left', 'Delta A')
+        # self.dA_avg_graph.setLabel('bottom', 'Delay (ps)')
 
         self.delaytimes = []
         self.dA_inputs_avg = []
         self.dA_inputs_med = []
-
 
 
         self.dA_Combobox = QComboBox()
@@ -46,10 +53,10 @@ class ShotDelayApp(QWidget):
         self.dA_Combobox.setCurrentText("Average")
         self.dA_Combobox.currentIndexChanged.connect(self.avg_med_toggle)
         top_left_layout.addWidget(self.dA_Combobox)
-        if self.dA_Combobox.currentText() == "Average":
-            self.dA_avg_graph.plot(self.delaytimes, self.dA_inputs_avg, symbol='o', pen=None)
-        elif self.dA_Combobox.currentText() == "Median":
-            self.dA_avg_graph.plot(self.delaytimes, self.dA_inputs_med, symbol='o', pen=None)
+        # if self.dA_Combobox.currentText() == "Average":
+        #     self.dA_avg_graph.plot(self.delaytimes, self.dA_inputs_avg, symbol='o', pen=None)
+        # elif self.dA_Combobox.currentText() == "Median":
+        #     self.dA_avg_graph.plot(self.delaytimes, self.dA_inputs_med, symbol='o', pen=None)
 
         bottom_right_layout = QVBoxLayout()
 
@@ -102,7 +109,6 @@ class ShotDelayApp(QWidget):
         hbox.addWidget(file_upload_button)
         hbox.addWidget(self.file_label)
     
-
         # Add widgets to the bottom-right layout
         bottom_right_layout.addLayout(self.form_layout)
         bottom_right_layout.addWidget(self.status_label)
@@ -115,8 +121,8 @@ class ShotDelayApp(QWidget):
         spacer2 = QSpacerItem(400, 400)
         spacer3 = QSpacerItem(400, 400)
         self.grid_layout.addItem(top_left_layout, 0, 0)
-        self.grid_layout.addItem(spacer2, 0, 1)
-        self.grid_layout.addItem(spacer3, 1, 0)
+        self.grid_layout.addItem(top_right_layout, 0, 1)
+        self.grid_layout.addItem(bottom_left_layout, 1, 0)
         self.grid_layout.addLayout(bottom_right_layout, 1, 1)  # Bottom-right
 
         # Set the grid layout as the main layout
@@ -429,4 +435,7 @@ if __name__ == "__main__":
     app = QApplication([])
     window = ShotDelayApp()
     window.show()
+
+    window.start_fake_measurement()
+
     sys.exit(app.exec())
