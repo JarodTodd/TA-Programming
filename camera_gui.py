@@ -10,10 +10,10 @@ from cursor_plot import TAPlotWidget
 class ShotDelayApp(QWidget):
     trigger_worker_run = Signal(str, str, int)
 
-    def __init__(self):
+    def __init__(self, dls_window):
         super().__init__()
         self.setWindowTitle("Camera Interface")
-        self.DLSWindow = DLSWindow()  
+        self.DLSWindow = dls_window
         self.setup_ui()
 
     def setup_ui(self):

@@ -60,7 +60,7 @@ class Measurementworker(QThread):
             
             except Exception as e:
                 self.error_occurred.emit(str(e))
-                
+
         if self._orientation == "ButtonPress":
             argument = self._content
             print(f"Running script with argument: {argument}")
@@ -79,6 +79,7 @@ class Measurementworker(QThread):
         Modify freely to match your real-world needs.
         """
         self.counter = 0
+        self.teller = 0
         self.last_item = 0
         ref = self.get_reference_value()
         self.barvalue = ref * 1000
@@ -232,7 +233,6 @@ class Measurementworker(QThread):
         delaytime = 0
         dA_inputs_avg = 0
         dA_inputs_med = 0
-        counter = 0
         unit = blk[0].lower()
         pos = blk[1]
 
@@ -262,8 +262,8 @@ class Measurementworker(QThread):
             self.last_item = blk[1] / 1000000
 
         probe_avg, probe_med, dA_avg, dA_med = delta_a_block(block_2d_array)
-        self.update_probe.emit(probe_avg[counter], probe_med[counter])  # Emit probe data incrementally
-        print("Probe data emitted:", probe_avg[counter], probe_med[counter])  # Debugging
+        self.update_probe.emit(probe_avg[self.teller], probe_med[self.teller])  # Emit probe data incrementally
+        print("Probe data emitted:", probe_avg[self.teller], probe_med[self.teller])  # Debugging
         dA_average = np.mean(dA_avg, axis=0)
         dA_median = np.median(dA_med, axis=0)
 
@@ -272,7 +272,7 @@ class Measurementworker(QThread):
         dA_inputs_med = np.mean(dA_median)
 
         self.measurement_data_updated.emit(delaytime, dA_inputs_avg, dA_inputs_med)
-        counter += 1
+        self.teller += 1
 
         return blocks
 
