@@ -2,7 +2,7 @@ import sys
 from PySide6.QtWidgets import *
 from PySide6.QtCore import *
 from PySide6.QtGui import *
-from GUI import *
+from WorkerThread import *
 from camera_gui import *
 
 class MainApp(QMainWindow):
