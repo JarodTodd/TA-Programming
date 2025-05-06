@@ -18,7 +18,7 @@ class TAPlotWidget(QObject):
         self.pixel_indexes  = np.asarray(pixel_indexes)
         self.delta_A_matrix = np.zeros((delay_times.size, pixel_indexes.size))
 
-        # ─────────── canvas / axes ───────────
+        # create canvas / axes
         self.canvas_heatmap = FigureCanvasQTAgg(plt.Figure(figsize=(6, 4), constrained_layout=True))
         self.fig_h          = self.canvas_heatmap.figure
         self.ax_heatmap     = self.fig_h.add_subplot(111)
@@ -31,7 +31,7 @@ class TAPlotWidget(QObject):
         self.fig_p2         = self.canvas_plot2.figure
         self.ax_plot2       = self.fig_p2.add_subplot(111)
 
-        # ─────────── heat‑map ───────────
+        # heat‑map
         self.c = self.ax_heatmap.pcolormesh(
             self.pixel_indexes,
             self.delay_times,
@@ -45,7 +45,7 @@ class TAPlotWidget(QObject):
             ylabel="Delay time",
         )
 
-        # ─────────── secondary plots ───────────
+        # secondary plots
         (self.plot1,) = self.ax_plot1.plot([], [], marker="o")
         self.ax_plot1.set(
             xlabel="Delay time",
@@ -70,15 +70,14 @@ class TAPlotWidget(QObject):
         self.drag_status = 0
         self.draggable_pltline = None
 
-        # Matplotlib events
-        # heat‑map canvas
+        # Matplotlin events heat‑map plot
         self.canvas_heatmap.mpl_connect("motion_notify_event", self.cursor)
         self.canvas_heatmap.mpl_connect("button_press_event",  self.position_pointer)
         self.canvas_heatmap.mpl_connect("button_press_event",  self.drag_heatmap_enable)
         self.canvas_heatmap.mpl_connect("button_release_event", self.drag_stop)
         self.canvas_heatmap.mpl_connect("motion_notify_event", self.drag_heatmap_do)
 
-        # secondary canvases
+        # Matplotlib events secondary plots
         for canvas in (self.canvas_plot1, self.canvas_plot2):
             canvas.mpl_connect("button_press_event",  self.drag_secondairy_enable)
             canvas.mpl_connect("motion_notify_event",  self.drag_secondary_do)
