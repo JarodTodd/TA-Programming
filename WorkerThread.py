@@ -20,6 +20,8 @@ class Measurementworker(QThread):
     update_probe = Signal(list, list)
     process_content_signal = Signal(list, float, int)
 
+    # plot_row_update = Signal(int, np.ndarray)
+
     def __init__(self, content, orientation, shots):
         super().__init__()
 
@@ -34,6 +36,8 @@ class Measurementworker(QThread):
         self.process.readyReadStandardError.connect(self.handle_process_error)
         self.ref = None
         self.position = None
+
+        self.data_processor = ComputeData()
 
     @Slot(str, str, int)
     def start_measurement(self, content: str, orientation: str, shots: int) -> None:
@@ -261,7 +265,7 @@ class Measurementworker(QThread):
         elif unit in ['fs', 'femtosecond', 'femtoseconds']:
             self.last_item = blk[1] / 1000000
 
-        probe_avg, probe_med, dA_avg, dA_med = delta_a_block(block_2d_array)
+        probe_avg, probe_med, dA_avg, dA_med = self.data_processor.delta_a_block(block_2d_array)
         self.update_probe.emit(probe_avg[counter], probe_med[counter])  # Emit probe data incrementally
         print("Probe data emitted:", probe_avg[counter], probe_med[counter])  # Debugging
         dA_average = np.mean(dA_avg, axis=0)
