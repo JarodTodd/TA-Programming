@@ -436,6 +436,4 @@ if __name__ == "__main__":
     window = ShotDelayApp()
     window.show()
 
-    window.start_fake_measurement()
-
     sys.exit(app.exec())
