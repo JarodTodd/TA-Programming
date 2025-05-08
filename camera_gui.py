@@ -6,14 +6,17 @@ import sys
 from WorkerThread import *
 import numpy as np                      
 from cursor_plot import TAPlotWidget
+from PIL import Image
+from pyqtgraph.exporters import ImageExporter
+
 
 class ShotDelayApp(QWidget):
     trigger_worker_run = Signal(str, str, int)
 
-    def __init__(self):
+    def __init__(self, dls_window):
         super().__init__()
         self.setWindowTitle("Camera Interface")
-        self.DLSWindow = DLSWindow()  
+        self.DLSWindow = dls_window
         self.setup_ui()
 
     def setup_ui(self):
@@ -248,6 +251,10 @@ class DLSWindow(QMainWindow):
 
         self.probe_combobox.currentIndexChanged.connect(self.update_probe_graph)
 
+        self.save_probe_button = QPushButton("Save Probe Data")
+        self.save_probe_button.clicked.connect(lambda: self.save_probe_data())
+        left_layout.addWidget(self.save_probe_button)
+
         right_layout = QVBoxLayout()
 
         hbox = QHBoxLayout()
@@ -402,6 +409,32 @@ class DLSWindow(QMainWindow):
             med_list = [1, 2, 3, 4, 5]  # Example data for median
             self.probe_avg_graph.plot(range(len(med_list)), med_list, symbol='o', pen='b')
         pass
+
+    def save_probe_data(self):
+        try:
+            # Open a file dialog to choose the save location and filename
+            filename, _ = QFileDialog.getSaveFileName(
+                self,
+                "Save Probe Plot",
+                "",
+                "PNG Files (*.png);;JPEG Files (*.jpg);;All Files (*)"
+            )
+
+            # If the user cancels the dialog, filename will be an empty string
+            if not filename:
+                print("Save operation cancelled.")
+                return
+
+            # Create an ImageExporter for the pyqtgraph plot
+            exporter = ImageExporter(self.probe_avg_graph.plotItem)
+            exporter.parameters()['width'] = 1000  # Set the width of the exported image (optional)
+
+            # Save the plot to the selected file
+            exporter.export(filename)
+            print(f"Probe plot saved successfully to {filename}.")
+
+        except Exception as e:
+            self.show_error_message(f"Failed to save probe plot: {e}")
 
 
     def Initialize(self):

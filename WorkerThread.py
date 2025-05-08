@@ -64,7 +64,7 @@ class Measurementworker(QThread):
             
             except Exception as e:
                 self.error_occurred.emit(str(e))
-                
+
         if self._orientation == "ButtonPress":
             argument = self._content
             print(f"Running script with argument: {argument}")
@@ -83,6 +83,7 @@ class Measurementworker(QThread):
         Modify freely to match your real-world needs.
         """
         self.counter = 0
+        self.teller = 0
         self.last_item = 0
         ref = self.get_reference_value()
         self.barvalue = ref * 1000
@@ -236,7 +237,6 @@ class Measurementworker(QThread):
         delaytime = 0
         dA_inputs_avg = 0
         dA_inputs_med = 0
-        counter = 0
         unit = blk[0].lower()
         pos = blk[1]
 
@@ -283,7 +283,7 @@ class Measurementworker(QThread):
         dA_inputs_med = np.mean(dA_median)
 
         self.measurement_data_updated.emit(delaytime, dA_inputs_avg, dA_inputs_med)
-        counter += 1
+        self.teller += 1
 
         return blocks
 
