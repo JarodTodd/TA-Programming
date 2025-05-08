@@ -198,6 +198,7 @@ class ShotDelayApp(QWidget):
 
     def start_measurement(self, content, orientation, shots):
         self.worker = Measurementworker(content, orientation, shots)
+        self.worker.plot_row_update.connect(self.ta_widgets.update_row, Qt.QueuedConnection)
         self.worker.measurement_data_updated.connect(self.update_graph, Qt.QueuedConnection)
         self.worker.error_occurred.connect(self.show_error_message)  # Optional error handler
         self.worker.update_delay_bar_signal.connect(self.update_progress_bar)

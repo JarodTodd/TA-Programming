@@ -18,7 +18,6 @@ class ComputeData():
         #Stores the array of each delay delta_A
         self.delta_A_matrix_avg = []
         self.delta_A_matrix_median = []
-        
 
     def repeat_measurement(self):
         """
