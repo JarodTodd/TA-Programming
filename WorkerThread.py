@@ -20,7 +20,7 @@ class Measurementworker(QThread):
     update_probe = Signal(list, list)
     process_content_signal = Signal(list, float, int)
 
-    # plot_row_update = Signal(int, np.ndarray)
+    plot_row_update = Signal(int, np.ndarray)
 
     def __init__(self, content, orientation, shots):
         super().__init__()
@@ -266,6 +266,13 @@ class Measurementworker(QThread):
             self.last_item = blk[1] / 1000000
 
         probe_avg, probe_med, dA_avg, dA_med = self.data_processor.delta_a_block(block_2d_array)
+        try:
+            row_idx = len(dA_avg) -1
+            row_data = dA_avg[-1]
+            self.plot_row_update.emit(row_idx, row_data)
+        except Exception:
+            pass
+
         self.update_probe.emit(probe_avg[counter], probe_med[counter])  # Emit probe data incrementally
         print("Probe data emitted:", probe_avg[counter], probe_med[counter])  # Debugging
         dA_average = np.mean(dA_avg, axis=0)
