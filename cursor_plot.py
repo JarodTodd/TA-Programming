@@ -7,6 +7,9 @@ from PySide6.QtCore    import QTimer, QObject
 from PySide6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 
+from main import *
+from WorkerThread import *
+
 
 class TAPlotWidget(QObject):
 
@@ -84,6 +87,7 @@ class TAPlotWidget(QObject):
             canvas.mpl_connect("button_release_event", self.drag_stop)
 
     # update delta_A matrix and refresh plots
+    @Slot(int, np.ndarray)
     def update_row(self, row_idx: int, new_values):
         self.delta_A_matrix[row_idx, :] = new_values
 

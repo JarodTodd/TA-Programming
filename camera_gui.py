@@ -2,11 +2,9 @@ from PySide6.QtWidgets import *
 from PySide6.QtCore import *
 from PySide6.QtGui import *
 import pyqtgraph as pg
-import sys
 from WorkerThread import *
 import numpy as np                      
 from cursor_plot import TAPlotWidget
-from PIL import Image
 from pyqtgraph.exporters import ImageExporter
 
 
@@ -17,9 +15,14 @@ class ShotDelayApp(QWidget):
         super().__init__()
         self.setWindowTitle("Camera Interface")
         self.DLSWindow = dls_window
+        self.worker = Measurementworker("", "", 0)
         self.setup_ui()
+        self.worker.update_ref_signal.connect(self.update_t0, Qt.QueuedConnection)
+        self.worker.update_delay_bar_signal.connect(self.update_progress_bar, Qt.QueuedConnection)
+        
 
     def setup_ui(self):
+        self.t_0 = 0
         self.layout = QVBoxLayout()
         print("Setting up UI")
         # Main layout as a grid
@@ -84,23 +87,54 @@ class ShotDelayApp(QWidget):
         self.file_label = QLabel("No file selected", self)
         self.text_display = QTextEdit()
         self.text_display.setReadOnly(False)
-        self.progress_bar = QProgressBar()
-        self.progress_bar.setRange(0, 8672)
-        self.progress_bar.setValue(0)
-        self.progress_bar.setFormat("/8672")
+        self.progress_bar = QSlider()
+        self.progress_bar.setOrientation(Qt.Vertical)
+        self.progress_bar.setRange(0, 8672)  # max picoseconds delay
+        self.progress_bar.setTickInterval(250)
+        self.progress_bar.setSingleStep(250)
+        self.progress_bar.setTickPosition(QSlider.TicksLeft)
+        self.progress_bar.valueChanged.connect(self.update_progress_bar)
+        self.progress_label = QLabel(f"Current absolute position: {self.progress_bar.value()} ps")
+        self.relative_label = QLabel(f"Current relative position: -- ps")
+        self.t_0_label = QLabel(f"t0: {self.t_0} ps")
+        
+
+        # Create a layout to hold the slider and tick labels
+        slider_layout = QHBoxLayout()
+
+        # Create a vertical layout for the tick labels
+        tick_labels_layout = QVBoxLayout()
+
+        # Add tick labels beside the slider
+        tick_values = []
+        for i in range(0, 8672, 250):
+            tick_values.append(i)
+        for value in reversed(tick_values):  # Reverse to match the vertical slider orientation
+            label = QLabel(str(value))
+            label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+            tick_labels_layout.addWidget(label)
+
+        # Add the tick labels and slider to the layout
+        slider_layout.addLayout(tick_labels_layout)
+        slider_layout.addWidget(self.progress_bar)
+
+        # Add the slider layout to the main layout
+        leftvbox = QVBoxLayout()
+        leftvbox.addLayout(slider_layout)
+
 
         # Script execution buttons
         vbox = QVBoxLayout()
         self.runscript_button = QPushButton("Run Script")
-        self.runscript_button.clicked.connect(lambda: self.start_measurement(self.text_display.toPlainText(), "forward", int(self.shots_input.text())))
+        self.runscript_button.clicked.connect(lambda: self.trigger_worker_run.emit(self.text_display.toPlainText(), "forward", int(self.shots_input.text())))
         self.runscript_button.setEnabled(False)
 
         self.runscript_backwards_button = QPushButton("Run Script Backwards")
-        self.runscript_backwards_button.clicked.connect(lambda: self.start_measurement(self.text_display.toPlainText(), "backward", int(self.shots_input.text())))
+        self.runscript_backwards_button.clicked.connect(lambda: self.trigger_worker_run.emit(self.text_display.toPlainText(), "backward", int(self.shots_input.text())))
         self.runscript_backwards_button.setEnabled(False)
 
         self.runscript_random_button = QPushButton("Run Script Random")
-        self.runscript_random_button.clicked.connect(lambda: self.start_measurement(self.text_display.toPlainText(), "random", int(self.shots_input.text())))
+        self.runscript_random_button.clicked.connect(lambda: self.trigger_worker_run.emit(self.text_display.toPlainText(), "random", int(self.shots_input.text())))
         self.runscript_random_button.setEnabled(False)
 
         vbox.addWidget(self.runscript_button)
@@ -108,21 +142,22 @@ class ShotDelayApp(QWidget):
         vbox.addWidget(self.runscript_random_button)
 
         # Add widgets to hbox5
+        hbox.addLayout(leftvbox)
         hbox.addLayout(vbox)
         hbox.addWidget(file_upload_button)
         hbox.addWidget(self.file_label)
+        hbox.addWidget(self.text_display)
+        hbox.addWidget(self.progress_label)
+        hbox.addWidget(self.t_0_label)
+        hbox.addWidget(self.relative_label)
     
         # Add widgets to the bottom-right layout
         bottom_right_layout.addLayout(self.form_layout)
         bottom_right_layout.addWidget(self.status_label)
         bottom_right_layout.addLayout(hbox)
-        bottom_right_layout.addWidget(self.text_display)
-        bottom_right_layout.addWidget(self.progress_bar)
+        
 
-        # Add the bottom-right layout to the grid layout
-        spacer1 = QSpacerItem(400, 400)
-        spacer2 = QSpacerItem(400, 400)
-        spacer3 = QSpacerItem(400, 400)
+
         self.grid_layout.addItem(top_left_layout, 0, 0)
         self.grid_layout.addItem(top_right_layout, 0, 1)
         self.grid_layout.addItem(bottom_left_layout, 1, 0)
@@ -140,7 +175,15 @@ class ShotDelayApp(QWidget):
         """Update the local progress bar with the value from DLSWindow."""
         print("Updating progress bar with value:", value)
         self.progress_bar.setValue(value)
-        self.progress_bar.setFormat(f"{round(value)}/8672")
+        self.progress_label.setText(f"Current absolute position: {self.progress_bar.value()} ps")
+
+    def update_t0(self, t_0):
+        """Update the t_0 value."""
+        print(f"Updating t_0 in UI: {t_0}")  # Debugging
+        self.t_0 = t_0
+        self.t_0_label.setText(f"t0: {self.t_0} ps")
+        self.relative_label.setText(f"Current relative position: {self.progress_bar.value() - self.t_0} ps")
+
 
     def show_error_message(self, error_message):
         msgbox = QMessageBox()
@@ -182,13 +225,7 @@ class ShotDelayApp(QWidget):
         self.dA_inputs_med.append(dA_inputs_med)
 
         # Clear the graph and re-plot with new data
-        if self.dA_Combobox.currentText() == "Average":
-            self.dA_avg_graph.clear()
-            self.dA_avg_graph.plot(self.delaytimes, self.dA_inputs_avg, symbol='o')
-        if self.dA_Combobox.currentText() == "Median":
-            self.dA_avg_graph.clear()
-            self.dA_avg_graph.plot(self.delaytimes, self.dA_inputs_med, symbol='o')
-    
+
     def avg_med_toggle(self):
         """Toggle between average and median."""
 
@@ -211,7 +248,7 @@ class ShotDelayApp(QWidget):
 
 class DLSWindow(QMainWindow):
     progress_updated = Signal(int)
-    run_command_signal = Signal(str)
+    run_command_signal = Signal(str, str, int)
 
     
 
@@ -219,8 +256,8 @@ class DLSWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle("Delayline GUI")
 
-
-
+        self.worker = Measurementworker("", "", 0)
+        self.worker.update_delay_bar_signal.connect(self.update_delay_bar)
         # Central widget
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
@@ -260,19 +297,19 @@ class DLSWindow(QMainWindow):
         hbox = QHBoxLayout()
 
         initialize_button = QPushButton("Initialize")
-        initialize_button.clicked.connect(self.Initialize)
+        initialize_button.clicked.connect(lambda: self.run_command_signal.emit("Initialize", "ButtonPress", 0))
         hbox.addWidget(initialize_button)
 
         disable_button = QPushButton("Disable/Ready")
-        disable_button.clicked.connect(self.Disable_click)
+        disable_button.clicked.connect(lambda: self.run_command_signal.emit("Disable", "ButtonPress", 0))
         hbox.addWidget(disable_button)
 
         move_neg_button = QPushButton("Move -100ps")
-        move_neg_button.clicked.connect(self.Move_back_click)
+        move_neg_button.clicked.connect(lambda: self.run_command_signal.emit("MoveNegative", "ButtonPress", 0))
         hbox.addWidget(move_neg_button)
 
         move_pos_button = QPushButton("Move +100ps")
-        move_pos_button.clicked.connect(self.Move_click)
+        move_pos_button.clicked.connect(lambda: self.run_command_signal.emit("MovePositive", "ButtonPress", 0))
         hbox.addWidget(move_pos_button)
 
         right_layout.addLayout(hbox)
@@ -353,7 +390,7 @@ class DLSWindow(QMainWindow):
 
             if 0 <= current_bar_value + value_ps <= 8672:
                 value_ns = value_ps / 1000  # Convert to ns for script
-                self.run_command_signal.emit(f"MoveRelative {value_ns}")
+                self.start_measurement(f"MoveRelative {value_ns}", "ButtonPress", 0)
                 print(f"Emitting command: MoveRelative {value_ns}")
 
             else:
@@ -438,22 +475,22 @@ class DLSWindow(QMainWindow):
 
 
     def Initialize(self):
-        self.start_measurement("Initialize", "ButtonPress", 0)
+        self.run_command_signal.emit("Initialize", "ButtonPress", 0)
 
     def Disable_click(self):
-        self.start_measurement("Disable", "ButtonPress", 0)
+        self.run_command_signal.emit("Disable", "ButtonPress", 0)
 
     def Move_click(self):
-        self.start_measurement("MovePositive", "ButtonPress", 0)
+        self.run_command_signal.emit("MovePositive", "ButtonPress", 0)
 
     def Move_back_click(self):
-        self.start_measurement("MoveNegative", "ButtonPress", 0)
+        self.run_command_signal.emit("MoveNegative", "ButtonPress", 0)
 
     def SetReference(self):
-        self.start_measurement("SetReference", "ButtonPress", 0)
+        self.run_command_signal.emit("SetReference", "ButtonPress", 0)
 
     def GoToReference(self):
-        self.start_measurement("GoToReference", "ButtonPress", 0)
+        self.run_command_signal.emit("GoToReference", "ButtonPress", 0)
     
     def start_measurement(self, content, orientation, shots):
         self.worker = Measurementworker(content, orientation, shots)
@@ -464,10 +501,3 @@ class DLSWindow(QMainWindow):
         self.worker_thread.stop()  # Stop the worker thread
         self.worker_thread.wait()  # Ensure the thread has finished
         event.accept()  # Accept the close event
-
-if __name__ == "__main__":
-    app = QApplication([])
-    window = ShotDelayApp()
-    window.show()
-
-    sys.exit(app.exec())

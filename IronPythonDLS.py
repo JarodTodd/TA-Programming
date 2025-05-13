@@ -1,7 +1,6 @@
 import sys
 import time
 import clr
-
 # Add the path to the Newport DLS Command Interface DLL
 sys.path.append(
     r"C:\Windows\Microsoft.NET\assembly\GAC_64\Newport.DLS.CommandInterface\v4.0_1.0.1.0__90ac4f829985d2bf"
@@ -13,7 +12,6 @@ from CommandInterfaceDLS import *
 # Constants
 c = 299792458  # Speed of light in m/s
 instrument = "COM6"  # Change this to the port the DLS is connected to
-
 # Initialize the DLS
 myDLS = DLS()
 result = myDLS.OpenInstrument(instrument)
@@ -87,6 +85,13 @@ def GetPosition():
     print(f"Current position: {position} ps")
     return position
 
+def StartGUI(): 
+    print("JAJAJEJFAISJEFIJEAF")
+    position = myDLS.PA_Get()[1] * 1000000 * 8 / c
+    reference = myDLS.RF_Get()[1] * 1000000 * 8 / c
+    print(f"Starting GUI with position: {position} ps and reference: {reference} ps")
+    return position, reference
+
 def Error(errorCode):
     error_messages = {
         "00001": "Bit end of run negative: Move carriage away from end/check cables",
@@ -109,6 +114,7 @@ if __name__ == "__main__":
                 StartUp()
             elif command == "MovePositive":
                 MoveRelative(0.1)  # Adjust value if needed
+                print("Moved to positive position.")
             elif command == "MoveNegative":
                 MoveRelative(-0.1)
             elif command == "Disable":
@@ -124,6 +130,9 @@ if __name__ == "__main__":
                 GetPosition()
             elif command == "GetReference":
                 GetReference()
+            elif command == "StartGUI":
+                StartGUI()
+                print("GUI started.")
             else:
                 sys.stderr.write(f"Unknown command: {command}\n")
         except Exception as e:

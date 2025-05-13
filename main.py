@@ -105,7 +105,9 @@ class ComputeData():
 # Run main()
 if __name__ == "__main__":
     data_processor = ComputeData()
+    print("aKESJf")
     data_processor.repeat_measurement()
+    print("aa")
     data_processor.delta_a_block(data_processor.blocks[0])
     data_processor.delta_a_block(data_processor.blocks[1])
 

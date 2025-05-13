@@ -16,28 +16,27 @@ script_path = r"C:\Users\PC026453\Documents\TA-Programming\IronPythonDLS.py"
 class Measurementworker(QThread):
     measurement_data_updated = Signal(float, float, float)
     update_delay_bar_signal = Signal(float)
+    update_ref_signal = Signal(float)
     error_occurred = Signal(str)
     update_probe = Signal(list, list)
     process_content_signal = Signal(list, float, int)
+    task_done_signal = Signal()
+    start_process_signal = Signal(str)
+    orientation_signal = Signal(str)
 
     plot_row_update = Signal(int, np.ndarray)
 
     def __init__(self, content, orientation, shots):
         super().__init__()
-
+        self._is_running = True
+        self.process = None
         self._content = content
         self._orientation: str = orientation
         self._shots: int = shots
-        self.process = QProcess()
-        self.process.moveToThread(self)
-        self.process.setProgram(ironpython_executable)
-        self.process.setArguments([script_path, "GetReference"])
-        self.process.readyReadStandardOutput.connect(self.handle_process_output)
-        self.process.readyReadStandardError.connect(self.handle_process_error)
         self.ref = None
         self.position = None
-
         self.data_processor = ComputeData()
+        
 
     @Slot(str, str, int)
     def start_measurement(self, content: str, orientation: str, shots: int) -> None:
@@ -50,17 +49,18 @@ class Measurementworker(QThread):
         self._shots = shots
         self.start()
 
-    def run(self):
-        if self._orientation != "":
-            try:
-                parsed = self.parse_script_content(self._content, self._orientation)
-                if not parsed:
-                    self.error_occurred.emit("No valid script content parsed.")
-                    return
-                
-                self.process.start()
+    def update_command(self, content, orientation, shots):
+        self._orientation = orientation
+        self._content = content
+        self._shots = shots
 
-                self._run_measurement_loop(parsed, self._shots)  # Call the measurement loop
+    @Slot(str)
+    def run(self):
+
+        if self._orientation == "forward" or self._orientation == "backward" or self._orientation == "random":
+            try:
+                print(f"Running script with content: {self._content}")
+                self._run_measurement_loop(self._content, self._shots)  # Call the measurement loop
             
             except Exception as e:
                 self.error_occurred.emit(str(e))
@@ -69,27 +69,31 @@ class Measurementworker(QThread):
             argument = self._content
             print(f"Running script with argument: {argument}")
             try:
-                if self.process.state() == QProcess.Running:
-                    self.process.waitForFinished()  # Wait for the current process to finish
-
-                self.process.start(ironpython_executable, [script_path, argument])
-                print(f"Command: {ironpython_executable} {script_path} {argument}")
+                self.start_process_signal.emit(argument)
             except Exception as e:
                 self.error_occurred.emit(str(e))
 
+        if self._orientation == "StartUp":
+            try:
+                self.start_process_signal.emit("StartGUI")
+                ref, pos = self.start_gui()
+                print(f"Position: {pos}, Reference: {ref}")
+                self.task_done_signal.emit()
+
+            except Exception as e:
+                self.error_occurred.emit(str(e))
+        
     def _run_measurement_loop(self, content: list[dict], shots: int) -> None:
         """
         Example loop that calls your existing RunMeasurement() and streams data.
         Modify freely to match your real-world needs.
         """
+        print("Starting measurement loop...")
         self.counter = 0
         self.teller = 0
         self.last_item = 0
-        ref = self.get_reference_value()
-        self.barvalue = ref * 1000
-        position = self.get_position_value()
-
-
+        ref, position = self.start_gui()
+        print(f"Position: {position}, Reference: {ref}")
         if not self.validate_reference_and_position(ref, position, content):
             return
 
@@ -143,6 +147,13 @@ class Measurementworker(QThread):
                     self.position = float(stdout_line.split(":")[1].strip().split()[0])
                     print(f"Moved to relative position: {self.position}")
 
+                elif "Starting GUI with position" in stdout_line:
+                    parts = stdout_line.split(":")
+                    if len(parts) >= 3:
+                        self.position = float(parts[1].strip().split()[0])
+                        self.ref = float(parts[2].strip().split()[0])
+
+
                 else:
                     print("Output does not match expected format.")
 
@@ -193,21 +204,34 @@ class Measurementworker(QThread):
             parsed_content.reverse()
         elif orientation == 'random':
             random.shuffle(parsed_content)
+
+        #Signal
         return parsed_content
     
     def stop(self):
-        self._is_running = False  # Safely stop the loop
+        print("Stopping the worker thread...")
+        self._is_running = False
+        if self.process and self.process.state() == QProcess.Running:
+            print("Terminating process...")
+            self.process.terminate()
+            self.process.waitForFinished()
+        self.process = None
         self.quit()
-        self.wait()
+        if not self.wait(5000):
+            self.terminate()
+            self.wait()
+        
+        print("Worker thread stopped.")
+
 
     def get_reference_value(self):
-        self.run_script("GetReference")
+        self.start_process_signal.emit("GetReference")
         while self.ref is None:
             QCoreApplication.processEvents()  # Allow the event loop to process signals
         return self.ref
 
     def get_position_value(self):
-        self.run_script("GetPosition")
+        self.start_process_signal.emit("GetPosition")
         while self.position is None:
             QCoreApplication.processEvents()  # Allow the event loop to process signals
         return self.position
@@ -225,10 +249,20 @@ class Measurementworker(QThread):
         return True
     
     def move_to_reference(self, ref):
-        self.run_script("GoToReference")
+        self.start_process_signal.emit("GoToReference")
         while abs(self.position - ref) > 0.01:
             QCoreApplication.processEvents()  # Wait for the position to update
         self.update_delay_bar_signal.emit(ref * 1000)
+
+    def start_gui(self):
+
+        self.start_process_signal.emit("StartGUI")
+        while self.position is None:
+            QCoreApplication.processEvents()
+        print("Emitting position and reference")
+        self.update_delay_bar_signal.emit(self.position * 1000)
+        self.update_ref_signal.emit(self.ref * 1000)
+        return self.ref, self.position
 
 
     @Slot(list, float, int)
@@ -248,13 +282,15 @@ class Measurementworker(QThread):
         pos -= self.last_item
         self.barvalue += pos * 1000
         print(self.barvalue, pos, self.last_item)
-        self.run_script(f"MoveRelative {pos}")
+        self.start_process_signal.emit(f"MoveRelative {pos}")
         
 
         # Simulate measurement
-        time.sleep(4)
+
         self.update_delay_bar_signal.emit(self.barvalue)
+        print("a")
         block_buffer = camera(number_of_shots, self.counter)
+        print("b")
         block_2d_array = np.array(block_buffer).reshape(number_of_shots, 1088)
         blocks.append(block_2d_array)
 
@@ -271,10 +307,10 @@ class Measurementworker(QThread):
             row_data = dA_avg[-1]
             self.plot_row_update.emit(row_idx, row_data)
         except Exception:
-            pass
+            print("Error in row data processing")
 
-        self.update_probe.emit(probe_avg[counter], probe_med[counter])  # Emit probe data incrementally
-        print("Probe data emitted:", probe_avg[counter], probe_med[counter])  # Debugging
+        self.update_probe.emit(probe_avg[self.teller], probe_med[self.teller])  # Emit probe data incrementally
+        print("Probe data emitted:", probe_avg[self.teller], probe_med[self.teller])  # Debugging
         dA_average = np.mean(dA_avg, axis=0)
         dA_median = np.median(dA_med, axis=0)
 
