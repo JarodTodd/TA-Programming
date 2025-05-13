@@ -370,7 +370,7 @@ class DLSWindow(QMainWindow):
 
     def start_probe_thread(self, shots = 10):
         self.probe_worker = ProbeThread(shots)
-        self.probe_worker.update_probe.connect(self.update_probe_graph, Qt.QueuedConnection)
+        self.probe_worker.probe_update.connect(self.update_probe_graph, Qt.QueuedConnection)
         self.probe_worker.start()
 
     def stop_probe_thread(self):
