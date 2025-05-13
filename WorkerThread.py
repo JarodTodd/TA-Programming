@@ -24,7 +24,8 @@ class Measurementworker(QThread):
     start_process_signal = Signal(str)
     orientation_signal = Signal(str)
 
-    plot_row_update = Signal(int, np.ndarray)
+    parsed_content_signal = Signal(list)
+    plot_row_update = Signal(int, np.ndarray, np.ndarray)
 
     def __init__(self, content, orientation, shots):
         super().__init__()
@@ -216,6 +217,19 @@ class Measurementworker(QThread):
         elif orientation == 'random':
             random.shuffle(parsed_content)
 
+        delay_values = []
+        for item in parsed_content:
+            value = item[1]
+            unit = item[0].lower()
+            if unit in ['ns', 'nanosecond', 'nanoseconds']:            
+                value = value * 1000                             
+            elif unit in ['ps', 'picosecond', 'picoseconds']:           
+                value = value                                     
+            else:                                                       
+                value = value / 1000 
+            delay_values.append(value)
+        self.parsed_content_signal.emit(delay_values)
+
         #Signal
         return parsed_content
     
@@ -309,12 +323,19 @@ class Measurementworker(QThread):
             self.last_item = blk[1] / 1000000
 
         probe_avg, probe_med, dA_avg, dA_med = self.data_processor.delta_a_block(block_2d_array)
-        try:
-            row_idx = len(dA_avg) -1
-            row_data = dA_avg[-1]
-            self.plot_row_update.emit(row_idx, row_data)
-        except Exception:
-            print("Error in row data processing")
+        
+        # compute the delay in picoseconds that belongs to this block
+        if unit in ['ns', 'nanosecond', 'nanoseconds']:            
+            delaytime = blk[1] * 1000                             
+        elif unit in ['ps', 'picosecond', 'picoseconds']:           
+            delaytime = blk[1]                                     
+        else:                                                       
+            delaytime = blk[1] / 1000 
+
+        # last‑shot ΔA row
+        row_data_avg = dA_avg[-1]
+        row_data_med = dA_med[-1]
+        self.plot_row_update.emit(delaytime, row_data_avg, row_data_med)  
 
         self.update_probe.emit(probe_avg[self.teller], probe_med[self.teller])  # Emit probe data incrementally
         print("Probe data emitted:", probe_avg[self.teller], probe_med[self.teller])  # Debugging
