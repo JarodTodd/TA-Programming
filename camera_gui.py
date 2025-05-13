@@ -157,12 +157,14 @@ class ShotDelayApp(QWidget):
         bottom_right_layout.addWidget(self.status_label)
         bottom_right_layout.addLayout(hbox)
         
-
+        bottom_right_widget = QWidget()
+        bottom_right_widget.setLayout(bottom_right_layout)
+        bottom_right_widget.setMaximumSize(400, 400)
 
         self.grid_layout.addItem(top_left_layout, 0, 0)
         self.grid_layout.addItem(top_right_layout, 0, 1)
         self.grid_layout.addItem(bottom_left_layout, 1, 0)
-        self.grid_layout.addLayout(bottom_right_layout, 1, 1)  # Bottom-right
+        self.grid_layout.addWidget(bottom_right_widget, 1, 1)  # Bottom-right
 
         # Set the grid layout as the main layout
         self.setLayout(self.grid_layout)
@@ -238,6 +240,7 @@ class ShotDelayApp(QWidget):
             self.dA_avg_graph.plot(self.delaytimes, self.dA_inputs_med, symbol='o')
 
     def start_measurement(self, content, orientation, shots):
+        self.DLSWindow.stop_probe_thread()
         self.worker = Measurementworker(content, orientation, shots)
         self.worker.parsed_content_signal.connect(self.ta_widgets.update_delay_stages, Qt.BlockingQueuedConnection)
         self.worker.plot_row_update.connect(self.ta_widgets.update_row, Qt.QueuedConnection)
@@ -246,6 +249,7 @@ class ShotDelayApp(QWidget):
         self.worker.update_delay_bar_signal.connect(self.update_progress_bar)
         self.worker.update_delay_bar_signal.connect(self.DLSWindow.update_delay_bar)
         self.worker.update_probe.connect(self.DLSWindow.update_probe_graph, Qt.QueuedConnection)
+        self.worker.finished.connect(self.DLSWindow.start_probe_thread)
         self.worker.start()
 
 class DLSWindow(QMainWindow):
@@ -276,7 +280,7 @@ class DLSWindow(QMainWindow):
         self.probe_inputs_avg = []
         self.probe_inputs_med = []
 
-        
+        self.start_probe_thread()
 
 
         self.probe_combobox = QComboBox()
@@ -364,6 +368,14 @@ class DLSWindow(QMainWindow):
         central_layout.addLayout(right_layout)
         central_widget.setLayout(central_layout)
 
+    def start_probe_thread(self, shots = 10):
+        self.probe_worker = ProbeThread(shots)
+        self.probe_worker.update_probe.connect(self.update_probe_graph, Qt.QueuedConnection)
+        self.probe_worker.start()
+
+    def stop_probe_thread(self):
+        self.probe_worker.stop()
+        self.probe_worker.wait()
 
     def LabelChange(self):
         selected = self.delay_unit.currentText()

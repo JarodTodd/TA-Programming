@@ -11,7 +11,28 @@ import time
 ironpython_executable = r"C:\Users\PC026453\Documents\TA-Programming\IronPython 3.4\ipy.exe"
 script_path = r"C:\Users\PC026453\Documents\TA-Programming\IronPythonDLS.py"
 
+class ProbeThread(QThread):
+    def __init__(self, shots = 100):
+        self.shots = shots
+        self.running = True
+        self.data_proccessor = ComputeData()
 
+        self.probe_update = Signal(np.ndarray, np.ndarray)
+    
+    def run(self):
+        while self.running:
+            
+            block_buffer = camera(self.shots, 0)
+            block_2d_array = np.array(block_buffer).reshape(self.shots, 1088)
+
+            probe_avg, probe_med, _, _ = data_processor.delta_a_block(block_2d_array)
+
+            self.probe_update.emit(probe_avg[-1], probe_med[-1])
+    
+    def stop(self):
+        self.running = False
+        self.quit()
+            
 
 class Measurementworker(QThread):
     measurement_data_updated = Signal(float, float, float)
