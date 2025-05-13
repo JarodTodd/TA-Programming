@@ -71,7 +71,17 @@ class ComputeData():
 
         n_pairs = min(len(pump_off), len(pump_on))
         if n_pairs == 0:
-            raise ValueError("No pump_off/pump_on pairs found.")
+            print("No pump-on/pump-off pairs found in this block.")
+            pump_off_avg = np.mean(pump_off, axis=0)
+            pump_off_median = np.median(pump_off, axis=0)
+
+            self.probe_spectrum_avg.append(pump_off_avg)
+            self.probe_spectrum_median.append(pump_off_median)
+            zeros = np.zeros(end_pixel - start_pixel, dtype=float)
+            self.delta_A_matrix_avg.append(zeros)
+            self.delta_A_matrix_median.append(zeros)
+
+            return self.probe_spectrum_avg, self.probe_spectrum_median, self.delta_A_matrix_avg, self.delta_A_matrix_median
 
         #Pair shots and compute delta A
         with np.errstate(divide='ignore', invalid='ignore'):
