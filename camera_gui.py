@@ -36,7 +36,7 @@ class ShotDelayApp(QWidget):
 
         # TAPlotWidget 
         delay_times   = np.array([-0.2, 0.0, 0.2, 0.5, 1.0])
-        pixel_indexes = np.arange(10)
+        pixel_indexes = np.arange(1074)
         self.ta_widgets = TAPlotWidget(delay_times, pixel_indexes)
         top_left_layout.addWidget(self.ta_widgets.canvas_heatmap)
         top_right_layout.addWidget(self.ta_widgets.canvas_plot1)
@@ -59,6 +59,7 @@ class ShotDelayApp(QWidget):
         self.dA_Combobox.setCurrentText("Average")
         self.dA_Combobox.currentIndexChanged.connect(self.avg_med_toggle)
         top_left_layout.addWidget(self.dA_Combobox)
+        self.dA_Combobox.currentTextChanged.connect(lambda txt: self.ta_widgets.set_mode("avg" if txt == "Average" else "med"))
         # if self.dA_Combobox.currentText() == "Average":
         #     self.dA_avg_graph.plot(self.delaytimes, self.dA_inputs_avg, symbol='o', pen=None)
         # elif self.dA_Combobox.currentText() == "Median":
@@ -238,6 +239,7 @@ class ShotDelayApp(QWidget):
 
     def start_measurement(self, content, orientation, shots):
         self.worker = Measurementworker(content, orientation, shots)
+        self.worker.parsed_content_signal.connect(self.ta_widgets.update_delay_stages, Qt.BlockingQueuedConnection)
         self.worker.plot_row_update.connect(self.ta_widgets.update_row, Qt.QueuedConnection)
         self.worker.measurement_data_updated.connect(self.update_graph, Qt.QueuedConnection)
         self.worker.error_occurred.connect(self.show_error_message)  # Optional error handler
