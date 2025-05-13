@@ -79,11 +79,16 @@ class Measurementworker(QThread):
     @Slot(str)
     def run(self):
 
-        if self._orientation == "forward" or self._orientation == "backward" or self._orientation == "random":
+        if self._orientation in ("forward", "backward", "random"):
             try:
-                print(f"Running script with content: {self._content}")
-                self._run_measurement_loop(self._content, self._shots)  # Call the measurement loop
-            
+                # always parse the raw text first
+                parsed = self.parse_script_content(
+                    self._content if isinstance(self._content, str)
+                    else ",".join(self._content),
+                    self._orientation,
+                )
+                print(f"Running script with parsed content: {parsed}")
+                self._run_measurement_loop(parsed, self._shots)
             except Exception as e:
                 self.error_occurred.emit(str(e))
 
@@ -114,25 +119,26 @@ class Measurementworker(QThread):
         self.counter = 0
         self.teller = 0
         self.last_item = 0
+        self.barvalue = 0
         ref, position = self.start_gui()
-        print(f"Position: {position}, Reference: {ref}")
         if not self.validate_reference_and_position(ref, position, content):
             return
 
         if round(ref, 3) != round(position, 3):
             self.move_to_reference(ref)
-
+        self.barvalue = ref * 1000
+        self.update_delay_bar_signal.emit(ref * 1000)
         for item in content:
             print(item)
             if self.isInterruptionRequested():  # allow user to abort
                 break
+            
 
             result = self.process_content(item, ref, shots)
             self.counter += 1  # hardware I/O – heavy stuff
             
 
         # Clean-up
-        self.process.close()
 
 
     @Slot(str)
@@ -140,17 +146,22 @@ class Measurementworker(QThread):
         print(f"Running script with argument: {argument}")
         try:
             if self.process.state() == QProcess.Running:
-                self.process.waitForFinished()  # Wait for the current process to finish
+                print("Waiting for the current process to finish...")
+                self.process.waitForFinished()
 
             self.process.start(ironpython_executable, [script_path, argument])
-            print(f"Command: {ironpython_executable} {script_path} {argument}")
+            print(f"Command started: {ironpython_executable} {script_path} {argument}")
         except Exception as e:
+            print(f"Error starting process: {e}")
             self.error_occurred.emit(str(e))
+
+        self.process.finished.connect(lambda: print("Process finished."))
+        self.process.readyReadStandardOutput.connect(self.handle_process_output)
+        self.process.readyReadStandardError.connect(self.handle_process_error)
 
     def handle_process_output(self):
         stdout_line = self.process.readAllStandardOutput().data().decode('utf-8').strip()
         if stdout_line:
-
 
             try:
                 if "Reference position" in stdout_line:
@@ -290,13 +301,12 @@ class Measurementworker(QThread):
         self.update_delay_bar_signal.emit(ref * 1000)
 
     def start_gui(self):
-
         self.start_process_signal.emit("StartGUI")
-        while self.position is None:
+        while self.ref is None or self.position is None:
             QCoreApplication.processEvents()
-        print("Emitting position and reference")
-        self.update_delay_bar_signal.emit(self.position * 1000)
-        self.update_ref_signal.emit(self.ref * 1000)
+        print("Signal emitted. Current position:", self.position, "Current reference:", self.ref)
+        self.update_delay_bar_signal.emit(self.position * 1000 if self.position else 0)
+        self.update_ref_signal.emit(self.ref * 1000 if self.ref else 0)
         return self.ref, self.position
 
 
@@ -308,24 +318,21 @@ class Measurementworker(QThread):
         dA_inputs_med = 0
         unit = blk[0].lower()
         pos = blk[1]
-
         if unit in ['ps', 'picosecond', 'picoseconds']:
             pos /= 1000
         elif unit in ['fs', 'femtosecond', 'femtoseconds']:
             pos /= 1000000
-
         pos -= self.last_item
+        
         self.barvalue += pos * 1000
-        print(self.barvalue, pos, self.last_item)
         self.start_process_signal.emit(f"MoveRelative {pos}")
+
         
 
         # Simulate measurement
-
+        QThread.sleep(4)
         self.update_delay_bar_signal.emit(self.barvalue)
-        print("a")
         block_buffer = camera(number_of_shots, self.counter)
-        print("b")
         block_2d_array = np.array(block_buffer).reshape(number_of_shots, 1088)
         blocks.append(block_2d_array)
 
