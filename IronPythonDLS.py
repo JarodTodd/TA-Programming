@@ -86,7 +86,6 @@ def GetPosition():
     return position
 
 def StartGUI(): 
-    print("JAJAJEJFAISJEFIJEAF")
     position = myDLS.PA_Get()[1] * 1000000 * 8 / c
     reference = myDLS.RF_Get()[1] * 1000000 * 8 / c
     print(f"Starting GUI with position: {position} ps and reference: {reference} ps")
@@ -132,7 +131,6 @@ if __name__ == "__main__":
                 GetReference()
             elif command == "StartGUI":
                 StartGUI()
-                print("GUI started.")
             else:
                 sys.stderr.write(f"Unknown command: {command}\n")
         except Exception as e:

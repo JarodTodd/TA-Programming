@@ -45,7 +45,7 @@ if __name__ == "__main__":
 
         worker.process.setProgram(ironpython_executable)
         if isinstance(argument, list):  # Handle list arguments
-            worker.run()
+            worker.start()
         elif isinstance(argument, str):  # Handle string arguments
             worker.process.setArguments([script_path, argument])
             worker.process.start()
@@ -55,14 +55,15 @@ if __name__ == "__main__":
             except RuntimeError:
                 print("Signals already disconnected.")
                 
-            worker.process.readyReadStandardOutput.connect(lambda: print(worker.process.readAllStandardOutput().data().decode('utf-8').strip()))
-            worker.process.readyReadStandardError.connect(lambda: print(worker.process.readAllStandardError().data().decode('utf-8').strip()))
+            worker.process.readyReadStandardOutput.connect(worker.handle_process_output)
+            worker.process.readyReadStandardError.connect(worker.handle_process_error)
             worker.process.finished.connect(lambda: print("Process finished."))
 
     worker.start_process_signal.connect(start_process)
 
     def handle_button_press(content, orientation, shots):
         parsed_content = [item.strip() for item in content.split(",") if item.strip()]
+        print(parsed_content)
 
         if len(parsed_content) == 1:
             parsed_content = parsed_content[0]
@@ -73,16 +74,8 @@ if __name__ == "__main__":
     main_app.dls_window.run_command_signal.connect(handle_button_press)
     main_app.shot_delay_app.trigger_worker_run.connect(handle_button_press)
 
-    cleanup_done = False
-    import traceback
 
     def stop_worker():
-        global cleanup_done
-        traceback.print_stack()
-        if cleanup_done:
-            print("Cleanup already done. Skipping redundant call to stop_worker.")
-            return
-
         if worker.process:
             try:
                 worker.process.readyReadStandardOutput.disconnect()
@@ -100,9 +93,6 @@ if __name__ == "__main__":
         print("Application exit cleanup complete.")
         app.aboutToQuit.disconnect(stop_worker)
         app.quit()
-
-        # Mark cleanup as done
-        cleanup_done = True
 
     worker.start()
     app.aboutToQuit.connect(stop_worker)
