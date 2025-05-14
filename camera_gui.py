@@ -6,6 +6,8 @@ from WorkerThread import *
 import numpy as np                      
 from cursor_plot import TAPlotWidget
 from pyqtgraph.exporters import ImageExporter
+from matplotlib.backends.backend_qtagg import NavigationToolbar2QT
+from PySide6 import QtCore
 
 
 class ShotDelayApp(QWidget):
@@ -38,6 +40,22 @@ class ShotDelayApp(QWidget):
         delay_times   = np.array([-0.2, 0.0, 0.2, 0.5, 1.0])
         pixel_indexes = np.arange(1074)
         self.ta_widgets = TAPlotWidget(delay_times, pixel_indexes)
+
+        # Navigation toolbars for the plots
+        self.toolbar_heatmap = NavigationToolbar2QT(self.ta_widgets.canvas_heatmap, self)
+        self.shrink_toolbar(self.toolbar_heatmap)
+        self.romove_toolbar_icons(self.toolbar_heatmap)
+        self.toolbar_plt1 = NavigationToolbar2QT(self.ta_widgets.canvas_plot1,   self)
+        self.shrink_toolbar(self.toolbar_plt1)
+        self.romove_toolbar_icons(self.toolbar_plt1)
+        self.toolbar_plt2 = NavigationToolbar2QT(self.ta_widgets.canvas_plot2,   self)
+        self.shrink_toolbar(self.toolbar_plt2)
+        self.romove_toolbar_icons(self.toolbar_plt2)
+        top_left_layout.addWidget(self.toolbar_heatmap)      
+        top_right_layout.addWidget(self.toolbar_plt1)    
+        bottom_left_layout.addWidget(self.toolbar_plt2)   
+
+        # Add plots to the layout
         top_left_layout.addWidget(self.ta_widgets.canvas_heatmap)
         top_right_layout.addWidget(self.ta_widgets.canvas_plot1)
         bottom_left_layout.addWidget(self.ta_widgets.canvas_plot2)
@@ -173,6 +191,14 @@ class ShotDelayApp(QWidget):
         self.shots_input.textChanged.connect(self.validate_inputs)
         self.text_display.textChanged.connect(self.validate_inputs)
 
+    def shrink_toolbar(self, toolbar, height=15):
+        toolbar.setIconSize(QtCore.QSize(height, height))  
+        toolbar.setFixedHeight(height + 6) 
+
+    def romove_toolbar_icons(self, toolbar):
+        for action in toolbar.actions():
+            if action.text() in {"Customize"}:
+                toolbar.removeAction(action)
 
     def update_progress_bar(self, value):
         """Update the local progress bar with the value from DLSWindow."""
