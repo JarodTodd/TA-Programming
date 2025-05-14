@@ -31,13 +31,20 @@ if __name__ == "__main__":
     main_app = MainApp()
     main_app.show()
     worker = Measurementworker("", "StartUp", 0)
+    probe = ProbeThread()
     output_signal = Signal(str)
 
-
+    
+    worker.error_occurred.connect(main_app.dls_window.show_error_message)  # Optional error handler
+    worker.update_delay_bar_signal.connect(main_app.shot_delay_app.update_progress_bar)
+    worker.update_delay_bar_signal.connect(main_app.dls_window.update_delay_bar)
+    
+    
     def start_process(argument):
         if worker.process is None:
             worker.process = QProcess()
 
+        
         if worker.process.state() == QProcess.Running:
             print("Terminating existing process...")
             worker.process.terminate()
@@ -52,7 +59,7 @@ if __name__ == "__main__":
 
             try:
                 worker.process.finished.disconnect()
-            except RuntimeError:
+            except Exception:
                 print("Signals already disconnected.")
                 
             worker.process.readyReadStandardOutput.connect(worker.handle_process_output)
@@ -75,6 +82,7 @@ if __name__ == "__main__":
     main_app.shot_delay_app.trigger_worker_run.connect(handle_button_press)
 
 
+
     def stop_worker():
         if worker.process:
             try:
@@ -89,6 +97,7 @@ if __name__ == "__main__":
                 worker.process.waitForFinished()
 
         worker.stop()
+        probe.stop()
         QCoreApplication.processEvents()
         print("Application exit cleanup complete.")
         app.aboutToQuit.disconnect(stop_worker)

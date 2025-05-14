@@ -272,7 +272,7 @@ class DLSWindow(QMainWindow):
         left_layout = QVBoxLayout()
         self.probe_avg_graph = pg.PlotWidget()
         left_layout.addWidget(self.probe_avg_graph)
-        self.probe_avg_graph.setTitle("Probe Spectrum")
+        self.probe_avg_graph.setTitle("Intensity (counts)")
         self.probe_avg_graph.setLabel('left', 'Probe')
         self.probe_avg_graph.setLabel('bottom', 'Wavelength (nm)')
         self.probe_avg_graph.setBackground('w')
@@ -454,7 +454,6 @@ class DLSWindow(QMainWindow):
         self.probe_inputs_avg = avg_list
         self.probe_inputs_med = med_list
         if self.probe_combobox.currentText() == "Average":
-            print("Plotting average data")  # Debugging
             self.probe_avg_graph.plot(range(len(avg_list)), avg_list, symbol='o', pen='r')
         elif self.probe_combobox.currentText() == "Median":
             med_list = [1, 2, 3, 4, 5]  # Example data for median
@@ -468,7 +467,7 @@ class DLSWindow(QMainWindow):
                 self,
                 "Save Probe Plot",
                 "",
-                "PNG Files (*.png);;JPEG Files (*.jpg);;All Files (*)"
+                "CSV files (*.csv);;All Files (*)"
             )
 
             # If the user cancels the dialog, filename will be an empty string
@@ -477,8 +476,7 @@ class DLSWindow(QMainWindow):
                 return
 
             # Create an ImageExporter for the pyqtgraph plot
-            exporter = ImageExporter(self.probe_avg_graph.plotItem)
-            exporter.parameters()['width'] = 1000  # Set the width of the exported image (optional)
+            exporter = csv.exporter.CSVExporter(self.probe_inputs_avg)
 
             # Save the plot to the selected file
             exporter.export(filename)
