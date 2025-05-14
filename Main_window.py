@@ -34,10 +34,20 @@ if __name__ == "__main__":
     probe = ProbeThread()
     output_signal = Signal(str)
 
+
+    worker.started.connect(main_app.dls_window.stop_probe_thread, Qt.QueuedConnection)
+    worker.parsed_content_signal.connect(main_app.shot_delay_app.ta_widgets.update_delay_stages, Qt.BlockingQueuedConnection)
+    worker.plot_row_update.connect(main_app.shot_delay_app.ta_widgets.update_row, Qt.QueuedConnection)
+    worker.measurement_data_updated.connect(main_app.shot_delay_app.update_graph, Qt.QueuedConnection)
+    worker.update_probe.connect(main_app.dls_window.update_probe_graph, Qt.QueuedConnection)
+
+    worker.error_occurred.connect(main_app.shot_delay_app.show_error_message)
     
     worker.error_occurred.connect(main_app.dls_window.show_error_message)  # Optional error handler
     worker.update_delay_bar_signal.connect(main_app.shot_delay_app.update_progress_bar)
     worker.update_delay_bar_signal.connect(main_app.dls_window.update_delay_bar)
+
+    worker.finished.connect(main_app.dls_window.start_probe_thread, Qt.QueuedConnection)
     
     
     def start_process(argument):
