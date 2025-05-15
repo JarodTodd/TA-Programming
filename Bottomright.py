@@ -5,7 +5,7 @@ from PySide6.QtWidgets import *
 
 
 class Ui_Bottom_right(QObject):
-    trigger_worker_run = Signal(str, str, int)
+    trigger_worker_run = Signal(str, str, int, int)
 
     def __init__(self):
         super().__init__()
@@ -44,18 +44,16 @@ class Ui_Bottom_right(QObject):
         # First grid (labels and inputs)
         self.start_from_box = QDoubleSpinBox()
         self.finish_time_box = QDoubleSpinBox()
-        self.integration_time_box = QDoubleSpinBox()
+        self.integration_time_box = QSpinBox()
         self.nos_box = QSpinBox()
         self.stepping_order_box = QComboBox()
         self.total_steps = QLineEdit()
 
-        self.integration_time_box.setValue(1)
-        self.nos_box.setValue(1)
 
         grid1 = QGridLayout()
         self._add_label_input(grid1, "Start from, ps", self.start_from_box, 0)
         self._add_label_input(grid1, "Finish time, ps", self.finish_time_box, 1)
-        self._add_label_input(grid1, "Average, s", self.integration_time_box, 2)
+        self._add_label_input(grid1, "Number of shots, #", self.integration_time_box, 2)
         self._add_label_input(grid1, "Number of scans", self.nos_box, 3)
         self._add_label_input(grid1, "Stepping order", self.stepping_order_box, 4)
         self._add_label_input(grid1, "Total # of steps", self.total_steps, 5)
@@ -76,7 +74,7 @@ class Ui_Bottom_right(QObject):
         self.start_button = QPushButton()
         self.start_button.setText("Start Measurement")
         self.start_button.setEnabled(False)
-        self.start_button.clicked.connect(lambda: self.trigger_worker_run.emit(self.text_display.toPlainText(), self.stepping_order_box.currentText(), int(self.integration_time_box.value())))
+        self.start_button.clicked.connect(lambda: self.trigger_worker_run.emit(self.content, self.stepping_order_box.currentText(), self.integration_time_box.value(), self.nos_box.value()))
         left_panel.addWidget(self.start_button)
 
         self.start_from_box.valueChanged.connect(self.validate_inputs)
@@ -84,6 +82,10 @@ class Ui_Bottom_right(QObject):
         self.nos_box.valueChanged.connect(self.validate_inputs)
         self.integration_time_box.valueChanged.connect(self.validate_inputs)
         self.stepping_order_box.currentIndexChanged.connect(self.validate_inputs)
+
+        self.nos_box.valueChanged.connect(lambda: self.total_steps.setText(f"{self.nos_box.value()*len(self.content)}"))
+        self.start_from_box.valueChanged.connect(lambda: self.update_start_from_content(self.start_from_box.value()))
+        self.finish_time_box.valueChanged.connect(lambda: self.update_finish_time_content(self.finish_time_box.value()))
 
     def _add_label_input(self, layout, label_text, widget, row):
         label = QLabel(label_text)
@@ -95,8 +97,9 @@ class Ui_Bottom_right(QObject):
             widget.setRange(-8672.66, 8672.66)
 
         elif isinstance(widget, QSpinBox):
-            widget.setRange(0, 1000000)
+            widget.setMinimum(1)
             widget.setSingleStep(1)
+            widget.setValue(1)
 
         elif isinstance(widget, QLineEdit):
             widget.setReadOnly(True)
@@ -112,7 +115,8 @@ class Ui_Bottom_right(QObject):
             if (
                 int(self.integration_time_box.value()) > 0
                 and int(self.nos_box.value()) > 0
-                and float(self.start_from_box.value()) != 0
+                and float(self.start_from_box.value()) != 0 
+                or float(self.finish_time_box.value()) != 0
             ):
                 self.start_button.setEnabled(True)
             else:
@@ -122,6 +126,7 @@ class Ui_Bottom_right(QObject):
             print("NONONO")
 
     def showFileDialog(self):
+        self.content = []
         fileName, _ = QFileDialog.getOpenFileName(
             self.tab2, "Select a .txt File", "", "Text Files (*.txt);;All Files (*)"
         )
@@ -131,8 +136,39 @@ class Ui_Bottom_right(QObject):
                 with open(fileName, "r") as file:
                     content = file.read()
                 self.text_display.setText(content)
+
+                # Changing self.content to a list that is accepted by measurement functions
+                self.content = [item.strip() for item in content.split(",") if item.strip()]
+                self.content = [(unit, float(value)) for item in self.content for value, unit in [item.strip().split()]]
+
+                # Changing GUI elements to display correct values after uploading file
+                self.total_steps.setText(f"{len(self.content)*self.nos_box.value()}")
+                self.current_step.setText(f"{0}")
+                self.current_scan.setText(f"{1}")
+                
+                if self.content[0][0] in ['ns', 'nanosecond', 'nanoseconds']:
+                    self.start_from_box.setValue(self.content[0][1]*1000)
+                if self.content[0][0] in ['fs', 'femtosecond', 'femtoseconds']:
+                    self.start_from_box.setValue(self.content[0][1]/1000)
+
+                if self.content[-1][0] in ['ns', 'nanosecond', 'nanoseconds']:
+                    self.finish_time_box.setValue(self.content[-1][1]*1000)
+                if self.content[-1][0] in ['fs', 'femtosecond', 'femtoseconds']:
+                    self.finish_time_box.setValue(self.content[-1][1]/1000)
             except Exception as e:
                 self.show_error_message(f"Failed to load file: {e}")
+
+    def update_start_from_content(self, value):
+        if hasattr(self, "content") and self.content:
+            # Update the first item to ('ps', value)
+            self.content[0] = ('ps', value)
+            print(self.content[0])
+
+    def update_finish_time_content(self, value):
+        if hasattr(self, "content") and self.content:
+            # Update the last item to ('ps', value)
+            self.content[-1] = ('ps', value)
+            print(self.content[-1])
 
     def show_error_message(self, error_message):
         msgbox = QMessageBox()

@@ -45,7 +45,7 @@ class Measurementworker(QThread):
     update_ref_signal = Signal(float)
     error_occurred = Signal(str)
     update_probe = Signal(list, list)
-    process_content_signal = Signal(list, float, int)
+    process_content_signal = Signal(list, float, int, int)
     task_done_signal = Signal()
     start_process_signal = Signal(str)
     orientation_signal = Signal(str)
@@ -53,20 +53,21 @@ class Measurementworker(QThread):
     parsed_content_signal = Signal(list)
     plot_row_update = Signal(int, np.ndarray, np.ndarray)
 
-    def __init__(self, content, orientation, shots):
+    def __init__(self, content, orientation, shots, scans):
         super().__init__()
         self._is_running = True
         self.process = None
         self._content = content
         self._orientation: str = orientation
         self._shots: int = shots
+        self._scans = scans
         self.ref = None
         self.position = None
         self.data_processor = ComputeData()
         
 
-    @Slot(str, str, int)
-    def start_measurement(self, content: str, orientation: str, shots: int) -> None:
+    @Slot(str, str, int, int)
+    def start_measurement(self, content: str, orientation: str, shots: int, scans: int) -> None:
         """
         Called from the GUI thread.  Stores parameters and kicks off self.run().
         """
@@ -74,12 +75,14 @@ class Measurementworker(QThread):
         self._content = content
         self._orientation = orientation
         self._shots = shots
+        self._scans = scans
         self.start()
 
-    def update_command(self, content, orientation, shots):
+    def update_command(self, content, orientation, shots, scans):
         self._orientation = orientation
         self._content = content
         self._shots = shots
+        self._scans = scans
 
     @Slot(str)
     def run(self):
@@ -115,7 +118,7 @@ class Measurementworker(QThread):
             except Exception as e:
                 self.error_occurred.emit(str(e))
         
-    def _run_measurement_loop(self, content: list[dict], shots: int) -> None:
+    def _run_measurement_loop(self, content: list[dict], shots: int, scans) -> None:
         """
         Example loop that calls your existing RunMeasurement() and streams data.
         Modify freely to match your real-world needs.
@@ -125,6 +128,7 @@ class Measurementworker(QThread):
         self.teller = 0
         self.last_item = 0
         self.barvalue = 0
+        self.nos = 0
         ref, position = self.start_gui()
         if not self.validate_reference_and_position(ref, position, content):
             return
@@ -133,17 +137,18 @@ class Measurementworker(QThread):
             self.move_to_reference(ref)
         self.barvalue = ref * 1000
         self.update_delay_bar_signal.emit(ref * 1000)
-        for item in content:
-            print(item)
-            if self.isInterruptionRequested():  # allow user to abort
-                break
-            
+        for i in range(0, scans):
+            for item in content:
+                if item == content[0]:
+                    self.nos += 1
+                    print(f"Starting scan {self.nos} of {scans}")
+                print(item)
+                if self.isInterruptionRequested():
+                    break
+                
+                result = self.process_content(item, ref, shots)
+                self.counter += 1
 
-            result = self.process_content(item, ref, shots)
-            self.counter += 1  # hardware I/O – heavy stuff
-            
-
-        # Clean-up
 
 
     @Slot(str)
