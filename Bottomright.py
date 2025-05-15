@@ -75,6 +75,7 @@ class Ui_Bottom_right(QObject):
         self.start_button.setText("Start Measurement")
         self.start_button.setEnabled(False)
         self.start_button.clicked.connect(lambda: self.trigger_worker_run.emit(self.content, self.stepping_order_box.currentText(), self.integration_time_box.value(), self.nos_box.value()))
+        self.start_button.clicked.connect(lambda: print(self.content))
         left_panel.addWidget(self.start_button)
 
         self.start_from_box.valueChanged.connect(self.validate_inputs)

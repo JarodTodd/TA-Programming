@@ -78,16 +78,12 @@ if __name__ == "__main__":
 
     worker.start_process_signal.connect(start_process)
 
-    def handle_button_press(content, orientation, shots):
-        print(content)
-        parsed_content = [item.strip() for item in content.split(",") if item.strip()]
-        print(parsed_content)
+    def handle_button_press(content, orientation, shots, scans):
+        if len(content) == 1:
+            content = content[0]
 
-        if len(parsed_content) == 1:
-            parsed_content = parsed_content[0]
-
-        worker.update_command(parsed_content, orientation, shots)
-        start_process(parsed_content)
+        worker.update_command(content, orientation, shots, scans)
+        start_process(content)
 
     main_app.dls_window.run_command_signal.connect(handle_button_press)
     main_app.shot_delay_app.bottomright.trigger_worker_run.connect(handle_button_press)

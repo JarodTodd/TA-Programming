@@ -137,7 +137,7 @@ class ShotDelayApp(QWidget):
     def update_progress_bar(self, value):
         """Update the local progress bar with the value from DLSWindow."""
         print("Updating progress bar with value:", value)
-        self.bottomright.current_delay.setValue(value)
+        self.bottomright.current_delay.setText(f"{value}")
 
     def update_t0(self, t_0):
         """Update the t_0 value."""
@@ -192,7 +192,7 @@ class ShotDelayApp(QWidget):
 
 class DLSWindow(QMainWindow):
     progress_updated = Signal(int)
-    run_command_signal = Signal(str, str, int)
+    run_command_signal = Signal(str, str, int, int)
 
     
 

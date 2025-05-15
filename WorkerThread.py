@@ -87,15 +87,12 @@ class Measurementworker(QThread):
     @Slot(str)
     def run(self):
 
-        if self._orientation in ("forward", "backward", "random"):
+        if self._orientation in ("Regular", "Backwards", "Random"):
             try:
                 # always parse the raw text first
-                parsed = self.parse_script_content(
-                    self._content if isinstance(self._content, str)
-                    else ",".join(self._content),
-                    self._orientation,
-                )
+                parsed = self._content
                 print(f"Running script with parsed content: {parsed}")
+                print(self._orientation)
                 self._run_measurement_loop(parsed, self._shots)
             except Exception as e:
                 self.error_occurred.emit(str(e))
