@@ -19,6 +19,8 @@ class ComputeData():
         self.delta_A_matrix_avg = []
         self.delta_A_matrix_median = []
 
+        self.outlier_rejection = True
+
     def repeat_measurement(self):
         """
         Loops over all delay_stages 
@@ -58,6 +60,8 @@ class ComputeData():
         for i, row in enumerate(block):
             if abs(row_averages[i] - average) <= allowed_deviation:
                 good_shots.append(row)
+            else:
+                print("bad spectra found", flush=True)
 
         #Turn the list back into a NumPy array and return
         clean_block = np.array(good_shots)
@@ -68,7 +72,21 @@ class ComputeData():
         #Boolean masks for pump state
         pump_off = block[block[:, 2] < 49152,  start_pixel:end_pixel]
         pump_on  = block[block[:, 2] >= 49152, start_pixel:end_pixel]
+        print(len(pump_off), len(pump_off))
 
+        if self.outlier_rejection == True:
+            pump_off = self.reject_outliers(pump_off, 1)
+            pump_on = self.reject_outliers(pump_on, 1)
+
+            print(len(pump_off), len(pump_on))
+        
+        if pump_off.size == 0 and pump_on.size == 0:
+            print("all spectra rejection")
+            return None, None, None, None
+        elif pump_off.size == 0:
+            print("all probe spectra rejected")
+            return None, None, None, None
+        
         n_pairs = min(len(pump_off), len(pump_on))
         if n_pairs == 0:
             print("No pump-on/pump-off pairs found in this block.")
@@ -87,12 +105,9 @@ class ComputeData():
         with np.errstate(divide='ignore', invalid='ignore'):
             delta_A = -np.log(np.divide(pump_on[:n_pairs], pump_off[:n_pairs]))
 
-        #Reject outlier delta A values
-        delta_A_clean = self.reject_outliers(delta_A, percentage=percentage)
-
         #Average and median delta_A
-        delta_A_avg = np.mean(delta_A_clean, axis=0)
-        delta_A_median = np.median(delta_A_clean, axis=0)
+        delta_A_avg = np.mean(delta_A, axis=0)
+        delta_A_median = np.median(delta_A, axis=0)
 
         # Probe spectra from pump‑off state
         pump_off_avg = np.mean(pump_off, axis=0)

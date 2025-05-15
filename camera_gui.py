@@ -480,10 +480,9 @@ class DLSWindow(QMainWindow):
         self.probe_inputs_avg = avg_list
         self.probe_inputs_med = med_list
         if self.probe_combobox.currentText() == "Average":
-            self.probe_avg_graph.plot(range(len(avg_list)), avg_list, symbol='o', pen='r')
+            self.probe_avg_graph.plot(range(len(avg_list)), avg_list, pen='r')
         elif self.probe_combobox.currentText() == "Median":
-            med_list = [1, 2, 3, 4, 5]  # Example data for median
-            self.probe_avg_graph.plot(range(len(med_list)), med_list, symbol='o', pen='b')
+            self.probe_avg_graph.plot(range(len(med_list)), med_list, pen='b')
         pass
 
     def save_probe_data(self):
