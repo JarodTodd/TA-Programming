@@ -7,6 +7,8 @@ from Bottomright import *
 import numpy as np                      
 from cursor_plot import TAPlotWidget
 from pyqtgraph.exporters import ImageExporter
+from matplotlib.backends.backend_qtagg import NavigationToolbar2QT
+from PySide6 import QtCore
 
 
 class ShotDelayApp(QWidget):
@@ -40,6 +42,22 @@ class ShotDelayApp(QWidget):
         delay_times   = np.array([-0.2, 0.0, 0.2, 0.5, 1.0])
         pixel_indexes = np.arange(1074)
         self.ta_widgets = TAPlotWidget(delay_times, pixel_indexes)
+
+        # Navigation toolbars for the plots
+        self.toolbar_heatmap = NavigationToolbar2QT(self.ta_widgets.canvas_heatmap, self)
+        self.shrink_toolbar(self.toolbar_heatmap)
+        self.romove_toolbar_icons(self.toolbar_heatmap)
+        self.toolbar_plt1 = NavigationToolbar2QT(self.ta_widgets.canvas_plot1,   self)
+        self.shrink_toolbar(self.toolbar_plt1)
+        self.romove_toolbar_icons(self.toolbar_plt1)
+        self.toolbar_plt2 = NavigationToolbar2QT(self.ta_widgets.canvas_plot2,   self)
+        self.shrink_toolbar(self.toolbar_plt2)
+        self.romove_toolbar_icons(self.toolbar_plt2)
+        top_left_layout.addWidget(self.toolbar_heatmap)      
+        top_right_layout.addWidget(self.toolbar_plt1)    
+        bottom_left_layout.addWidget(self.toolbar_plt2)   
+
+        # Add plots to the layout
         top_left_layout.addWidget(self.ta_widgets.canvas_heatmap)
         top_right_layout.addWidget(self.ta_widgets.canvas_plot1)
         bottom_left_layout.addWidget(self.ta_widgets.canvas_plot2)
@@ -113,6 +131,16 @@ class ShotDelayApp(QWidget):
         self.grid_layout.addWidget(self.bottomright_widget, 1, 1)
 
         self.setLayout(self.grid_layout)
+
+
+    def shrink_toolbar(self, toolbar, height=15):
+        toolbar.setIconSize(QtCore.QSize(height, height))  
+        toolbar.setFixedHeight(height + 6) 
+
+    def romove_toolbar_icons(self, toolbar):
+        for action in toolbar.actions():
+            if action.text() in {"Customize"}:
+                toolbar.removeAction(action)
 
     def update_progress_bar(self, value):
         """Update the local progress bar with the value from DLSWindow."""
@@ -190,7 +218,7 @@ class DLSWindow(QMainWindow):
         left_layout = QVBoxLayout()
         self.probe_avg_graph = pg.PlotWidget()
         left_layout.addWidget(self.probe_avg_graph)
-        self.probe_avg_graph.setTitle("Probe Spectrum")
+        self.probe_avg_graph.setTitle("Intensity (counts)")
         self.probe_avg_graph.setLabel('left', 'Probe')
         self.probe_avg_graph.setLabel('bottom', 'Wavelength (nm)')
         self.probe_avg_graph.setBackground('w')
@@ -359,7 +387,6 @@ class DLSWindow(QMainWindow):
         self.probe_inputs_avg = avg_list
         self.probe_inputs_med = med_list
         if self.probe_combobox.currentText() == "Average":
-            print("Plotting average data")  # Debugging
             self.probe_avg_graph.plot(range(len(avg_list)), avg_list, symbol='o', pen='r')
         elif self.probe_combobox.currentText() == "Median":
             med_list = [1, 2, 3, 4, 5]  # Example data for median
@@ -373,7 +400,7 @@ class DLSWindow(QMainWindow):
                 self,
                 "Save Probe Plot",
                 "",
-                "PNG Files (*.png);;JPEG Files (*.jpg);;All Files (*)"
+                "CSV files (*.csv);;All Files (*)"
             )
 
             # If the user cancels the dialog, filename will be an empty string
@@ -382,8 +409,7 @@ class DLSWindow(QMainWindow):
                 return
 
             # Create an ImageExporter for the pyqtgraph plot
-            exporter = ImageExporter(self.probe_avg_graph.plotItem)
-            exporter.parameters()['width'] = 1000  # Set the width of the exported image (optional)
+            exporter = csv.exporter.CSVExporter(self.probe_inputs_avg)
 
             # Save the plot to the selected file
             exporter.export(filename)

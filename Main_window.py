@@ -31,13 +31,30 @@ if __name__ == "__main__":
     main_app = MainApp()
     main_app.show()
     worker = Measurementworker("", "StartUp", 0)
+    probe = ProbeThread()
     output_signal = Signal(str)
 
 
+    worker.started.connect(main_app.dls_window.stop_probe_thread, Qt.QueuedConnection)
+    worker.parsed_content_signal.connect(main_app.shot_delay_app.ta_widgets.update_delay_stages, Qt.BlockingQueuedConnection)
+    worker.plot_row_update.connect(main_app.shot_delay_app.ta_widgets.update_row, Qt.QueuedConnection)
+    worker.measurement_data_updated.connect(main_app.shot_delay_app.update_graph, Qt.QueuedConnection)
+    worker.update_probe.connect(main_app.dls_window.update_probe_graph, Qt.QueuedConnection)
+
+    worker.error_occurred.connect(main_app.shot_delay_app.show_error_message)
+    
+    worker.error_occurred.connect(main_app.dls_window.show_error_message)  # Optional error handler
+    worker.update_delay_bar_signal.connect(main_app.shot_delay_app.update_progress_bar)
+    worker.update_delay_bar_signal.connect(main_app.dls_window.update_delay_bar)
+
+    worker.finished.connect(main_app.dls_window.start_probe_thread, Qt.QueuedConnection)
+    
+    
     def start_process(argument):
         if worker.process is None:
             worker.process = QProcess()
 
+        
         if worker.process.state() == QProcess.Running:
             print("Terminating existing process...")
             worker.process.terminate()
@@ -52,7 +69,7 @@ if __name__ == "__main__":
 
             try:
                 worker.process.finished.disconnect()
-            except RuntimeError:
+            except Exception:
                 print("Signals already disconnected.")
                 
             worker.process.readyReadStandardOutput.connect(worker.handle_process_output)
@@ -75,6 +92,7 @@ if __name__ == "__main__":
     main_app.shot_delay_app.bottomright.trigger_worker_run.connect(handle_button_press)
 
 
+
     def stop_worker():
         if worker.process:
             try:
@@ -89,6 +107,7 @@ if __name__ == "__main__":
                 worker.process.waitForFinished()
 
         worker.stop()
+        probe.stop()
         QCoreApplication.processEvents()
         print("Application exit cleanup complete.")
         app.aboutToQuit.disconnect(stop_worker)

@@ -7,6 +7,7 @@ from main import *
 from camera import *
 import random
 import time
+import threading
 
 ironpython_executable = r"C:\Users\PC026453\Documents\TA-Programming\IronPython 3.4\ipy.exe"
 script_path = r"C:\Users\PC026453\Documents\TA-Programming\IronPythonDLS.py"
@@ -33,6 +34,7 @@ class ProbeThread(QThread):
     def stop(self):
         self.running = False
         self.quit()
+        self.wait()
             
 
 class Measurementworker(QThread):
