@@ -79,6 +79,7 @@ if __name__ == "__main__":
     worker.start_process_signal.connect(start_process)
 
     def handle_button_press(content, orientation, shots):
+        print(content)
         parsed_content = [item.strip() for item in content.split(",") if item.strip()]
         print(parsed_content)
 
