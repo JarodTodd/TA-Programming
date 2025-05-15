@@ -3,19 +3,21 @@ from PySide6.QtCore import *
 from PySide6.QtGui import *
 import pyqtgraph as pg
 from WorkerThread import *
+from Bottomright import *
 import numpy as np                      
 from cursor_plot import TAPlotWidget
 from pyqtgraph.exporters import ImageExporter
 
 
 class ShotDelayApp(QWidget):
-    trigger_worker_run = Signal(str, str, int)
+
 
     def __init__(self, dls_window):
         super().__init__()
         self.setWindowTitle("Camera Interface")
         self.DLSWindow = dls_window
         self.worker = Measurementworker("", "", 0)
+        self.bottomright = Ui_Bottom_right()
         self.setup_ui()
         self.worker.update_ref_signal.connect(self.update_t0, Qt.QueuedConnection)
         self.worker.update_delay_bar_signal.connect(self.update_progress_bar, Qt.QueuedConnection)
@@ -65,127 +67,63 @@ class ShotDelayApp(QWidget):
         # elif self.dA_Combobox.currentText() == "Median":
         #     self.dA_avg_graph.plot(self.delaytimes, self.dA_inputs_med, symbol='o', pen=None)
 
+        # Simplified setup for bottom-right layout and widgets
         bottom_right_layout = QVBoxLayout()
 
-        # Form layout for shots and delays input
+        # Form layout for shots input
         self.form_layout = QFormLayout()
-        self.shots_input = QLineEdit()
-        self.shots_input.setPlaceholderText("Enter number of shots")
+        self.shots_input = QLineEdit(placeholderText="Enter number of shots")
         self.form_layout.addRow("Number of Shots:", self.shots_input)
 
         # Status label
-        self.status_label = QLabel("")
-        self.status_label.setAlignment(Qt.AlignCenter)
+        self.status_label = QLabel("", alignment=Qt.AlignCenter)
 
-        # File upload and script execution layout
+
         hbox = QHBoxLayout()
-
-        # File upload button
-        file_upload_button = QPushButton("Upload File")
-        file_upload_button.clicked.connect(self.showFileDialog)
-
-        # File label and text display
-        self.file_label = QLabel("No file selected", self)
-        self.text_display = QTextEdit()
-        self.text_display.setReadOnly(False)
-        self.progress_bar = QSlider()
-        self.progress_bar.setOrientation(Qt.Vertical)
-        self.progress_bar.setRange(0, 8672)  # max picoseconds delay
-        self.progress_bar.setTickInterval(250)
-        self.progress_bar.setSingleStep(250)
-        self.progress_bar.setTickPosition(QSlider.TicksLeft)
+        # Progress bar with tick labels
+        self.progress_bar = QSlider(Qt.Vertical, tickInterval=250, singleStep=250, tickPosition=QSlider.TicksLeft)
+        self.progress_bar.setRange(0, 8672)
         self.progress_bar.valueChanged.connect(self.update_progress_bar)
-        self.progress_label = QLabel(f"Current absolute position: {self.progress_bar.value()} ps")
-        self.relative_label = QLabel(f"Current relative position: -- ps")
-        self.t_0_label = QLabel(f"t0: {self.t_0} ps")
-        
 
-        # Create a layout to hold the slider and tick labels
         slider_layout = QHBoxLayout()
-
-        # Create a vertical layout for the tick labels
         tick_labels_layout = QVBoxLayout()
-
-        # Add tick labels beside the slider
-        tick_values = []
-        for i in range(0, 8672, 250):
-            tick_values.append(i)
-        for value in reversed(tick_values):  # Reverse to match the vertical slider orientation
-            label = QLabel(str(value))
-            label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
-            tick_labels_layout.addWidget(label)
-
-        # Add the tick labels and slider to the layout
+        for value in reversed(range(0, 8672, 250)):
+            tick_labels_layout.addWidget(QLabel(str(value), alignment=Qt.AlignRight | Qt.AlignVCenter))
         slider_layout.addLayout(tick_labels_layout)
         slider_layout.addWidget(self.progress_bar)
 
-        # Add the slider layout to the main layout
-        leftvbox = QVBoxLayout()
-        leftvbox.addLayout(slider_layout)
+        # Create a vertical layout for the slider and add it to the hbox
+        slider_vbox = QVBoxLayout()
+        slider_vbox.addLayout(slider_layout)
+        hbox.addLayout(slider_vbox)
 
 
-        # Script execution buttons
-        vbox = QVBoxLayout()
-        self.runscript_button = QPushButton("Run Script")
-        self.runscript_button.clicked.connect(lambda: self.trigger_worker_run.emit(self.text_display.toPlainText(), "forward", int(self.shots_input.text())))
-        self.runscript_button.setEnabled(False)
 
-        self.runscript_backwards_button = QPushButton("Run Script Backwards")
-        self.runscript_backwards_button.clicked.connect(lambda: self.trigger_worker_run.emit(self.text_display.toPlainText(), "backward", int(self.shots_input.text())))
-        self.runscript_backwards_button.setEnabled(False)
-
-        self.runscript_random_button = QPushButton("Run Script Random")
-        self.runscript_random_button.clicked.connect(lambda: self.trigger_worker_run.emit(self.text_display.toPlainText(), "random", int(self.shots_input.text())))
-        self.runscript_random_button.setEnabled(False)
-
-        vbox.addWidget(self.runscript_button)
-        vbox.addWidget(self.runscript_backwards_button)
-        vbox.addWidget(self.runscript_random_button)
-
-        # Add widgets to hbox5
-        hbox.addLayout(leftvbox)
-        hbox.addLayout(vbox)
-        hbox.addWidget(file_upload_button)
-        hbox.addWidget(self.file_label)
-        hbox.addWidget(self.text_display)
-        hbox.addWidget(self.progress_label)
-        hbox.addWidget(self.t_0_label)
-        hbox.addWidget(self.relative_label)
-    
-        # Add widgets to the bottom-right layout
+        # Add widgets to bottom-right layout
         bottom_right_layout.addLayout(self.form_layout)
         bottom_right_layout.addWidget(self.status_label)
-        bottom_right_layout.addLayout(hbox)
-        
-        bottom_right_widget = QWidget()
-        bottom_right_widget.setLayout(bottom_right_layout)
-        bottom_right_widget.setMaximumSize(400, 400)
+        self.bottomright_widget = QWidget()
+        self.bottomright = Ui_Bottom_right()
+        self.bottomright.setupUi(self.bottomright_widget)
+        bottom_right_layout.addWidget(self.bottomright_widget)
 
         self.grid_layout.addItem(top_left_layout, 0, 0)
         self.grid_layout.addItem(top_right_layout, 0, 1)
         self.grid_layout.addItem(bottom_left_layout, 1, 0)
-        self.grid_layout.addWidget(bottom_right_widget, 1, 1)  # Bottom-right
+        self.grid_layout.addWidget(self.bottomright_widget, 1, 1)
 
-        # Set the grid layout as the main layout
         self.setLayout(self.grid_layout)
-
-        # Connect signals
-        self.shots_input.textChanged.connect(self.validate_inputs)
-        self.text_display.textChanged.connect(self.validate_inputs)
-
 
     def update_progress_bar(self, value):
         """Update the local progress bar with the value from DLSWindow."""
         print("Updating progress bar with value:", value)
         self.progress_bar.setValue(value)
-        self.progress_label.setText(f"Current absolute position: {self.progress_bar.value()} ps")
 
     def update_t0(self, t_0):
         """Update the t_0 value."""
         print(f"Updating t_0 in UI: {t_0}")  # Debugging
         self.t_0 = t_0
-        self.t_0_label.setText(f"t0: {self.t_0} ps")
-        self.relative_label.setText(f"Current relative position: {self.progress_bar.value() - self.t_0} ps")
+
 
 
     def show_error_message(self, error_message):
@@ -198,27 +136,7 @@ class ShotDelayApp(QWidget):
         msgbox.exec()
 
 
-    def showFileDialog(self):
-        fileName, _ = QFileDialog.getOpenFileName(self, "Select a .txt File", "", "Text Files (*.txt);;All Files (*)")
-        if fileName:
-            self.file_label.setText(fileName)
-            try:
-                with open(fileName, 'r') as file:
-                    content = file.read()
-                self.text_display.setText(content)
-            except Exception as e:
-                self.show_error_message(f"Failed to load file: {e}")
 
-
-    def validate_inputs(self):
-        try:
-            shots = int(self.shots_input.text())
-            valid = shots > 0 and self.text_display.toPlainText() != ""
-        except ValueError:
-            valid = False
-        self.runscript_button.setEnabled(valid)
-        self.runscript_backwards_button.setEnabled(valid)
-        self.runscript_random_button.setEnabled(valid)
 
     @Slot(float, float, float)
     def update_graph(self, delaytimes, dA_inputs_avg, dA_inputs_med):
@@ -434,19 +352,6 @@ class DLSWindow(QMainWindow):
         msgbox.setStandardButtons(QMessageBox.Ok)
         msgbox.exec()
 
-
-    def showFileDialog(self):
-        fileName, _ = QFileDialog.getOpenFileName(self, "Select a .txt File", "", "Text Files (*.txt);;All Files (*)")
-        if fileName:
-            self.file_label.setText(fileName)
-            try:
-                with open(fileName, 'r') as file:
-                    content = file.read()
-                
-                self.text_display.setText(content)
-            except Exception as e:
-                self.show_error_message(f"Failed to load file: {e}")
-        return content
     
     @Slot(list, list)
     def update_probe_graph(self, avg_list, med_list):
