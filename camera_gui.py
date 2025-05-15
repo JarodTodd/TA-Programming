@@ -18,7 +18,7 @@ class ShotDelayApp(QWidget):
         super().__init__()
         self.setWindowTitle("Camera Interface")
         self.DLSWindow = dls_window
-        self.worker = Measurementworker("", "", 0)
+        self.worker = Measurementworker("", "", 0, 0)
         self.bottomright = Ui_Bottom_right()
         self.setup_ui()
         self.worker.update_ref_signal.connect(self.update_t0, Qt.QueuedConnection)
@@ -46,13 +46,13 @@ class ShotDelayApp(QWidget):
         # Navigation toolbars for the plots
         self.toolbar_heatmap = NavigationToolbar2QT(self.ta_widgets.canvas_heatmap, self)
         self.shrink_toolbar(self.toolbar_heatmap)
-        self.romove_toolbar_icons(self.toolbar_heatmap)
+        self.remove_toolbar_icons(self.toolbar_heatmap)
         self.toolbar_plt1 = NavigationToolbar2QT(self.ta_widgets.canvas_plot1,   self)
         self.shrink_toolbar(self.toolbar_plt1)
-        self.romove_toolbar_icons(self.toolbar_plt1)
+        self.remove_toolbar_icons(self.toolbar_plt1)
         self.toolbar_plt2 = NavigationToolbar2QT(self.ta_widgets.canvas_plot2,   self)
         self.shrink_toolbar(self.toolbar_plt2)
-        self.romove_toolbar_icons(self.toolbar_plt2)
+        self.remove_toolbar_icons(self.toolbar_plt2)
         top_left_layout.addWidget(self.toolbar_heatmap)      
         top_right_layout.addWidget(self.toolbar_plt1)    
         bottom_left_layout.addWidget(self.toolbar_plt2)   
@@ -61,14 +61,6 @@ class ShotDelayApp(QWidget):
         top_left_layout.addWidget(self.ta_widgets.canvas_heatmap)
         top_right_layout.addWidget(self.ta_widgets.canvas_plot1)
         bottom_left_layout.addWidget(self.ta_widgets.canvas_plot2)
-
-        # old dA_graph 
-        # self.dA_avg_graph = pg.PlotWidget()
-        # top_left_layout.addWidget(self.dA_avg_graph)
-        # self.dA_avg_graph.setTitle("Delta A Graph")
-        # self.dA_avg_graph.setLabel('left', 'Delta A')
-        # self.dA_avg_graph.setLabel('bottom', 'Delay (ps)')
-
         self.delaytimes = []
         self.dA_inputs_avg = []
         self.dA_inputs_med = []
@@ -137,7 +129,7 @@ class ShotDelayApp(QWidget):
         toolbar.setIconSize(QtCore.QSize(height, height))  
         toolbar.setFixedHeight(height + 6) 
 
-    def romove_toolbar_icons(self, toolbar):
+    def remove_toolbar_icons(self, toolbar):
         for action in toolbar.actions():
             if action.text() in {"Customize"}:
                 toolbar.removeAction(action)
@@ -145,7 +137,7 @@ class ShotDelayApp(QWidget):
     def update_progress_bar(self, value):
         """Update the local progress bar with the value from DLSWindow."""
         print("Updating progress bar with value:", value)
-        self.progress_bar.setValue(value)
+        self.bottomright.current_delay.setValue(value)
 
     def update_t0(self, t_0):
         """Update the t_0 value."""
@@ -208,7 +200,7 @@ class DLSWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle("Delayline GUI")
 
-        self.worker = Measurementworker("", "", 0)
+        self.worker = Measurementworker("", "", 0, 0)
         self.worker.update_delay_bar_signal.connect(self.update_delay_bar)
         # Central widget
         central_widget = QWidget()
@@ -249,19 +241,19 @@ class DLSWindow(QMainWindow):
         hbox = QHBoxLayout()
 
         initialize_button = QPushButton("Initialize")
-        initialize_button.clicked.connect(lambda: self.run_command_signal.emit("Initialize", "ButtonPress", 0))
+        initialize_button.clicked.connect(lambda: self.run_command_signal.emit("Initialize", "ButtonPress", 0, 0))
         hbox.addWidget(initialize_button)
 
         disable_button = QPushButton("Disable/Ready")
-        disable_button.clicked.connect(lambda: self.run_command_signal.emit("Disable", "ButtonPress", 0))
+        disable_button.clicked.connect(lambda: self.run_command_signal.emit("Disable", "ButtonPress", 0, 0))
         hbox.addWidget(disable_button)
 
         move_neg_button = QPushButton("Move -100ps")
-        move_neg_button.clicked.connect(lambda: self.run_command_signal.emit("MoveNegative", "ButtonPress", 0))
+        move_neg_button.clicked.connect(lambda: self.run_command_signal.emit("MoveNegative", "ButtonPress", 0, 0))
         hbox.addWidget(move_neg_button)
 
         move_pos_button = QPushButton("Move +100ps")
-        move_pos_button.clicked.connect(lambda: self.run_command_signal.emit("MovePositive", "ButtonPress", 0))
+        move_pos_button.clicked.connect(lambda: self.run_command_signal.emit("MovePositive", "ButtonPress", 0, 0))
         hbox.addWidget(move_pos_button)
 
         right_layout.addLayout(hbox)
@@ -350,7 +342,7 @@ class DLSWindow(QMainWindow):
 
             if 0 <= current_bar_value + value_ps <= 8672:
                 value_ns = value_ps / 1000  # Convert to ns for script
-                self.start_measurement(f"MoveRelative {value_ns}", "ButtonPress", 0)
+                self.start_measurement(f"MoveRelative {value_ns}", "ButtonPress", 0, 0)
                 print(f"Emitting command: MoveRelative {value_ns}")
 
             else:
@@ -420,22 +412,22 @@ class DLSWindow(QMainWindow):
 
 
     def Initialize(self):
-        self.run_command_signal.emit("Initialize", "ButtonPress", 0)
+        self.run_command_signal.emit("Initialize", "ButtonPress", 0, 0)
 
     def Disable_click(self):
-        self.run_command_signal.emit("Disable", "ButtonPress", 0)
+        self.run_command_signal.emit("Disable", "ButtonPress", 0, 0)
 
     def Move_click(self):
-        self.run_command_signal.emit("MovePositive", "ButtonPress", 0)
+        self.run_command_signal.emit("MovePositive", "ButtonPress", 0, 0)
 
     def Move_back_click(self):
-        self.run_command_signal.emit("MoveNegative", "ButtonPress", 0)
+        self.run_command_signal.emit("MoveNegative", "ButtonPress", 0, 0)
 
     def SetReference(self):
-        self.run_command_signal.emit("SetReference", "ButtonPress", 0)
+        self.run_command_signal.emit("SetReference", "ButtonPress", 0, 0)
 
     def GoToReference(self):
-        self.run_command_signal.emit("GoToReference", "ButtonPress", 0)
+        self.run_command_signal.emit("GoToReference", "ButtonPress", 0, 0)
     
     def start_measurement(self, content, orientation, shots):
         self.worker = Measurementworker(content, orientation, shots)

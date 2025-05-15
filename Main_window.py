@@ -30,7 +30,7 @@ if __name__ == "__main__":
     app = QApplication([])
     main_app = MainApp()
     main_app.show()
-    worker = Measurementworker("", "StartUp", 0)
+    worker = Measurementworker("", "StartUp", 0, 0)
     probe = ProbeThread()
     output_signal = Signal(str)
 
@@ -62,7 +62,7 @@ if __name__ == "__main__":
 
         worker.process.setProgram(ironpython_executable)
         if isinstance(argument, list):  # Handle list arguments
-            worker.start()
+            worker.process.start()
         elif isinstance(argument, str):  # Handle string arguments
             worker.process.setArguments([script_path, argument])
             worker.process.start()
