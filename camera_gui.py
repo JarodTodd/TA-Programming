@@ -41,6 +41,9 @@ class ShotDelayApp(QWidget):
         delay_times   = np.array([0.0, 0.2, 0.5, 1.0])
         pixel_indexes = np.arange(1074)
         self.ta_widgets = TAPlotWidget(delay_times, pixel_indexes) 
+        self.ta_widgets.canvas_heatmap.setBackground('w')
+        self.ta_widgets.canvas_plot1.setBackground('w')
+        self.ta_widgets.canvas_plot2.setBackground('w')
 
         # Add plots to the layout
         top_left_layout.addWidget(self.ta_widgets.canvas_heatmap)
