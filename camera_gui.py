@@ -143,6 +143,7 @@ class ShotDelayApp(QWidget):
         """Update the t_0 value."""
         print(f"Updating t_0 in UI: {t_0}")  # Debugging
         self.t_0 = t_0
+        self.bottomright.t0_line.setText(f"{t_0}")
 
 
 

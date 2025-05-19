@@ -2,6 +2,7 @@ import os
 from PySide6.QtCore import *
 from PySide6.QtGui import *
 from PySide6.QtWidgets import *
+from exponential_steps import *
 
 
 class Ui_Bottom_right(QObject):
@@ -26,7 +27,29 @@ class Ui_Bottom_right(QObject):
         self.tabWidget.addTab(self.tab2, "From File")
         main_layout.addWidget(self.tabWidget)
         self.tabWidget.setCurrentIndex(0)
+        tab1layout = QVBoxLayout()
 
+        self.step_option_box = QComboBox()
+        self.step_option_box.addItems(["Exponential", "Linear"])
+        grid = QGridLayout()
+        self.start_spin = QDoubleSpinBox()
+        self.start_spin.setRange(-8672.66, 8672.66)
+        self.finish_spin = QDoubleSpinBox()
+        self.finish_spin.setRange(-8672.66, 8672.66)
+        self.steps_box = QSpinBox()
+        self.steps_box.setMaximum(999999)
+        self.steps_box.setValue(100)
+
+        grid.addWidget(QLabel("Start from, ps:"), 0, 0)
+        grid.addWidget(self.start_spin, 0, 1)
+        grid.addWidget(QLabel("Finish time, ps:"), 1, 0)
+        grid.addWidget(self.finish_spin, 1, 1)
+        grid.addWidget(QLabel("Number of steps:"), 2, 0)
+        grid.addWidget(self.steps_box, 2, 1)
+
+        tab1layout.addWidget(self.step_option_box)
+        tab1layout.addLayout(grid)
+        self.tab1.setLayout(tab1layout)
         tab2layout = QHBoxLayout()
         self.file_upload_button = QPushButton("Upload File")
         self.file_upload_button.clicked.connect(self.showFileDialog)
@@ -64,11 +87,13 @@ class Ui_Bottom_right(QObject):
         self.current_delay = QLineEdit()
         self.time_remaining = QLineEdit()
         self.current_scan = QLineEdit()
+        self.t0_line = QLineEdit()
         grid2 = QGridLayout()
         self._add_label_input(grid2, "Current step #", self.current_step, 0)
         self._add_label_input(grid2, "Current delay, ps", self.current_delay, 1)
-        self._add_label_input(grid2, "Time remaining", self.time_remaining, 2)
-        self._add_label_input(grid2, "Current scan #", self.current_scan, 3)
+        self._add_label_input(grid2, "Reference time (t0)", self.t0_line, 2)
+        self._add_label_input(grid2, "Time remaining", self.time_remaining, 3)
+        self._add_label_input(grid2, "Current scan #", self.current_scan, 4)
         left_panel.addLayout(grid2)
 
         self.start_button = QPushButton()
@@ -99,6 +124,7 @@ class Ui_Bottom_right(QObject):
 
         elif isinstance(widget, QSpinBox):
             widget.setMinimum(1)
+            widget.setMaximum(999999)
             widget.setSingleStep(1)
             widget.setValue(1)
 
@@ -171,6 +197,12 @@ class Ui_Bottom_right(QObject):
             self.content[-1] = ('ps', value)
             print(self.content[-1])
 
+    def start_button_press(self):
+        if self.tabWidget.currentIndex(0):
+            self.trigger_worker_run.emit(generate_timepoints(self.start_from_box.value(), self.finish_time_box.value(), self.integration_time_box.value()), self.stepping_order_box.currentText(), self.integration_time_box.value(), self.nos_box.value())
+        if self.tabWidget.currentIndex(1):
+            self.trigger_worker_run.emit(self.content, self.stepping_order_box.currentText(), self.integration_time_box.value(), self.nos_box.value())
+            
     def show_error_message(self, error_message):
         msgbox = QMessageBox()
         msgbox.setWindowTitle("Error")
