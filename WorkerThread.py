@@ -51,7 +51,7 @@ class Measurementworker(QThread):
     orientation_signal = Signal(str)
 
     parsed_content_signal = Signal(list)
-    plot_row_update = Signal(int, np.ndarray, np.ndarray)
+    plot_row_update = Signal(float, np.ndarray, np.ndarray)
 
     def __init__(self, content, orientation, shots, scans):
         super().__init__()
@@ -90,6 +90,18 @@ class Measurementworker(QThread):
         print(f"This is {self._orientation}")
         if self._orientation in ("Regular", "Backwards", "Random"):
             try:
+                delay_values = []
+                for item in self._content:
+                    value = item[1]
+                    unit = item[0].lower()
+                    if unit in ['ns', 'nanosecond', 'nanoseconds']:            
+                        value = value * 1000                             
+                    elif unit in ['ps', 'picosecond', 'picoseconds']:           
+                        value = value                                     
+                    else:                                                       
+                        value = value / 1000 
+                    delay_values.append(value)
+                self.parsed_content_signal.emit(delay_values)
                 # always parse the raw text first
                 parsed = self._content
                 print(f"Running script with parsed content: {parsed}")

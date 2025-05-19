@@ -7,7 +7,6 @@ from Bottomright import *
 import numpy as np                      
 from cursor_plot import TAPlotWidget
 from pyqtgraph.exporters import ImageExporter
-from matplotlib.backends.backend_qtagg import NavigationToolbar2QT
 from PySide6 import QtCore
 
 
@@ -39,23 +38,9 @@ class ShotDelayApp(QWidget):
         
 
         # TAPlotWidget 
-        delay_times   = np.array([-0.2, 0.0, 0.2, 0.5, 1.0])
+        delay_times   = np.array([0.0, 0.2, 0.5, 1.0])
         pixel_indexes = np.arange(1074)
-        self.ta_widgets = TAPlotWidget(delay_times, pixel_indexes)
-
-        # Navigation toolbars for the plots
-        self.toolbar_heatmap = NavigationToolbar2QT(self.ta_widgets.canvas_heatmap, self)
-        self.shrink_toolbar(self.toolbar_heatmap)
-        self.remove_toolbar_icons(self.toolbar_heatmap)
-        self.toolbar_plt1 = NavigationToolbar2QT(self.ta_widgets.canvas_plot1,   self)
-        self.shrink_toolbar(self.toolbar_plt1)
-        self.remove_toolbar_icons(self.toolbar_plt1)
-        self.toolbar_plt2 = NavigationToolbar2QT(self.ta_widgets.canvas_plot2,   self)
-        self.shrink_toolbar(self.toolbar_plt2)
-        self.remove_toolbar_icons(self.toolbar_plt2)
-        top_left_layout.addWidget(self.toolbar_heatmap)      
-        top_right_layout.addWidget(self.toolbar_plt1)    
-        bottom_left_layout.addWidget(self.toolbar_plt2)   
+        self.ta_widgets = TAPlotWidget(delay_times, pixel_indexes) 
 
         # Add plots to the layout
         top_left_layout.addWidget(self.ta_widgets.canvas_heatmap)
@@ -124,16 +109,6 @@ class ShotDelayApp(QWidget):
 
         self.setLayout(self.grid_layout)
 
-
-    def shrink_toolbar(self, toolbar, height=15):
-        toolbar.setIconSize(QtCore.QSize(height, height))  
-        toolbar.setFixedHeight(height + 6) 
-
-    def remove_toolbar_icons(self, toolbar):
-        for action in toolbar.actions():
-            if action.text() in {"Customize"}:
-                toolbar.removeAction(action)
-
     def update_progress_bar(self, value):
         """Update the local progress bar with the value from DLSWindow."""
         print("Updating progress bar with value:", value)
@@ -176,19 +151,6 @@ class ShotDelayApp(QWidget):
         elif self.dA_Combobox.currentText() == "Median":
             self.dA_avg_graph.clear()
             self.dA_avg_graph.plot(self.delaytimes, self.dA_inputs_med, symbol='o')
-
-    def start_measurement(self, content, orientation, shots):
-        self.DLSWindow.stop_probe_thread()
-        self.worker = Measurementworker(content, orientation, shots)
-        self.worker.parsed_content_signal.connect(self.ta_widgets.update_delay_stages, Qt.BlockingQueuedConnection)
-        self.worker.plot_row_update.connect(self.ta_widgets.update_row, Qt.QueuedConnection)
-        self.worker.measurement_data_updated.connect(self.update_graph, Qt.QueuedConnection)
-        self.worker.error_occurred.connect(self.show_error_message)  # Optional error handler
-        self.worker.update_delay_bar_signal.connect(self.update_progress_bar)
-        self.worker.update_delay_bar_signal.connect(self.DLSWindow.update_delay_bar)
-        self.worker.update_probe.connect(self.DLSWindow.update_probe_graph, Qt.QueuedConnection)
-        self.worker.finished.connect(self.DLSWindow.start_probe_thread)
-        self.worker.start()
 
 class DLSWindow(QMainWindow):
     progress_updated = Signal(int)

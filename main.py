@@ -60,8 +60,8 @@ class ComputeData():
         for i, row in enumerate(block):
             if abs(row_averages[i] - average) <= allowed_deviation:
                 good_shots.append(row)
-            else:
-                print("bad spectra found", flush=True)
+            # else:
+            #     print("bad spectra found", flush=True)
 
         #Turn the list back into a NumPy array and return
         clean_block = np.array(good_shots)
@@ -72,27 +72,22 @@ class ComputeData():
         #Boolean masks for pump state
         pump_off = block[block[:, 2] < 49152,  start_pixel:end_pixel]
         pump_on  = block[block[:, 2] >= 49152, start_pixel:end_pixel]
-        print(len(pump_off), len(pump_off))
+        # print(len(pump_off), len(pump_off))
 
         if self.outlier_rejection == True:
-            pump_off = self.reject_outliers(pump_off, 0.05)
-            pump_on = self.reject_outliers(pump_on, 0.05)
+            pump_off = self.reject_outliers(pump_off, 110)
+            pump_on = self.reject_outliers(pump_on, 110)
 
-            print(len(pump_off), len(pump_on))
+            # print(len(pump_off), len(pump_on))
         
-        if pump_off.size == 0 and pump_on.size == 0:
-            print("all spectra rejection")
-            print("\n\n\n\n")
+        if len(pump_off) == 0 and len(pump_on) == 0:
             return None, None, None, None
         elif pump_off.size == 0:
-            print("all probe spectra rejected")
-            print("\n\n\n\n")
             return None, None, None, None
-            \
+            
         n_pairs = min(len(pump_off), len(pump_on))
         if n_pairs == 0:
             print("No pump-on/pump-off pairs found in this block.")
-            print("\n\n\n\n")
             pump_off_avg = np.mean(pump_off, axis=0)
             pump_off_median = np.median(pump_off, axis=0)
 
