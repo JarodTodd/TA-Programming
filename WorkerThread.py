@@ -17,7 +17,7 @@ class ProbeThread(QThread):
 
     def __init__(self, shots = 10, parent: QObject | None = None):
         super().__init__(parent)
-        self.shots = shots
+        self.shots = 10
         self.running = True
         self.data_processor = ComputeData()
     
@@ -66,8 +66,8 @@ class Measurementworker(QThread):
         self.data_processor = ComputeData()
         
 
-    @Slot(str, str, int, int)
-    def start_measurement(self, content: str, orientation: str, shots: int, scans: int) -> None:
+    @Slot(list, str, int, int)
+    def start_measurement(self, content: list, orientation: str, shots: int, scans: int) -> None:
         """
         Called from the GUI thread.  Stores parameters and kicks off self.run().
         """
@@ -83,17 +83,18 @@ class Measurementworker(QThread):
         self._content = content
         self._shots = shots
         self._scans = scans
+        # print(content, orientation, shots, scans)
 
     @Slot(str)
     def run(self):
-
+        print(f"This is {self._orientation}")
         if self._orientation in ("Regular", "Backwards", "Random"):
             try:
                 # always parse the raw text first
                 parsed = self._content
                 print(f"Running script with parsed content: {parsed}")
                 print(self._orientation)
-                self._run_measurement_loop(parsed, self._shots)
+                self._run_measurement_loop(parsed, self._shots, self._scans)
             except Exception as e:
                 self.error_occurred.emit(str(e))
 
