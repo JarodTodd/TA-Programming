@@ -5,10 +5,11 @@ from PySide6.QtWidgets import *
 
 
 class Ui_Bottom_right(QObject):
-    trigger_worker_run = Signal(str, str, int, int)
+    trigger_worker_run = Signal(list, str, int, int)
 
     def __init__(self):
         super().__init__()
+        self.content = []
 
     def setupUi(self, Bottom_right):
         Bottom_right.setWindowTitle("Bottom_right")
@@ -74,8 +75,7 @@ class Ui_Bottom_right(QObject):
         self.start_button = QPushButton()
         self.start_button.setText("Start Measurement")
         self.start_button.setEnabled(False)
-        self.start_button.clicked.connect(lambda: self.trigger_worker_run.emit(self.content, self.stepping_order_box.currentText(), self.integration_time_box.value(), self.nos_box.value()))
-        self.start_button.clicked.connect(lambda: print(self.content))
+        self.start_button.clicked.connect(self.on_start_button_clicked)
         left_panel.addWidget(self.start_button)
 
         self.start_from_box.valueChanged.connect(self.validate_inputs)
@@ -101,7 +101,7 @@ class Ui_Bottom_right(QObject):
             widget.setMinimum(1)
             widget.setSingleStep(1)
             widget.setValue(1)
-
+            widget.setMaximum(9999999)
         elif isinstance(widget, QLineEdit):
             widget.setReadOnly(True)
             widget.setStyleSheet("background-color: lightgray;")
@@ -125,6 +125,20 @@ class Ui_Bottom_right(QObject):
 
         except ValueError:
             print("NONONO")
+
+
+    def on_start_button_clicked(self):
+        if not self.content:
+            self.show_error_message("No measurement steps defined. Please upload a file or enter values.")
+            return
+        self.trigger_worker_run.emit(
+            self.content,
+            self.stepping_order_box.currentText(),
+            self.integration_time_box.value(),
+            self.nos_box.value()
+        )
+        print(f"Self.content = {self.content}")
+
 
     def showFileDialog(self):
         self.content = []

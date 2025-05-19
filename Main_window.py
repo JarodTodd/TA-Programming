@@ -54,15 +54,14 @@ if __name__ == "__main__":
         if worker.process is None:
             worker.process = QProcess()
 
-        
         if worker.process.state() == QProcess.Running:
             print("Terminating existing process...")
             worker.process.terminate()
             worker.process.waitForFinished()
-
+        print(type(argument))
         worker.process.setProgram(ironpython_executable)
         if isinstance(argument, list):  # Handle list arguments
-            worker.process.start()
+            worker.start()
         elif isinstance(argument, str):  # Handle string arguments
             worker.process.setArguments([script_path, argument])
             worker.process.start()
@@ -81,7 +80,6 @@ if __name__ == "__main__":
     def handle_button_press(content, orientation, shots, scans):
         if len(content) == 1:
             content = content[0]
-
         worker.update_command(content, orientation, shots, scans)
         start_process(content)
 

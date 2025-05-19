@@ -389,7 +389,7 @@ class DLSWindow(QMainWindow):
             # Open a file dialog to choose the save location and filename
             filename, _ = QFileDialog.getSaveFileName(
                 self,
-                "Save Probe Plot",
+                "Save Probe Data",
                 "",
                 "CSV files (*.csv);;All Files (*)"
             )
@@ -399,28 +399,21 @@ class DLSWindow(QMainWindow):
                 print("Save operation cancelled.")
                 return
 
-            # Create an ImageExporter for the pyqtgraph plot
-            exporter = csv.exporter.CSVExporter(self.probe_inputs_avg)
+            # Save the probe data to CSV
+            import csv
+            with open(filename, 'w', newline='') as csvfile:
+                writer = csv.writer(csvfile)
+                # Write header
+                writer.writerow(["Index", "Average", "Median"])
+                # Write data rows
+                for i, (avg, med) in enumerate(zip(self.probe_inputs_avg, self.probe_inputs_med)):
+                    writer.writerow([i, avg, med])
 
-            # Save the plot to the selected file
-            exporter.export(filename)
-            print(f"Probe plot saved successfully to {filename}.")
+            print(f"Probe data saved successfully to {filename}.")
 
         except Exception as e:
-            self.show_error_message(f"Failed to save probe plot: {e}")
+            self.show_error_message(f"Failed to save probe data: {e}")
 
-
-    def Initialize(self):
-        self.run_command_signal.emit("Initialize", "ButtonPress", 0, 0)
-
-    def Disable_click(self):
-        self.run_command_signal.emit("Disable", "ButtonPress", 0, 0)
-
-    def Move_click(self):
-        self.run_command_signal.emit("MovePositive", "ButtonPress", 0, 0)
-
-    def Move_back_click(self):
-        self.run_command_signal.emit("MoveNegative", "ButtonPress", 0, 0)
 
     def SetReference(self):
         self.run_command_signal.emit("SetReference", "ButtonPress", 0, 0)
@@ -428,10 +421,6 @@ class DLSWindow(QMainWindow):
     def GoToReference(self):
         self.run_command_signal.emit("GoToReference", "ButtonPress", 0, 0)
     
-    def start_measurement(self, content, orientation, shots):
-        self.worker = Measurementworker(content, orientation, shots)
-        self.worker.start()
-
 
     def closeEvent(self, event):
         self.worker_thread.stop()  # Stop the worker thread
