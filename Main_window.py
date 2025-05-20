@@ -22,12 +22,12 @@ class MainApp(QMainWindow):
         self.dls_window = DLSWindow()
         self.shot_delay_app = ShotDelayApp(self.dls_window)
         self.dA_window = dA_Window()
+        self.dls_window.probe_worker.dA_update.connect(self.dA_window.update_dA_graph,Qt.QueuedConnection)
 
         # Add tabs    
         self.tabs.addTab(self.shot_delay_app, "Shot Delay App")
         self.tabs.addTab(self.dls_window, "DLS Window")
         self.tabs.addTab(self.dA_window, "dA Window")
-
 
 if __name__ == "__main__":
     app = QApplication([])
