@@ -9,6 +9,7 @@ import numpy as np
 from cursor_plot import TAPlotWidget
 from pyqtgraph.exporters import ImageExporter
 from PySide6 import QtCore
+from dAwindow import *
 
 
 class ShotDelayApp(QWidget):
@@ -175,12 +176,8 @@ class DLSWindow(QMainWindow):
         self.probe_combobox.addItems(["Average", "Median"])
         self.probe_combobox.setCurrentText("Average")
         left_layout.addWidget(self.probe_combobox)
-        if self.probe_combobox.currentText() == "Average":
-            self.probe_avg_graph.plot(range(len(self.probe_inputs_avg)), self.probe_inputs_avg, symbol='o', pen=None)
-        elif self.probe_combobox.currentText() == "Median":
-            self.probe_avg_graph.plot(range(len(self.probe_inputs_med)), self.probe_inputs_med, symbol='o', pen=None)
+        self.probe_combobox.currentIndexChanged.connect(self.redraw_probe_plot)
 
-        self.probe_combobox.currentIndexChanged.connect(self.update_probe_graph)
 
         self.save_probe_button = QPushButton("Save Probe Data")
         self.save_probe_button.clicked.connect(lambda: self.save_probe_data())
@@ -258,7 +255,9 @@ class DLSWindow(QMainWindow):
 
     def start_probe_thread(self, shots = 10):
         self.probe_worker = ProbeThread(shots)
-        self.probe_worker.probe_update.connect(self.update_probe_graph, Qt.QueuedConnection)
+        self.probe_worker.probe_update.connect(self.update_probe_data, Qt.QueuedConnection)
+        
+       
         self.probe_worker.start()
 
     def stop_probe_thread(self):
@@ -324,16 +323,21 @@ class DLSWindow(QMainWindow):
         msgbox.exec()
 
     
-    @Slot(list, list)
-    def update_probe_graph(self, avg_list, med_list):
-        self.probe_avg_graph.clear()  # Clear the graph before plotting new data
-        self.probe_inputs_avg = avg_list
-        self.probe_inputs_med = med_list
+    @Slot(object, object)                          
+    def update_probe_data(self, avg_row, med_row):
+        self.probe_inputs_avg = avg_row
+        self.probe_inputs_med = med_row
+        self.redraw_probe_plot()             
+
+    @Slot(int)
+    def redraw_probe_plot(self, *_):
+        self.probe_avg_graph.clear()
         if self.probe_combobox.currentText() == "Average":
-            self.probe_avg_graph.plot(range(len(avg_list)), avg_list, pen='r')
-        elif self.probe_combobox.currentText() == "Median":
-            self.probe_avg_graph.plot(range(len(med_list)), med_list, pen='b')
-        pass
+            if self.probe_inputs_avg.size:
+                self.probe_avg_graph.plot(self.probe_inputs_avg, pen='r')
+        else:
+            if self.probe_inputs_med.size:
+                self.probe_avg_graph.plot(self.probe_inputs_med, pen='b')
 
     def save_probe_data(self):
         try:

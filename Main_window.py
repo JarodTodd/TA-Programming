@@ -22,7 +22,6 @@ class MainApp(QMainWindow):
         self.dls_window = DLSWindow()
         self.shot_delay_app = ShotDelayApp(self.dls_window)
         self.dA_window = dA_Window()
-        self.dls_window.probe_worker.dA_update.connect(self.dA_window.update_dA_graph,Qt.QueuedConnection)
 
         # Add tabs    
         self.tabs.addTab(self.shot_delay_app, "Shot Delay App")
@@ -42,7 +41,7 @@ if __name__ == "__main__":
     worker.parsed_content_signal.connect(main_app.shot_delay_app.ta_widgets.update_delay_stages, Qt.BlockingQueuedConnection)
     worker.plot_row_update.connect(main_app.shot_delay_app.ta_widgets.update_row, Qt.QueuedConnection)
     worker.measurement_data_updated.connect(main_app.shot_delay_app.update_graph, Qt.QueuedConnection)
-    worker.update_probe.connect(main_app.dls_window.update_probe_graph, Qt.QueuedConnection)
+    worker.update_probe.connect(main_app.dls_window.update_probe_data, Qt.QueuedConnection)
 
     worker.error_occurred.connect(main_app.shot_delay_app.show_error_message)
     
