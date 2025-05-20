@@ -36,4 +36,4 @@ def generate_timepoints(t_start, t_end, num_points, t0=0):
 
         times = log_post  
 
-generate_timepoints(-10, 3000, 2000)
+# generate_timepoints(-10, 3000, 2000)

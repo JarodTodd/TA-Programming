@@ -154,15 +154,19 @@ class Ui_Bottom_right(QObject):
 
 
     def on_start_button_clicked(self):
-        if not self.content:
-            self.show_error_message("No measurement steps defined. Please upload a file or enter values.")
-            return
-        self.trigger_worker_run.emit(
-            self.content,
-            self.stepping_order_box.currentText(),
-            self.integration_time_box.value(),
-            self.nos_box.value()
-        )
+        if self.tabWidget.currentIndex() == 0:
+            self.content = generate_timepoints(self.start_from_box.value(), self.finish_time_box.value(), self.steps_box.value())
+            self.trigger_worker_run.emit(self.content, self.stepping_order_box.currentText(), self.integration_time_box.value(), self.nos_box.value())
+        if self.tabWidget.currentIndex() == 1:
+            if not self.content:
+                self.show_error_message("No measurement steps defined. Please upload a file or enter values.")
+                return
+            self.trigger_worker_run.emit(
+                self.content,
+                self.stepping_order_box.currentText(),
+                self.integration_time_box.value(),
+                self.nos_box.value()
+            )
         print(f"Self.content = {self.content}")
 
 
@@ -210,12 +214,6 @@ class Ui_Bottom_right(QObject):
             # Update the last item to ('ps', value)
             self.content[-1] = ('ps', value)
             print(self.content[-1])
-
-    def start_button_press(self):
-        if self.tabWidget.currentIndex(0):
-            self.trigger_worker_run.emit(generate_timepoints(self.start_from_box.value(), self.finish_time_box.value(), self.integration_time_box.value()), self.stepping_order_box.currentText(), self.integration_time_box.value(), self.nos_box.value())
-        if self.tabWidget.currentIndex(1):
-            self.trigger_worker_run.emit(self.content, self.stepping_order_box.currentText(), self.integration_time_box.value(), self.nos_box.value())
             
     def show_error_message(self, error_message):
         msgbox = QMessageBox()
