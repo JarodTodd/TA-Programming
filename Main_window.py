@@ -29,7 +29,6 @@ class MainApp(QMainWindow):
         self.tabs.addTab(self.dA_window, "dA Window")
 
         self.dls_window.start_probe_thread()
-        self.dls_window.probe_worker.dA_update.connect(self.dA_window.update_dA_graph, Qt.QueuedConnection)
 
 if __name__ == "__main__":
     app = QApplication([])
@@ -38,6 +37,7 @@ if __name__ == "__main__":
     worker = Measurementworker("", "StartUp", 0, 0)
     output_signal = Signal(str)
 
+    main_app.dls_window.probe_worker.dA_update.connect(main_app.dA_window.update_dA_graph, Qt.QueuedConnection)
 
     worker.started.connect(main_app.dls_window.stop_probe_thread, Qt.QueuedConnection)
     worker.parsed_content_signal.connect(main_app.shot_delay_app.ta_widgets.update_delay_stages, Qt.BlockingQueuedConnection)

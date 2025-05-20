@@ -257,8 +257,8 @@ class DLSWindow(QMainWindow):
         if self.probe_worker is not None:
             return                              # already running
         self.probe_worker = ProbeThread(shots)
-        self.probe_worker.probe_update.connect(
-            self.update_probe_data, Qt.QueuedConnection)
+        self.probe_worker.probe_update.connect(self.update_probe_data, Qt.QueuedConnection)
+        self.probe_worker.dA_update.connect(self.update_dA_plot, Qt.QueuedConnection)
         self.probe_worker.start()
 
     def stop_probe_thread(self):
@@ -345,7 +345,8 @@ class DLSWindow(QMainWindow):
 
     @Slot(object, object)
     def update_dA_plot(self, avg_row, med_row):
-        self.parent().dA_window.update_dA_graph(avg_row, med_row)
+        self.window().dA_window.update_dA_graph(avg_row, med_row)
+
 
     def save_probe_data(self):
         try:
