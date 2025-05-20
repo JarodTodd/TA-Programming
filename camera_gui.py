@@ -281,7 +281,7 @@ class DLSWindow(QMainWindow):
         try:
             unit = self.delay_unit.currentText()
             value = float(self.delay_input.text())
-            current_bar_value = self.delay_bar.value()*1000  # In ps
+            current_bar_value = self.delay_bar.value()  # In ps
             print(current_bar_value)
             print(current_bar_value - value)
             if unit == "ns":
@@ -297,6 +297,7 @@ class DLSWindow(QMainWindow):
                 value_ns = value_ps / 1000  # Convert to ns for script
                 self.run_command_signal.emit(f"MoveRelative {value_ns}", "ButtonPress", 0, 0)
                 print(f"Emitting command: MoveRelative {value_ns}")
+                self.delay_bar.setValue(current_bar_value + value)
 
             else:
                 raise ValueError("Value is out of range.")
