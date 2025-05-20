@@ -23,8 +23,8 @@ class dA_Window(QWidget):
         main_layout = QHBoxLayout(Form)
 
         # Left vertical layout with spacer
-        left_layout = QVBoxLayout()
-        main_layout.addLayout(left_layout)
+        self.left_layout = QVBoxLayout()
+        main_layout.addLayout(self.left_layout)
 
         
 
@@ -44,12 +44,7 @@ class dA_Window(QWidget):
         self.dA_plot_combobox.addItems(["Average", "Median"])
         self.dA_plot_combobox.setCurrentText("Average")
         self.left_layout.addWidget(self.dA_plot_combobox)
-        if self.dA_plot_combobox.currentText() == "Average":
-            self.dA_plot.plot(range(len(self.dA_inputs_avg)), self.dA_inputs_avg, symbol='o', pen=None)
-        elif self.dA_plot_combobox.currentText() == "Median":
-            self.dA_plot.plot(range(len(self.dA_inputs_med)), self.dA_inputs_med, symbol='o', pen=None)
-
-        self.dA_plot_combobox.currentIndexChanged.connect(self.update_dA_graph)
+        self.dA_plot_combobox.currentIndexChanged.connect(self.redraw_dA_plot)
 
         # Save button
         self.save_data_button = QPushButton("Save Intensity Data")
@@ -71,7 +66,6 @@ class dA_Window(QWidget):
         self.verticalSlider = QSlider(Qt.Vertical)
         self.verticalSlider.setRange(0, 8627)
         self.verticalSlider.setInvertedAppearance(True)
-        self.verticalSlider.valuechanged.connect()
         right_layout.addWidget(self.verticalSlider)
 
         # Grid layout for controls
@@ -118,7 +112,7 @@ class dA_Window(QWidget):
         self.abs_pos_line.setText(f"{value}")
         self.rel_pos_line.setText(f"{0}")
 
-    @Slot(list, list)
+    @Slot(object, object)
     def update_dA_graph(self, avg_list, med_list):
         self.dA_plot.clear()  # Clear the graph before plotting new data
         self.probe_inputs_avg = avg_list
@@ -128,6 +122,10 @@ class dA_Window(QWidget):
         elif self.dA_plot_combobox.currentText() == "Median":
             self.dA_plot.plot(range(len(med_list)), med_list, pen='b')
         pass
+    @Slot()
+
+    def redraw_dA_plot(self):
+        self.update_dA_graph(self.probe_inputs_avg, self.probe_inputs_med)
 
 
 if __name__ == "__main__":
