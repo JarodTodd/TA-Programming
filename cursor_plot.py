@@ -5,15 +5,15 @@ from PySide6.QtCore import QObject, Qt
 
 class TAPlotWidget(QObject):
 
-    def __init__(self, delay_times, pixel_indexes, parent=None):
+    def __init__(self, delay_times, pixel_indices, parent=None):
         super().__init__(parent)
 
         # start data
         self.delay_times   = np.asarray(delay_times,  dtype=float)
-        self.pixel_indexes = np.asarray(pixel_indexes, dtype=int)
+        self.pixel_indices = np.asarray(pixel_indices, dtype=int)
 
-        self.delta_A_matrix_avg = np.zeros((self.delay_times.size, self.pixel_indexes.size))
-        self.delta_A_matrix_med = np.zeros((self.delay_times.size, self.pixel_indexes.size))
+        self.delta_A_matrix_avg = np.zeros((self.delay_times.size, self.pixel_indices.size))
+        self.delta_A_matrix_med = np.zeros((self.delay_times.size, self.pixel_indices.size))
         self.mode          = "avg"
         self.active_matrix = self.delta_A_matrix_avg
 
@@ -23,7 +23,7 @@ class TAPlotWidget(QObject):
         self.canvas_heatmap.setLabels(left="Delay / ps", bottom="Pixel index")
 
         # compute grid shape
-        self.X_edges = self.compute_edges(self.pixel_indexes)
+        self.X_edges = self.compute_edges(self.pixel_indices)
         self.Y_edges = self.compute_edges(self.delay_times)
         self.X_grid, self.Y_grid = np.meshgrid(self.X_edges, self.Y_edges)
 
@@ -113,7 +113,7 @@ class TAPlotWidget(QObject):
         self.delay_times = np.sort(np.asarray(parsed_content, dtype=float))
         self.delay_to_index = {float(d): i for i, d in enumerate(self.delay_times)}
 
-        nz = (self.delay_times.size, self.pixel_indexes.size)
+        nz = (self.delay_times.size, self.pixel_indices.size)
         self.delta_A_matrix_avg = np.zeros(nz)
         self.delta_A_matrix_med = np.zeros_like(self.delta_A_matrix_avg)
         self.active_matrix = (self.delta_A_matrix_avg if self.mode == "avg" else self.delta_A_matrix_med)
@@ -142,7 +142,7 @@ class TAPlotWidget(QObject):
 
     def update_secondary(self):
         pixel_idx = int(round(self.vline_heatmap.value()))
-        pixel_idx = int(np.clip(pixel_idx, self.pixel_indexes.min(), self.pixel_indexes.max())) # handles input out of bounds
+        pixel_idx = int(np.clip(pixel_idx, self.pixel_indices.min(), self.pixel_indices.max())) # handles input out of bounds
 
         delay_val = self.hline_heatmap.value()
         delay_idx = np.abs(self.delay_times - delay_val).argmin()
@@ -151,7 +151,7 @@ class TAPlotWidget(QObject):
         self.canvas_plot1.setTitle(f"pixel {pixel_idx}")
         self.vline_pl1.setValue(self.delay_times[delay_idx])
 
-        self.plot2.setData(self.pixel_indexes, self.active_matrix[delay_idx, :])
+        self.plot2.setData(self.pixel_indices, self.active_matrix[delay_idx, :])
         self.canvas_plot2.setTitle(f"delay {self.delay_times[delay_idx]:g}")
         self.vline_pl2.setValue(pixel_idx)
 
@@ -169,8 +169,8 @@ class TAPlotWidget(QObject):
         if self.mesh in self.canvas_heatmap.items():
             self.canvas_heatmap.removeItem(self.mesh)
 
-        # compute mesh in case size changed (in case delay times or pixel indexes change)
-        self.X_edges = self.compute_edges(self.pixel_indexes)
+        # compute mesh in case size changed (in case delay times or pixel indicespixel_indices change)
+        self.X_edges = self.compute_edges(self.pixel_indices)
         self.Y_edges = self.compute_edges(self.delay_times)
         self.X_grid, self.Y_grid = np.meshgrid(self.X_edges, self.Y_edges)
 
