@@ -275,6 +275,7 @@ class DLSWindow(QMainWindow):
     def start_probe_thread(self, shots = 10):
         self.probe_worker = ProbeThread(shots)
         self.probe_worker.probe_update.connect(self.update_probe_graph, Qt.QueuedConnection)
+        self.probe_worker.dA_update.connect(self.update_dA_graph, Qt.QueuedConnection)
         self.probe_worker.start()
 
     def stop_probe_thread(self):
@@ -341,6 +342,17 @@ class DLSWindow(QMainWindow):
     
     @Slot(list, list)
     def update_probe_graph(self, avg_list, med_list):
+        self.probe_avg_graph.clear()  # Clear the graph before plotting new data
+        self.probe_inputs_avg = avg_list
+        self.probe_inputs_med = med_list
+        if self.probe_combobox.currentText() == "Average":
+            self.probe_avg_graph.plot(range(len(avg_list)), avg_list, pen='r')
+        elif self.probe_combobox.currentText() == "Median":
+            self.probe_avg_graph.plot(range(len(med_list)), med_list, pen='b')
+        pass
+
+    @Slot(list, list)
+    def update_dA_graph(self, avg_list, med_list):
         self.probe_avg_graph.clear()  # Clear the graph before plotting new data
         self.probe_inputs_avg = avg_list
         self.probe_inputs_med = med_list
