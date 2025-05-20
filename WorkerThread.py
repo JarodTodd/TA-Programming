@@ -14,24 +14,27 @@ script_path = r"C:\Users\PC026453\Documents\TA-Programming\IronPythonDLS.py"
 
 class ProbeThread(QThread):
     probe_update = Signal(np.ndarray, np.ndarray)
+    dA_update = Signal(np.ndarray, np.ndarray)
 
     def __init__(self, shots = 10, parent: QObject | None = None):
         super().__init__(parent)
-        self.shots = 10
+        self.shots = 1000
         self.running = True
-        self.data_processor = ComputeData()
+        self.probe_processor = ComputeData()
+        self.dA_processor =  ComputeData()
     
     def run(self):
         while self.running:
             block_buffer = camera(self.shots, 0)
             block_2d_array = np.array(block_buffer).reshape(self.shots, 1088)
 
-            probe_avg, probe_med, _, _ = self.data_processor.delta_a_block(block_2d_array)
+            probe_avg, probe_med, dA_average, dA_median = self.probe_processor.delta_a_block(block_2d_array)
 
             if probe_avg == None or probe_med == None:
                 continue
 
             self.probe_update.emit(probe_avg[-1], probe_med[-1])
+            self.dA_update.emit(dA_average[-1], dA_median[-1])
     
     def stop(self):
         self.running = False

@@ -33,40 +33,87 @@ class ComputeData():
             block_2d_array = np.array(block_buffer).reshape(number_of_shots, 1088)
             self.blocks.append(block_2d_array)
 
-    def reject_outliers(self, block, percentage=50, range_start = 0, range_end = None):
+    def reject_outliers(self, block1, block2 = None, percentage=50, range_start = 0, range_end = None):
         """
         Returns an array that contains only the rows
         whose average lies inside the chosen percentage bound
         around the mean.
         """
+        if block2 == None:
+            if percentage >= 100:
+                return np.array(block1)
+            else:
+                block_region = block1[:,range_start:range_end]
 
-        if percentage >= 100:
-            return np.array(block)
-        if (range_end == None):
-            block_region = block
+            #Calculate overal average of the block
+            average = np.mean(block_region)
+
+            #Calculate the average of each row
+            row_sums = np.sum(block_region, axis=1)
+            row_averages = row_sums / len(block_region[0])
+
+            #Create a list with acceptable rows
+            allowed_deviation = (percentage / 100.0) * average
+            good_shots = []
+            for i, row in enumerate(block1):
+                if abs(row_averages[i] - average) <= allowed_deviation:
+                    good_shots.append(row)
+                # else:
+                #     print("bad spectra found", flush=True)
+
+            #Turn the list back into a NumPy array and return
+            clean_block = np.array(good_shots)
+
+            return clean_block
+        
         else:
-            block_region = block[:,range_start:range_end]
+            if percentage >= 100:
+                return np.array(block1), np.array(block2)
+            else:
+                block1_region = block1[:,range_start:range_end]
+                block2_region = block2[:,range_start:range_end]
 
-        #Calculate overal average of the block
-        average = np.mean(block_region)
+            #Calculate overal average
+            block1_average = np.mean(block1_region)
+            block2_average = np.mean(block2_region)
 
-        #Calculate the average of each row
-        row_sums = np.sum(block_region, axis=1)
-        row_averages = row_sums / len(block_region[0])
+            #Calculate the average of each row
+            block1_row_sums = np.sum(block1_region, axis=1)
+            block1_row_averages = block1_row_sums / len(block1_region[0])
 
-        #Create a list with acceptable rows
-        allowed_deviation = (percentage / 100.0) * average
-        good_shots = []
-        for i, row in enumerate(block):
-            if abs(row_averages[i] - average) <= allowed_deviation:
-                good_shots.append(row)
-            # else:
-            #     print("bad spectra found", flush=True)
+            block2_row_sums = np.sum(block2_region, axis=1)
+            block2_row_averages = block2_row_sums / len(block2_region[0])
 
-        #Turn the list back into a NumPy array and return
-        clean_block = np.array(good_shots)
+            #Allowed deviation
+            block1_allowed_deviation = (percentage / 100.0) * block1_average
+            block2_allowed_deviation = (percentage / 100.0) * block2_average
 
-        return clean_block
+            # Identify rejected row indices
+            block1_rejected_rows = []
+            for i, row in enumerate(block1):
+                if abs(block1_row_averages[i] - block1_average) <= block1_allowed_deviation:
+                    block1_rejected_rows.append(i)
+            block2_rejected_rows = []
+            for i, row in enumerate(block2):
+                if abs(block2_row_averages[i] - block2_average) <= block2_allowed_deviation:
+                   block2_rejected_rows.append(i)
+
+            # combined_rejected = list(set(block1_rejected_rows + block2_rejected_rows))
+
+            for item in block2_rejected_rows:
+                if item in range(len(block1)) and item not in block1_rejected_rows:
+                    block1_rejected_rows.append(item)
+            for item in block1_rejected_rows:
+                if item in range(len(block2)) and item not in block2_rejected_rows:
+                    block2_rejected_rows.append(item)
+
+            #Turn the list back into a NumPy array and return
+            block1_clean = np.delete(block1, block1_rejected_rows, axis=0)
+            block2_clean = np.delete(block2, block2_rejected_rows, axis=0)
+
+
+            return block1_clean, block2_clean
+
 
     def delta_a_block(self, block, start_pixel=12, end_pixel=1086, percentage = 110):
         #Boolean masks for pump state
@@ -75,8 +122,8 @@ class ComputeData():
         # print(len(pump_off), len(pump_off))
 
         if self.outlier_rejection == True:
-            pump_off = self.reject_outliers(pump_off, 110)
-            pump_on = self.reject_outliers(pump_on, 110)
+            pump_off = self.reject_outliers(pump_off, percentage=110)
+            pump_on = self.reject_outliers(pump_on, percentage=110)
 
             # print(len(pump_off), len(pump_on))
         
