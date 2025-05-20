@@ -6,7 +6,7 @@ import pyqtgraph as pg
 
 
 class dA_Window(QWidget):
-
+    run_command_signal = Signal(str, str, int, int)
     def __init__(self):
         super().__init__()
         self.t_0 = 0
@@ -31,8 +31,8 @@ class dA_Window(QWidget):
 
         #dA plot
         self.dA_plot = pg.PlotWidget()
-        self.dA_plot.setTitle("Intensity (counts)")
-        self.dA_plot.setLabel('left', 'Probe')
+        self.dA_plot.setTitle("dA Spectrum")
+        self.dA_plot.setLabel('left', 'Intensity (counts)')
         self.dA_plot.setLabel('bottom', 'Wavelength (nm)')
         self.dA_plot.setBackground('w')
         self.left_layout.addWidget(self.dA_plot)
@@ -98,14 +98,20 @@ class dA_Window(QWidget):
         self.t0_spinbox = QDoubleSpinBox()
         self.t0_spinbox.setRange(0, 8626.66)
         grid.addWidget(self.t0_spinbox, 5, 0)
-        self.setcurrentbutton = QPushButton("Set current")
-        grid.addWidget(self.setcurrentbutton, 6, 0)
+        self.set_current_button = QPushButton("Set current")
+        self.set_current_button.clicked.connect(lambda: self.set_current)
+        grid.addWidget(self.set_current_button, 6, 0)
         self.label_4 = QLabel("Current relative position, ps")
         self.label_4.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignBottom)
         grid.addWidget(self.label_4, 7, 0)
         self.rel_pos_line = QLineEdit()
         self.rel_pos_line.setEnabled(False)
         grid.addWidget(self.rel_pos_line, 8, 0)
+
+    def set_current(self):
+        self.run_command_signal.emit("SetReference", "ButtonPress", 0, 0)
+        self.t_0 = self.t0_spinbox.value()
+        self.rel_pos_line.setText("0")
 
     def update_slider(self, value):
         value = round(value, 2)
