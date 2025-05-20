@@ -28,12 +28,14 @@ class MainApp(QMainWindow):
         self.tabs.addTab(self.dls_window, "DLS Window")
         self.tabs.addTab(self.dA_window, "dA Window")
 
+        self.dls_window.start_probe_thread()
+        self.dls_window.probe_worker.dA_update.connect(self.dA_window.update_dA_graph, Qt.QueuedConnection)
+
 if __name__ == "__main__":
     app = QApplication([])
     main_app = MainApp()
     main_app.show()
     worker = Measurementworker("", "StartUp", 0, 0)
-    probe = ProbeThread()
     output_signal = Signal(str)
 
 
@@ -104,7 +106,9 @@ if __name__ == "__main__":
                 worker.process.waitForFinished()
 
         worker.stop()
-        probe.stop()
+        # stop the probe thread
+        main_app.dls_window.stop_probe_thread() 
+
         QCoreApplication.processEvents()
         print("Application exit cleanup complete.")
         app.aboutToQuit.disconnect(stop_worker)

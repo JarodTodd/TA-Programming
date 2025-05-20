@@ -9,7 +9,6 @@ import numpy as np
 from cursor_plot import TAPlotWidget
 from pyqtgraph.exporters import ImageExporter
 from PySide6 import QtCore
-from dAwindow import *
 
 
 class ShotDelayApp(QWidget):
@@ -168,9 +167,6 @@ class DLSWindow(QMainWindow):
         self.probe_inputs_avg = []
         self.probe_inputs_med = []
 
-        self.start_probe_thread()
-
-
         self.probe_combobox = QComboBox()
         self.probe_combobox.addItems(["Average", "Median"])
         self.probe_combobox.setCurrentText("Average")
@@ -252,16 +248,23 @@ class DLSWindow(QMainWindow):
         central_layout.addLayout(right_layout)
         central_widget.setLayout(central_layout)
 
-    def start_probe_thread(self, shots = 10):
+        self.probe_worker: ProbeThread | None = None
+
+    def start_probe_thread(self, shots: int = 10):
+        """Create and launch the single ProbeThread.  
+        Call this exactly once from MainApp after all tabs exist."""
+        if self.probe_worker is not None:
+            return                              # already running
         self.probe_worker = ProbeThread(shots)
-        self.probe_worker.probe_update.connect(self.update_probe_data, Qt.QueuedConnection)
-        
-       
+        self.probe_worker.probe_update.connect(
+            self.update_probe_data, Qt.QueuedConnection)
         self.probe_worker.start()
 
     def stop_probe_thread(self):
-        self.probe_worker.stop()
-        self.probe_worker.wait()
+        if self.probe_worker is not None:
+            self.probe_worker.stop()
+            self.probe_worker.wait()
+            self.probe_worker = None
 
     def LabelChange(self):
         selected = self.delay_unit.currentText()
@@ -336,6 +339,10 @@ class DLSWindow(QMainWindow):
         else:
             if self.probe_inputs_med.size:
                 self.probe_avg_graph.plot(self.probe_inputs_med, pen='b')
+
+    @Slot(object, object)
+    def update_dA_plot(self, avg_row, med_row):
+        self.parent().dA_window.update_dA_graph(avg_row, med_row)
 
     def save_probe_data(self):
         try:

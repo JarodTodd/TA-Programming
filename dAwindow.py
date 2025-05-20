@@ -45,7 +45,7 @@ class dA_Window(QWidget):
         self.dA_plot_combobox.addItems(["Average", "Median"])
         self.dA_plot_combobox.setCurrentText("Average")
         self.left_layout.addWidget(self.dA_plot_combobox)
-        self.dA_plot_combobox.currentIndexChanged.connect(self.redraw_dA_plot)
+        self.dA_plot_combobox.currentIndexChanged.connect(lambda _=0: self.redraw_dA_plot())
 
         # Save button
         self.save_data_button = QPushButton("Save Intensity Data")
@@ -120,20 +120,18 @@ class dA_Window(QWidget):
         self.abs_pos_line.setText(f"{value}")
         self.rel_pos_line.setText(f"{0}")
 
+    def redraw_dA_plot(self):
+        self.update_dA_graph(self.probe_inputs_avg, self.probe_inputs_med)
+
     @Slot(object, object)
     def update_dA_graph(self, avg_list, med_list):
-        self.dA_plot.clear()  # Clear the graph before plotting new data
+        self.dA_plot.clear()
         self.probe_inputs_avg = avg_list
         self.probe_inputs_med = med_list
         if self.dA_plot_combobox.currentText() == "Average":
             self.dA_plot.plot(range(len(avg_list)), avg_list, pen='r')
-        elif self.dA_plot_combobox.currentText() == "Median":
+        else:
             self.dA_plot.plot(range(len(med_list)), med_list, pen='b')
-        pass
-    @Slot()
-
-    def redraw_dA_plot(self):
-        self.update_dA_graph(self.probe_inputs_avg, self.probe_inputs_med)
 
 
 if __name__ == "__main__":
