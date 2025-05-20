@@ -288,7 +288,7 @@ class DLSWindow(QMainWindow):
 
             if 0 <= current_bar_value + value_ps <= 8672:
                 value_ns = value_ps / 1000  # Convert to ns for script
-                self.start_measurement(f"MoveRelative {value_ns}", "ButtonPress", 0, 0)
+                self.run_command_signal.emit(f"MoveRelative {value_ns}", "ButtonPress", 0, 0)
                 print(f"Emitting command: MoveRelative {value_ns}")
 
             else:
