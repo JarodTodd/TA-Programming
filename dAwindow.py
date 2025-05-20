@@ -9,9 +9,14 @@
 from PySide6.QtWidgets import *
 from PySide6.QtCore import *
 from PySide6.QtGui import *
+import pyqtgraph as pg
 
 
-class dA_Window(object):
+class dA_Window(QWidget):
+    def __init__(self, parent = None):
+        super().__init__(parent)
+        self.setupUi(self)
+
     def setupUi(self, Form):
         Form.setObjectName("Form")
         Form.resize(640, 623)
@@ -19,8 +24,36 @@ class dA_Window(object):
         self.horizontalLayout_3.setObjectName("horizontalLayout_3")
         self.verticalLayout = QVBoxLayout()
         self.verticalLayout.setObjectName("verticalLayout")
-        spacerItem = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
-        self.verticalLayout.addItem(spacerItem)
+        
+
+        #dA plot
+        self.dA_plot = pg.PlotWidget()
+        self.dA_plot.setTitle("Intensity (counts)")
+        self.dA_plot.setLabel('left', 'Probe')
+        self.dA_plot.setLabel('bottom', 'Wavelength (nm)')
+        self.dA_plot.setBackground('w')
+        self.verticalLayout.addWidget(self.dA_plot)
+
+        # Combo box for selecting Average or Median
+        self.dA_inputs_avg = []
+        self.dA_inputs_med = []
+
+        self.dA_plot_combobox = QComboBox()
+        self.dA_plot_combobox.addItems(["Average", "Median"])
+        self.dA_plot_combobox.setCurrentText("Average")
+        self.verticalLayout.addWidget(self.dA_plot_combobox)
+        if self.dA_plot_combobox.currentText() == "Average":
+            self.dA_plot.plot(range(len(self.dA_inputs_avg)), self.dA_inputs_avg, symbol='o', pen=None)
+        elif self.dA_plot_combobox.currentText() == "Median":
+            self.dA_plot.plot(range(len(self.dA_inputs_med)), self.dA_inputs_med, symbol='o', pen=None)
+
+        self.dA_plot_combobox.currentIndexChanged.connect(self.update_dA_graph)
+
+        # Save button
+        self.save_data_button = QPushButton("Save Intensity Data")
+        self.verticalLayout.addWidget(self.save_data_button)
+
+
         self.horizontalLayout_3.addLayout(self.verticalLayout)
         self.horizontalLayout = QHBoxLayout()
         self.horizontalLayout.setObjectName("horizontalLayout")
@@ -78,6 +111,17 @@ class dA_Window(object):
         self.label.setText(_translate("Form", "Move to target, ps"))
         self.label_3.setText(_translate("Form", "Time Zero, ps"))
         self.pushButton.setText(_translate("Form", "Set current"))
+
+    @Slot(list, list)
+    def update_dA_graph(self, avg_list, med_list):
+        self.dA_plot.clear()  # Clear the graph before plotting new data
+        self.probe_inputs_avg = avg_list
+        self.probe_inputs_med = med_list
+        if self.dA_plot_combobox.currentText() == "Average":
+            self.dA_plot.plot(range(len(avg_list)), avg_list, pen='r')
+        elif self.dA_plot_combobox.currentText() == "Median":
+            self.dA_plot.plot(range(len(med_list)), med_list, pen='b')
+        pass
 
 
 if __name__ == "__main__":
