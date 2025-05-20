@@ -4,6 +4,7 @@ from PySide6.QtGui import *
 import pyqtgraph as pg
 from WorkerThread import *
 from Bottomright import *
+from dAwindow import *
 import numpy as np                      
 from cursor_plot import TAPlotWidget
 from pyqtgraph.exporters import ImageExporter
@@ -19,6 +20,7 @@ class ShotDelayApp(QWidget):
         self.DLSWindow = dls_window
         self.worker = Measurementworker("", "", 0, 0)
         self.bottomright = Ui_Bottom_right()
+        self.dAwindow = dA_Window()
         self.setup_ui()
         self.worker.update_ref_signal.connect(self.update_t0, Qt.QueuedConnection)
         self.worker.update_delay_bar_signal.connect(self.update_progress_bar, Qt.QueuedConnection)
@@ -39,8 +41,8 @@ class ShotDelayApp(QWidget):
 
         # TAPlotWidget 
         delay_times   = np.array([0.0, 0.2, 0.5, 1.0])
-        pixel_indexes = np.arange(1074)
-        self.ta_widgets = TAPlotWidget(delay_times, pixel_indexes) 
+        pixel_indices = np.arange(1074)
+        self.ta_widgets = TAPlotWidget(delay_times, pixel_indices) 
         self.ta_widgets.canvas_heatmap.setBackground('w')
         self.ta_widgets.canvas_plot1.setBackground('w')
         self.ta_widgets.canvas_plot2.setBackground('w')
@@ -101,6 +103,8 @@ class ShotDelayApp(QWidget):
         print(f"Updating t_0 in UI: {t_0}")  # Debugging
         self.t_0 = round(t_0,2)
         self.bottomright.t0_line.setText(f"{t_0}")
+        self.dAwindow.t_0 = self.t_0
+        self.dAwindow.t0_spinbox.setValue(self.t_0)
 
 
 
