@@ -204,11 +204,16 @@ class Ui_Bottom_right(QObject):
                     self.start_from_box.setValue(self.content[0][1]*1000)
                 if self.content[0][0] in ['fs', 'femtosecond', 'femtoseconds']:
                     self.start_from_box.setValue(self.content[0][1]/1000)
+                if self.content[0][0] in ['ps', 'picosecond', 'picoseconds']:
+                    self.start_from_box.setValue(self.content[0][1])
 
                 if self.content[-1][0] in ['ns', 'nanosecond', 'nanoseconds']:
                     self.finish_time_box.setValue(self.content[-1][1]*1000)
                 if self.content[-1][0] in ['fs', 'femtosecond', 'femtoseconds']:
                     self.finish_time_box.setValue(self.content[-1][1]/1000)
+                if self.content[-1][0] in ['ps', 'picosecond', 'picoseconds']:
+                    self.finish_time_box.setValue(self.content[-1][1])         
+                               
             except Exception as e:
                 self.show_error_message(f"Failed to load file: {e}")
 

@@ -9,6 +9,7 @@ class dA_Window(QWidget):
 
     def __init__(self):
         super().__init__()
+        self.t_0 = 0
         self.setWindowTitle("Camera Interface")
 
         self.worker = Measurementworker("", "", 0, 0)
@@ -55,7 +56,7 @@ class dA_Window(QWidget):
 
         # Vertical slider
         slider_ticks = QVBoxLayout()
-        tick_values = list(range(0, 8627, 250))
+        tick_values = list(range(0, 8672, 250))
         for i in tick_values:
             label = QLabel(f"{i}-")
             label.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignTop)
@@ -64,8 +65,10 @@ class dA_Window(QWidget):
 
         right_layout.addLayout(slider_ticks)
         self.verticalSlider = QSlider(Qt.Vertical)
-        self.verticalSlider.setRange(0, 8627)
+        self.verticalSlider.setRange(0, 8672666)
+        self.verticalSlider.setSingleStep(0.01)
         self.verticalSlider.setInvertedAppearance(True)
+        self.verticalSlider.valueChanged.connect(lambda: self.update_abs_rel(self.verticalSlider.value()))
         right_layout.addWidget(self.verticalSlider)
 
         # Grid layout for controls
@@ -101,13 +104,18 @@ class dA_Window(QWidget):
 
     def update_slider(self, value):
         value = round(value, 2)
-        self.verticalSlider.setValue(value)
+        self.verticalSlider.setValue(value*1000)
         self.abs_pos_line.setText(f"{value}")
         self.rel_pos_line.setText(f"{0}")
 
+    def update_abs_rel(self, value):
+        value = round(value/1000, 2)
+        self.abs_pos_line.setText(str(value))
+        self.rel_pos_line.setText(str(value - self.t_0))
+
     def update_time_zero(self, value):
         value = round(value, 2)
-        self.verticalSlider.setValue(value)
+        self.verticalSlider.setValue(value*1000)
         self.t0_spinbox.setValue(value)
         self.abs_pos_line.setText(f"{value}")
         self.rel_pos_line.setText(f"{0}")
