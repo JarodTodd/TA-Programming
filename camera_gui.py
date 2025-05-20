@@ -96,7 +96,8 @@ class ShotDelayApp(QWidget):
     def update_progress_bar(self, value):
         """Update the local progress bar with the value from DLSWindow."""
         print("Updating progress bar with value:", value)
-        self.bottomright.current_delay.setText(f"{value}")
+        self.bottomright.current_delay.setText(f"{round(value, 2)}")
+        self.dAwindow.verticalSlider.setValue(round(value*1000, 2))
 
     def update_t0(self, t_0):
         """Update the t_0 value."""
@@ -159,8 +160,8 @@ class DLSWindow(QMainWindow):
         left_layout = QVBoxLayout()
         self.probe_avg_graph = pg.PlotWidget()
         left_layout.addWidget(self.probe_avg_graph)
-        self.probe_avg_graph.setTitle("Intensity (counts)")
-        self.probe_avg_graph.setLabel('left', 'Probe')
+        self.probe_avg_graph.setTitle("Probe")
+        self.probe_avg_graph.setLabel('left', 'Intensity (counts)')
         self.probe_avg_graph.setLabel('bottom', 'Wavelength (nm)')
         self.probe_avg_graph.setBackground('w')
 
@@ -203,7 +204,7 @@ class DLSWindow(QMainWindow):
         hbox2 = QHBoxLayout()
         self.delay_input = QLineEdit()
         self.delay_input.setPlaceholderText("Enter delay time")
-        self.delay_input.setValidator(QDoubleValidator(-8672000.0, 8672000.0, 20, self))
+        self.delay_input.setValidator(QDoubleValidator(-8672666.0, 8672666.0, 20, self))
         self.delay_input.validator().setLocale(QLocale(QLocale.C))
         self.delay_input.returnPressed.connect(self.Submitted)
 
@@ -281,7 +282,8 @@ class DLSWindow(QMainWindow):
             unit = self.delay_unit.currentText()
             value = float(self.delay_input.text())
             current_bar_value = self.delay_bar.value()*1000  # In ps
-
+            print(current_bar_value)
+            print(current_bar_value - value)
             if unit == "ns":
                 value_ps = value * 1000
             elif unit == "ps":
