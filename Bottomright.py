@@ -33,18 +33,18 @@ class Ui_Bottom_right(QObject):
         self.step_option_box = QComboBox()
         self.step_option_box.addItems(["Exponential", "Linear"])
         grid = QGridLayout()
-        self.start_spin = QDoubleSpinBox()
-        self.start_spin.setRange(-8672.66, 8672.66)
-        self.finish_spin = QDoubleSpinBox()
-        self.finish_spin.setRange(-8672.66, 8672.66)
+        self.exponential_start = QDoubleSpinBox()
+        self.exponential_start.setRange(-8672.66, 8672.66)
+        self.exponential_finish = QDoubleSpinBox()
+        self.exponential_finish.setRange(-8672.66, 8672.66)
         self.steps_box = QSpinBox()
         self.steps_box.setMaximum(999999)
         self.steps_box.setValue(100)
 
         grid.addWidget(QLabel("Start from, ps:"), 0, 0)
-        grid.addWidget(self.start_spin, 0, 1)
+        grid.addWidget(self.exponential_start, 0, 1)
         grid.addWidget(QLabel("Finish time, ps:"), 1, 0)
-        grid.addWidget(self.finish_spin, 1, 1)
+        grid.addWidget(self.exponential_finish, 1, 1)
         grid.addWidget(QLabel("Number of steps:"), 2, 0)
         grid.addWidget(self.steps_box, 2, 1)
 
@@ -111,7 +111,11 @@ class Ui_Bottom_right(QObject):
 
         self.nos_box.valueChanged.connect(lambda: self.total_steps.setText(f"{self.nos_box.value()*len(self.content)}"))
         self.start_from_box.valueChanged.connect(lambda: self.update_start_from_content(self.start_from_box.value()))
+        self.start_from_box.valueChanged.connect(lambda: self.exponential_start.setValue(self.start_from_box.value()))
+        self.exponential_start.valueChanged.connect(lambda: self.start_from_box.setValue(self.exponential_start.value()))
         self.finish_time_box.valueChanged.connect(lambda: self.update_finish_time_content(self.finish_time_box.value()))
+        self.exponential_finish.valueChanged.connect(lambda: self.finish_time_box.setValue(self.exponential_finish.value()))
+        self.tabWidget.currentChanged.connect(lambda: self.on_tab_change())
 
     def _add_label_input(self, layout, label_text, widget, row):
         label = QLabel(label_text)
@@ -121,6 +125,7 @@ class Ui_Bottom_right(QObject):
         if isinstance(widget, QDoubleSpinBox):
             widget.setDecimals(2)
             widget.setRange(-8672.66, 8672.66)
+            widget.setEnabled(False)
 
         elif isinstance(widget, QSpinBox):
             widget.setMinimum(1)
@@ -155,8 +160,12 @@ class Ui_Bottom_right(QObject):
 
     def on_start_button_clicked(self):
         if self.tabWidget.currentIndex() == 0:
-            self.content = generate_timepoints(self.start_from_box.value(), self.finish_time_box.value(), self.steps_box.value())
-            self.trigger_worker_run.emit(self.content, self.stepping_order_box.currentText(), self.integration_time_box.value(), self.nos_box.value())
+            try:
+                if self.start_from_box.value() != self.finish_time_box.value():
+                    self.content = generate_timepoints(self.start_from_box.value(), self.finish_time_box.value(), self.steps_box.value())
+                    self.trigger_worker_run.emit(self.content, self.stepping_order_box.currentText(), self.integration_time_box.value(), self.nos_box.value())
+            except Exception as e:
+                self.show_error_message(f"Start and end time are the same.")
         if self.tabWidget.currentIndex() == 1:
             if not self.content:
                 self.show_error_message("No measurement steps defined. Please upload a file or enter values.")
@@ -214,6 +223,14 @@ class Ui_Bottom_right(QObject):
             # Update the last item to ('ps', value)
             self.content[-1] = ('ps', value)
             print(self.content[-1])
+
+    def on_tab_change(self):
+        if self.tabWidget.currentIndex() == 0:
+            self.start_from_box.setEnabled(False)
+            self.finish_time_box.setEnabled(False)
+        elif self.tabWidget.currentIndex() == 1:
+            self.start_from_box.setEnabled(True)
+            self.finish_time_box.setEnabled(True)
             
     def show_error_message(self, error_message):
         msgbox = QMessageBox()

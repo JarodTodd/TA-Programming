@@ -4,6 +4,7 @@ from PySide6.QtCore import *
 from PySide6.QtGui import *
 from WorkerThread import *
 from camera_gui import *
+from dAwindow import *
 
 ironpython_executable = r"C:\Users\PC026453\Documents\TA-Programming\IronPython 3.4\ipy.exe"
 script_path = r"C:\Users\PC026453\Documents\TA-Programming\IronPythonDLS.py"
@@ -20,10 +21,12 @@ class MainApp(QMainWindow):
         self.setCentralWidget(self.tabs)
         self.dls_window = DLSWindow()
         self.shot_delay_app = ShotDelayApp(self.dls_window)
+        self.dA_window = dA_Window()
 
         # Add tabs    
         self.tabs.addTab(self.shot_delay_app, "Shot Delay App")
         self.tabs.addTab(self.dls_window, "DLS Window")
+        self.tabs.addTab(self.dA_window, "dA Window")
 
 
 if __name__ == "__main__":

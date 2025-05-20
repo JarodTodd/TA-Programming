@@ -26,7 +26,7 @@ def generate_timepoints(t_start, t_end, num_points, t0=0):
             False
             timepoints = np.concatenate((pre_dense, new_list))
             timepoints.sort()
-            timepoints = [f"{value} ps" for value in timepoints]
+            timepoints = [("ps", value) for value in timepoints]
             print(timepoints)
             np.savetxt("time_points.txt", timepoints, fmt="%s")
             return timepoints
