@@ -76,27 +76,6 @@ class ShotDelayApp(QWidget):
         # Status label
         self.status_label = QLabel("", alignment=Qt.AlignCenter)
 
-
-        hbox = QHBoxLayout()
-        # Progress bar with tick labels
-        self.progress_bar = QSlider(Qt.Vertical, tickInterval=250, singleStep=250, tickPosition=QSlider.TicksLeft)
-        self.progress_bar.setRange(0, 8672)
-        self.progress_bar.valueChanged.connect(self.update_progress_bar)
-
-        slider_layout = QHBoxLayout()
-        tick_labels_layout = QVBoxLayout()
-        for value in reversed(range(0, 8672, 250)):
-            tick_labels_layout.addWidget(QLabel(str(value), alignment=Qt.AlignRight | Qt.AlignVCenter))
-        slider_layout.addLayout(tick_labels_layout)
-        slider_layout.addWidget(self.progress_bar)
-
-        # Create a vertical layout for the slider and add it to the hbox
-        slider_vbox = QVBoxLayout()
-        slider_vbox.addLayout(slider_layout)
-        hbox.addLayout(slider_vbox)
-
-
-
         # Add widgets to bottom-right layout
         bottom_right_layout.addLayout(self.form_layout)
         bottom_right_layout.addWidget(self.status_label)
