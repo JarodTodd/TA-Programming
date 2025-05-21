@@ -79,7 +79,7 @@ def	camera(number_of_shots, delay_number):
 	# You can find a description of all settings here: https://entwicklungsburo-stresing.github.io/structmeasurement__settings.html
 	settings.board_sel = 1
 	settings.nos = number_of_shots
-	settings.nob = 1
+	settings.nob = 2
 	settings.camera_settings[drvno].sti_mode = 1
 	settings.camera_settings[drvno].bti_mode = 4
 	settings.camera_settings[drvno].SENSOR_TYPE = 4
@@ -170,7 +170,7 @@ def	camera(number_of_shots, delay_number):
 	# This block is showing you how to get all data of one frame with one DLL call
 	block_buffer = (c_uint16 * (settings.camera_settings[drvno].PIXEL * settings.nos * settings.camera_settings[drvno].CAMCNT))(0)
 	ptr_block_buffer = pointer(block_buffer)
-	status = dll.DLLCopyOneBlock(drvno, 0, ptr_block_buffer)
+	status = dll.DLLCopyOneBlock(drvno, 1, ptr_block_buffer)
 	if(status != 0):
 		raise BaseException(dll.DLLConvertErrorCodeToMsg(status))
 	
