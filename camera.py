@@ -79,7 +79,7 @@ def	camera(number_of_shots, delay_number):
 	# You can find a description of all settings here: https://entwicklungsburo-stresing.github.io/structmeasurement__settings.html
 	settings.board_sel = 1
 	settings.nos = number_of_shots
-	settings.nob = 1
+	settings.nob = 2
 	settings.camera_settings[drvno].sti_mode = 1
 	settings.camera_settings[drvno].bti_mode = 4
 	settings.camera_settings[drvno].SENSOR_TYPE = 4
@@ -170,34 +170,34 @@ def	camera(number_of_shots, delay_number):
 	# This block is showing you how to get all data of one frame with one DLL call
 	block_buffer = (c_uint16 * (settings.camera_settings[drvno].PIXEL * settings.nos * settings.camera_settings[drvno].CAMCNT))(0)
 	ptr_block_buffer = pointer(block_buffer)
-	status = dll.DLLCopyOneBlock(drvno, 0, ptr_block_buffer)
+	status = dll.DLLCopyOneBlock(drvno, 1, ptr_block_buffer)
 	if(status != 0):
 		raise BaseException(dll.DLLConvertErrorCodeToMsg(status))
 	
-	# with open(f"camera_output{delay_number}.csv", mode="w", newline="") as file:
-	# 	writer = csv.writer(file)
+	with open(f"camera_output{delay_number}.csv", mode="w", newline="") as file:
+		writer = csv.writer(file)
 
-	# 	# Write header
-	# 	header = [f"pixel_{i}" for i in range(settings.camera_settings[drvno].PIXEL)]
-	# 	writer.writerow(header)
+		# Write header
+		header = [f"pixel_{i}" for i in range(settings.camera_settings[drvno].PIXEL)]
+		writer.writerow(header)
 
-	# 	# Write scan rows
-	# 	for scan_idx in range(settings.nos):
-	# 		start = scan_idx * settings.camera_settings[drvno].PIXEL
-	# 		scan_row = block_buffer[start:start + settings.camera_settings[drvno].PIXEL]
-	# 		if (scan_row[2] == 0):
-	# 			scan_row[2] = "OFF/OFF"
-	# 		elif (scan_row[2] == 16384):
-	# 			scan_row[2] = "OFF/ON"
-	# 		elif (scan_row[2] == 32768):
-	# 			scan_row[2] = "ON/OFF"
-	# 		elif (scan_row[2] == 49152):
-	# 			scan_row[2] = "ON/ON"
-	# 		else:
-	# 			print("Unexpected value")
-	# 		writer.writerow(scan_row)
+		# Write scan rows
+		for scan_idx in range(settings.nos):
+			start = scan_idx * settings.camera_settings[drvno].PIXEL
+			scan_row = block_buffer[start:start + settings.camera_settings[drvno].PIXEL]
+			if (scan_row[2] == 0):
+				scan_row[2] = "OFF/OFF"
+			elif (scan_row[2] == 16384):
+				scan_row[2] = "OFF/ON"
+			elif (scan_row[2] == 32768):
+				scan_row[2] = "ON/OFF"
+			elif (scan_row[2] == 49152):
+				scan_row[2] = "ON/ON"
+			else:
+				print("Unexpected value")
+			writer.writerow(scan_row)
 
-	# print(f"Data exported to camera_output{delay_number}.csv")
+	print(f"Data exported to camera_output{delay_number}.csv")
 
 	# This block is showing you how to get all data of the whole measurement with one DLL call
 	# data_buffer = (c_uint16 * (settings.PIXEL * settings.nos * settings.CAMCNT * settings.nob))(0)

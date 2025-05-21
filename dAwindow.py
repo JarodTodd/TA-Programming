@@ -122,17 +122,20 @@ class dA_Window(QWidget):
         self.abs_pos_line.setText(str(value))
         self.rel_pos_line.setText(str(value - self.t_0))
 
-    @Slot(object, object)
-    def update_dA_graph(self, avg_list, med_list):
-        self.dA_plot.clear()  # Clear the graph before plotting new data
-        self.probe_inputs_avg = avg_list
-        self.probe_inputs_med = med_list
-        self.dA_plot.plot(range(len(avg_list)), avg_list, pen='r')
-        pass
-    @Slot()
 
     def redraw_dA_plot(self):
-        self.update_dA_graph(self.probe_inputs_avg, self.probe_inputs_med)
+        self.update_dA_graph(self.dA_inputs_avg, self.dA_inputs_med)
+
+    @Slot(object, object)
+    def update_dA_graph(self, avg_list, med_list):
+        self.dA_inputs_avg = avg_list
+        self.dA_inputs_med = med_list
+        self.dA_plot.clear()
+        if self.dA_plot_combobox.currentText() == "Average":
+            self.dA_plot.plot(range(len(avg_list)), avg_list, pen='r')
+        else:
+            self.dA_plot.plot(range(len(med_list)), med_list, pen='b')
+
 
 
 if __name__ == "__main__":
