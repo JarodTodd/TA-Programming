@@ -12,10 +12,15 @@ class dA_Window(QWidget):
         self.t_0 = 0
         self.setWindowTitle("Camera Interface")
 
-        self.worker = Measurementworker("", "", 0, 0)
         self.setupUi(self)
-        self.worker.update_ref_signal.connect(self.update_time_zero, Qt.QueuedConnection)
-        self.worker.update_delay_bar_signal.connect(self.update_slider, Qt.QueuedConnection)
+        for child in self.findChildren(QWidget):
+            child.installEventFilter(self)
+
+        # This timer makes sure the WorkerThread doesn't get too many commands in a short amount of time
+        self.slider_timer = QTimer(self)
+        self.slider_timer.setInterval(300)
+        self.slider_timer.setSingleShot(True)
+        self.slider_timer.timeout.connect(self.emit_slider_signal)
 
 
     def setupUi(self, Form):
@@ -26,8 +31,6 @@ class dA_Window(QWidget):
         # Left vertical layout with spacer
         self.left_layout = QVBoxLayout()
         main_layout.addLayout(self.left_layout)
-
-        
 
         #dA plot
         self.dA_plot = pg.PlotWidget()
@@ -41,12 +44,6 @@ class dA_Window(QWidget):
         self.dA_inputs_avg = []
         self.dA_inputs_med = []
 
-        self.dA_plot_combobox = QComboBox()
-        self.dA_plot_combobox.addItems(["Average", "Median"])
-        self.dA_plot_combobox.setCurrentText("Average")
-        self.left_layout.addWidget(self.dA_plot_combobox)
-        self.dA_plot_combobox.currentIndexChanged.connect(self.redraw_dA_plot)
-
         # Save button
         self.save_data_button = QPushButton("Save Intensity Data")
         self.left_layout.addWidget(self.save_data_button)
@@ -54,87 +51,83 @@ class dA_Window(QWidget):
         right_layout = QHBoxLayout()
         main_layout.addLayout(right_layout)
 
-        # Vertical slider
-        slider_ticks = QVBoxLayout()
-        tick_values = list(range(0, 8672, 250))
-        for i in tick_values:
-            label = QLabel(f"{i}-")
-            label.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignTop)
-            label.setFixedHeight(22)
-            slider_ticks.addWidget(label)
 
-        right_layout.addLayout(slider_ticks)
         self.verticalSlider = QSlider(Qt.Vertical)
         self.verticalSlider.setRange(0, 8672666)
         self.verticalSlider.setSingleStep(0.01)
+        self.verticalSlider.setTickInterval(250000)
+        self.verticalSlider.setTickPosition(QSlider.TicksLeft)
         self.verticalSlider.setInvertedAppearance(True)
-        self.verticalSlider.valueChanged.connect(lambda: self.update_abs_rel(self.verticalSlider.value()))
+        self.verticalSlider.valueChanged.connect(self.on_slider_change)
         right_layout.addWidget(self.verticalSlider)
 
         # Grid layout for controls
-        grid = QGridLayout()
-        right_layout.addLayout(grid)
+        vbox = QVBoxLayout()
+        right_layout.addLayout(vbox)
 
         self.label = QLabel("Move to target, ps")
         self.label.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignBottom)
-        grid.addWidget(self.label, 0, 0)
+        vbox.addWidget(self.label)
         self.move_target_box = QDoubleSpinBox()
         self.move_target_box.setRange(-8626.66, 8626.66)
-        grid.addWidget(self.move_target_box, 1, 0)
+        vbox.addWidget(self.move_target_box)
         self.label_2 = QLabel("Current absolute position, ps")
         self.label_2.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignBottom)
-        grid.addWidget(self.label_2, 2, 0)
+        vbox.addWidget(self.label_2)
         self.abs_pos_line = QLineEdit()
         self.abs_pos_line.setEnabled(False)
-        grid.addWidget(self.abs_pos_line, 3, 0)
+        vbox.addWidget(self.abs_pos_line)
         self.label_3 = QLabel("Time Zero, ps")
         self.label_3.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignBottom)
-        grid.addWidget(self.label_3, 4, 0)
+        vbox.addWidget(self.label_3)
         self.t0_spinbox = QDoubleSpinBox()
         self.t0_spinbox.setRange(0, 8626.66)
-        grid.addWidget(self.t0_spinbox, 5, 0)
+        vbox.addWidget(self.t0_spinbox)
         self.set_current_button = QPushButton("Set current")
-        self.set_current_button.clicked.connect(lambda: self.set_current)
-        grid.addWidget(self.set_current_button, 6, 0)
+        self.set_current_button.clicked.connect(self.set_current)
+        vbox.addWidget(self.set_current_button)
         self.label_4 = QLabel("Current relative position, ps")
         self.label_4.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignBottom)
-        grid.addWidget(self.label_4, 7, 0)
+        vbox.addWidget(self.label_4)
         self.rel_pos_line = QLineEdit()
         self.rel_pos_line.setEnabled(False)
-        grid.addWidget(self.rel_pos_line, 8, 0)
+        vbox.addWidget(self.rel_pos_line)
 
     def set_current(self):
         self.run_command_signal.emit("SetReference", "ButtonPress", 0, 0)
         self.t_0 = self.t0_spinbox.value()
         self.rel_pos_line.setText("0")
 
-    def update_slider(self, value):
-        value = round(value, 2)
-        self.verticalSlider.setValue(value*1000)
-        self.abs_pos_line.setText(f"{value}")
-        self.rel_pos_line.setText(f"{0}")
+    def eventFilter(self, obj, event):
+        if event.type() == QEvent.KeyPress:
+            if event.key() == Qt.Key_Up:
+                self.verticalSlider.setValue(self.verticalSlider.value() + 1000)
+                return True
+            elif event.key() == Qt.Key_Down:
+                self.verticalSlider.setValue(self.verticalSlider.value() - 1000)
+                return True
+        return super().eventFilter(obj, event)
+    
+    def on_slider_change(self, value):
+        self.update_abs_rel(value)
+        self.slider_timer.start()
+
+    def emit_slider_signal(self):
+        value = self.verticalSlider.value()
+        print(f"emitting now: {value}")
+        self.run_command_signal.emit(f"MoveRelative {value/1000:.3f}", "ButtonPress", 0, 0)
 
     def update_abs_rel(self, value):
         value = round(value/1000, 2)
         self.abs_pos_line.setText(str(value))
         self.rel_pos_line.setText(str(value - self.t_0))
 
-    def update_time_zero(self, value):
-        value = round(value, 2)
-        self.verticalSlider.setValue(value*1000)
-        self.t0_spinbox.setValue(value)
-        self.abs_pos_line.setText(f"{value}")
-        self.rel_pos_line.setText(f"{0}")
-
     @Slot(object, object)
     def update_dA_graph(self, avg_list, med_list):
         self.dA_plot.clear()  # Clear the graph before plotting new data
         self.probe_inputs_avg = avg_list
         self.probe_inputs_med = med_list
-        if self.dA_plot_combobox.currentText() == "Average":
-            self.dA_plot.plot(range(len(avg_list)), avg_list, pen='r')
-        elif self.dA_plot_combobox.currentText() == "Median":
-            self.dA_plot.plot(range(len(med_list)), med_list, pen='b')
+        self.dA_plot.plot(range(len(avg_list)), avg_list, pen='r')
         pass
     @Slot()
 

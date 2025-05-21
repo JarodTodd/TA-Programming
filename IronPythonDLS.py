@@ -37,7 +37,7 @@ def StartUp():
 def MoveAbsolute(delay):
     state = myDLS.TS()[3]
     if state in ["46", "47", "48", "49"]:
-        position = (delay * 10**-6) * c / 8
+        position = (delay * 10**-9) * c / 8
         myDLS.PA_Set(position)
         print(f"Moved to absolute position: {myDLS.PA_Get()[1]} mm")
     else:
@@ -46,9 +46,9 @@ def MoveAbsolute(delay):
 def MoveRelative(delay):
     state = myDLS.TS()[3]
     if state in ["46", "47", "48", "49"]:
-        position = (delay * 10**-6) * c / 8
+        position = (delay * 10**-9) * c / 8
         myDLS.PR_Set(position)
-        new_position = myDLS.PA_Get()[1] * 1000000 * 8 / c
+        new_position = myDLS.PA_Get()[1] * 10**9 * 8 / c
         print(f"Moved to relative position: {new_position} ps")
     else:
         sys.stderr.write("Controller is not in the correct state to move.\n")
@@ -70,24 +70,24 @@ def SetReference():
     print(f"Reference position set to: {position} mm")
 
 def GetReference():
-    reference = myDLS.RF_Get()[1] * 1000000 * 8 / c
+    reference = myDLS.RF_Get()[1] * 10**9 * 8 / c
     print(f"Reference position: {reference} ps")
     return reference
 
 def GoToReference():
     reference = myDLS.RF_Get()[1]
     myDLS.PA_Set(reference)
-    position = myDLS.PA_Get()[1] * 1000000 * 8 / c
+    position = myDLS.PA_Get()[1] * 10**9 * 8 / c
     print(f"Moved to reference position: {position} ps")
 
 def GetPosition():
-    position = myDLS.PA_Get()[1] * 1000000 * 8 / c
+    position = myDLS.PA_Get()[1] * 10**9 * 8 / c
     print(f"Current position: {position} ps")
     return position
 
 def StartGUI(): 
-    position = myDLS.PA_Get()[1] * 1000000 * 8 / c
-    reference = myDLS.RF_Get()[1] * 1000000 * 8 / c
+    position = myDLS.PA_Get()[1] * 10**9 * 8 / c
+    reference = myDLS.RF_Get()[1] * 10**9 * 8 / c
     print(f"Starting GUI with position: {position} ps and reference: {reference} ps")
     return position, reference
 

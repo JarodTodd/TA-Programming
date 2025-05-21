@@ -148,8 +148,8 @@ class Measurementworker(QThread):
 
         if round(ref, 3) != round(position, 3):
             self.move_to_reference(ref)
-        self.barvalue = ref * 1000
-        self.update_delay_bar_signal.emit(ref * 1000)
+        self.barvalue = ref
+        self.update_delay_bar_signal.emit(ref)
         for i in range(0, scans):
             for item in content:
                 if item == content[0]:

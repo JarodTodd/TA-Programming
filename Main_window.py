@@ -1,4 +1,3 @@
-import sys
 from PySide6.QtWidgets import *
 from PySide6.QtCore import *
 from PySide6.QtGui import *
@@ -42,11 +41,8 @@ if __name__ == "__main__":
     worker.plot_row_update.connect(main_app.shot_delay_app.ta_widgets.update_row, Qt.QueuedConnection)
     worker.measurement_data_updated.connect(main_app.shot_delay_app.update_graph, Qt.QueuedConnection)
     worker.update_probe.connect(main_app.dls_window.update_probe_data, Qt.QueuedConnection)
-
     worker.error_occurred.connect(main_app.shot_delay_app.show_error_message)
-    
-    worker.error_occurred.connect(main_app.dls_window.show_error_message)  # Optional error handler
-    worker.update_delay_bar_signal.connect(main_app.shot_delay_app.update_progress_bar)
+    worker.update_delay_bar_signal.connect(main_app.shot_delay_app.update_current_delay)
     worker.update_delay_bar_signal.connect(main_app.dls_window.update_delay_bar)
 
     worker.finished.connect(main_app.dls_window.start_probe_thread, Qt.QueuedConnection)

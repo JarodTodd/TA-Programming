@@ -24,7 +24,7 @@ class ShotDelayApp(QWidget):
         self.dAwindow = dA_Window()
         self.setup_ui()
         self.worker.update_ref_signal.connect(self.update_t0, Qt.QueuedConnection)
-        self.worker.update_delay_bar_signal.connect(self.update_progress_bar, Qt.QueuedConnection)
+        self.worker.update_delay_bar_signal.connect(self.update_current_delay, Qt.QueuedConnection)
         
 
     def setup_ui(self):
@@ -34,12 +34,6 @@ class ShotDelayApp(QWidget):
         # Main layout as a grid
         self.grid_layout = QGridLayout()
 
-        # Bottom-righ quarter layout
-        top_left_layout = QVBoxLayout()
-        top_right_layout = QVBoxLayout()
-        bottom_left_layout = QVBoxLayout()
-        
-
         # TAPlotWidget 
         delay_times   = np.array([0.0, 0.2, 0.5, 1.0])
         pixel_indices = np.arange(1074)
@@ -48,57 +42,34 @@ class ShotDelayApp(QWidget):
         self.ta_widgets.canvas_plot1.setBackground('w')
         self.ta_widgets.canvas_plot2.setBackground('w')
 
-        # Add plots to the layout
-        top_left_layout.addWidget(self.ta_widgets.canvas_heatmap)
-        top_right_layout.addWidget(self.ta_widgets.canvas_plot1)
-        bottom_left_layout.addWidget(self.ta_widgets.canvas_plot2)
         self.delaytimes = []
         self.dA_inputs_avg = []
         self.dA_inputs_med = []
 
-
-        self.dA_Combobox = QComboBox()
-        self.dA_Combobox.addItems(["Average", "Median"])
-        self.dA_Combobox.setCurrentText("Average")
-        self.dA_Combobox.currentIndexChanged.connect(self.avg_med_toggle)
-        top_left_layout.addWidget(self.dA_Combobox)
-        self.dA_Combobox.currentTextChanged.connect(lambda txt: self.ta_widgets.set_mode("avg" if txt == "Average" else "med"))
-        # if self.dA_Combobox.currentText() == "Average":
-        #     self.dA_avg_graph.plot(self.delaytimes, self.dA_inputs_avg, symbol='o', pen=None)
-        # elif self.dA_Combobox.currentText() == "Median":
-        #     self.dA_avg_graph.plot(self.delaytimes, self.dA_inputs_med, symbol='o', pen=None)
-
-        # Simplified setup for bottom-right layout and widgets
+        # Adding interaction elements to GUI
         bottom_right_layout = QVBoxLayout()
-
-        # Form layout for shots input
-        self.form_layout = QFormLayout()
-        self.shots_input = QLineEdit(placeholderText="Enter number of shots")
-        self.form_layout.addRow("Number of Shots:", self.shots_input)
-
-        # Status label
-        self.status_label = QLabel("", alignment=Qt.AlignCenter)
-
-        # Add widgets to bottom-right layout
-        bottom_right_layout.addLayout(self.form_layout)
-        bottom_right_layout.addWidget(self.status_label)
+        # bottom_right_layout.addLayout(self.form_layout)
+        # bottom_right_layout.addWidget(self.status_label)
         self.bottomright_widget = QWidget()
         self.bottomright = Ui_Bottom_right()
         self.bottomright.setupUi(self.bottomright_widget)
         bottom_right_layout.addWidget(self.bottomright_widget)
 
-        self.grid_layout.addItem(top_left_layout, 0, 0)
-        self.grid_layout.addItem(top_right_layout, 0, 1)
-        self.grid_layout.addItem(bottom_left_layout, 1, 0)
+        # Putting GUI elements in correct spaces
+        self.grid_layout.addWidget(self.ta_widgets.canvas_heatmap, 0, 0)
+        self.grid_layout.addWidget(self.ta_widgets.canvas_plot1, 0, 1)
+        self.grid_layout.addWidget(self.ta_widgets.canvas_plot2, 1, 0)
         self.grid_layout.addWidget(self.bottomright_widget, 1, 1)
 
         self.setLayout(self.grid_layout)
 
-    def update_progress_bar(self, value):
-        """Update the local progress bar with the value from DLSWindow."""
+    def update_current_delay(self, value):
+        """Update the current delay values."""
+        value = round(value, 2)
         print("Updating progress bar with value:", value)
-        self.bottomright.current_delay.setText(f"{round(value, 2)}")
-        self.dAwindow.verticalSlider.setValue(round(value*1000, 2))
+        self.bottomright.current_delay.setText(f"{value}")
+        self.dAwindow.verticalSlider.setValue(value*1000)
+        self.dAwindow.abs_pos_line.setText(f"{value}")
 
     def update_t0(self, t_0):
         """Update the t_0 value."""
@@ -107,6 +78,9 @@ class ShotDelayApp(QWidget):
         self.bottomright.t0_line.setText(f"{t_0}")
         self.dAwindow.t_0 = self.t_0
         self.dAwindow.t0_spinbox.setValue(self.t_0)
+        self.dA.window.verticalSlider.setValue(t_0*1000)
+        self.dAwindow.abs_pos_line.setText(f"{t_0}")
+        self.dAwindow.rel_pos_line.setText(f"{0}")
 
 
 
@@ -129,17 +103,6 @@ class ShotDelayApp(QWidget):
         self.dA_inputs_avg.append(dA_inputs_avg)
         self.dA_inputs_med.append(dA_inputs_med)
 
-        # Clear the graph and re-plot with new data
-
-    def avg_med_toggle(self):
-        """Toggle between average and median."""
-
-        if self.dA_Combobox.currentText() == "Average":
-            self.dA_avg_graph.clear()
-            self.dA_avg_graph.plot(self.delaytimes, self.dA_inputs_avg, symbol='o')
-        elif self.dA_Combobox.currentText() == "Median":
-            self.dA_avg_graph.clear()
-            self.dA_avg_graph.plot(self.delaytimes, self.dA_inputs_med, symbol='o')
 
 class DLSWindow(QMainWindow):
     progress_updated = Signal(int)
@@ -171,14 +134,6 @@ class DLSWindow(QMainWindow):
 
         self.start_probe_thread()
 
-
-        self.probe_combobox = QComboBox()
-        self.probe_combobox.addItems(["Average", "Median"])
-        self.probe_combobox.setCurrentText("Average")
-        left_layout.addWidget(self.probe_combobox)
-        self.probe_combobox.currentIndexChanged.connect(self.redraw_probe_plot)
-
-
         self.save_probe_button = QPushButton("Save Probe Data")
         self.save_probe_button.clicked.connect(lambda: self.save_probe_data())
         left_layout.addWidget(self.save_probe_button)
@@ -207,21 +162,16 @@ class DLSWindow(QMainWindow):
 
         hbox2 = QHBoxLayout()
         self.delay_input = QLineEdit()
-        self.delay_input.setPlaceholderText("Enter delay time")
-        self.delay_input.setValidator(QDoubleValidator(-8672666.0, 8672666.0, 20, self))
+        self.delay_input.setPlaceholderText("Enter delay time, ps")
+        self.delay_input.setValidator(QDoubleValidator(-8672.666, 8672.666, 20, self))
         self.delay_input.validator().setLocale(QLocale(QLocale.C))
         self.delay_input.returnPressed.connect(self.Submitted)
 
-        self.delay_unit = QComboBox()
-        self.delay_unit.addItems(["ns", "ps", "fs"])
-        self.delay_unit.currentIndexChanged.connect(self.LabelChange)
-
         hbox2.addWidget(self.delay_input)
-        hbox2.addWidget(self.delay_unit)
 
         hbox3 = QHBoxLayout()
 
-        self.delay_label = QLabel("Delay (ns):", self)
+        self.delay_label = QLabel("Delay (ps):", self)
         hbox3.addWidget(self.delay_label)
 
         self.delay_bar = QProgressBar()
@@ -264,36 +214,14 @@ class DLSWindow(QMainWindow):
         self.probe_worker.stop()
         self.probe_worker.wait()
 
-    def LabelChange(self):
-        selected = self.delay_unit.currentText()
-        if selected == "ns":
-            self.delay_label.setText("Delay (ns):")
-        elif selected == "ps":
-            self.delay_label.setText("Delay (ps):")
-        elif selected == "fs":
-            self.delay_label.setText("Delay (fs):")
-
-
     def Submitted(self):
         try:
-            unit = self.delay_unit.currentText()
             value = float(self.delay_input.text())
             current_bar_value = self.delay_bar.value()*1000  # In ps
-            print(current_bar_value)
-            print(current_bar_value - value)
-            if unit == "ns":
-                value_ps = value * 1000
-            elif unit == "ps":
-                value_ps = value
-            elif unit == "fs":
-                value_ps = value / 1000
-            else:
-                raise ValueError("Unknown time unit.")
 
-            if 0 <= current_bar_value + value_ps <= 8672:
-                value_ns = value_ps / 1000  # Convert to ns for script
-                self.run_command_signal.emit(f"MoveRelative {value_ns}", "ButtonPress", 0, 0)
-                print(f"Emitting command: MoveRelative {value_ns}")
+            if 0 <= current_bar_value + value <= 8672:
+                self.run_command_signal.emit(f"MoveRelative {value}", "ButtonPress", 0, 0)
+                print(f"Emitting command: MoveRelative {value}")
 
             else:
                 raise ValueError("Value is out of range.")
