@@ -113,6 +113,8 @@ class dA_Window(QWidget):
         self.slider_timer.start()
 
     def emit_slider_signal(self):
+        # Add a dummy variable to the function so it doesn't emit signals everytime the slider is updated 
+        # because now it updates when a measurement is being done and emits doubled movement signals causing errors
         value = self.verticalSlider.value()
         # print(f"emitting now: {value}")
         # self.run_command_signal.emit(f"MoveRelative {value/1000:.3f}", "ButtonPress", 0, 0)

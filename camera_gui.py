@@ -223,7 +223,7 @@ class DLSWindow(QMainWindow):
     def Submitted(self):
         try:
             value = float(self.delay_input.text())
-            current_bar_value = self.delay_bar.value()  # In ps
+            current_bar_value = self.delay_bar.value()
 
             if 0 <= current_bar_value + value <= 8672:
                 self.run_command_signal.emit(f"MoveRelative {value}", "ButtonPress", 0, 0)
@@ -239,7 +239,7 @@ class DLSWindow(QMainWindow):
 
 
     def update_delay_bar(self, value):
-        value = max(0, min(value, self.delay_bar.maximum()))  # Keep in picoseconds
+        value = max(0, min(value, self.delay_bar.maximum()))
         self.delay_bar.setValue(round(value/1000))
         self.delay_bar.setFormat(f"{int(value)}/8672")
         self.progress_updated.emit(value)

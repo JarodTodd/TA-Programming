@@ -234,12 +234,11 @@ class Measurementworker(QThread):
 
 
     @Slot(list, float, int)
-    def process_content(self, blk, ref, number_of_shots):
+    def process_content(self, delay_relative, ref, number_of_shots):
         blocks = []
-        delaytime = 0
         dA_inputs_avg = 0
         dA_inputs_med = 0
-        pos = blk
+        pos = delay_relative
         print(pos)
         pos -= self.last_item
         
@@ -257,9 +256,7 @@ class Measurementworker(QThread):
 
         probe_avg, probe_med, dA_avg, dA_med = self.data_processor.delta_a_block(block_2d_array)
         
-        # compute the delay in picoseconds that belongs to this block      
-        delaytime = blk                                     
-
+        delaytime = delay_relative                                     
 
         # last‑shot ΔA row
         row_data_avg = dA_avg[-1]

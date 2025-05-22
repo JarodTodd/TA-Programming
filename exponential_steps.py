@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 def generate_timepoints(t_start, t_end, num_points, t0=0):
-    pre_dense = ["ps"]
+    pre_dense = []
     if t_start < t0:
         time = t_start
         while time < -5:
@@ -26,6 +26,8 @@ def generate_timepoints(t_start, t_end, num_points, t0=0):
             False
             timepoints = np.concatenate((pre_dense, new_list))
             timepoints.sort()
+            timepoints = [value for value in timepoints]
+            timepoints.insert(0, "ps")
             print(timepoints)
             np.savetxt("time_points.txt", timepoints, fmt="%s")
             return timepoints
@@ -35,4 +37,4 @@ def generate_timepoints(t_start, t_end, num_points, t0=0):
 
         times = log_post  
 
-# generate_timepoints(-10, 3000, 2000)
+generate_timepoints(-10, 3000, 2000)
