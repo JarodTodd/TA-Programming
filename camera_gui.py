@@ -131,6 +131,11 @@ class DLSWindow(QMainWindow):
         self.probe_inputs_avg = []
         self.probe_inputs_med = []
 
+        self.shot_input = QLineEdit()
+        self.shot_input.setPlaceholderText("Number of shots")
+        self.shot_input.returnPressed.connect(self.Submitted)
+        left_layout.addWidget(self.shot_input)
+
         self.start_probe_thread()
 
         self.save_probe_button = QPushButton("Save Probe Data")
@@ -208,7 +213,7 @@ class DLSWindow(QMainWindow):
         """Create and launch the single ProbeThread.  
         Call this exactly once from MainApp after all tabs exist."""
         if self.probe_worker is not None:
-            return                              # already running
+            return                  
         self.probe_worker = ProbeThread(shots)
         self.probe_worker.probe_update.connect(self.update_probe_data, Qt.QueuedConnection)
         self.probe_worker.dA_update.connect(self.update_dA_plot, Qt.QueuedConnection)
@@ -261,6 +266,7 @@ class DLSWindow(QMainWindow):
     def update_probe_data(self, avg_row, med_row):
         self.probe_inputs_avg = avg_row
         self.probe_inputs_med = med_row
+        self.probe_avg_graph.clear()
         self.probe_avg_graph.plot(self.probe_inputs_avg, pen='r')           
 
     @Slot(object, object)
