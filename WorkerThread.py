@@ -239,7 +239,6 @@ class Measurementworker(QThread):
         dA_inputs_avg = 0
         dA_inputs_med = 0
         pos = delay_relative
-        print(pos)
         pos -= self.last_item
         
         self.barvalue += pos
@@ -257,7 +256,6 @@ class Measurementworker(QThread):
         probe_avg, probe_med, dA_avg, dA_med = self.data_processor.delta_a_block(block_2d_array)
         
         delaytime = delay_relative                                     
-
         # last‑shot ΔA row
         row_data_avg = dA_avg[-1]
         row_data_med = dA_med[-1]
@@ -269,7 +267,7 @@ class Measurementworker(QThread):
         dA_average = np.mean(dA_avg, axis=0)
         dA_median = np.median(dA_med, axis=0)
 
-        delaytime = self.last_item # Convert to picoseconds for display
+        self.last_item = delaytime # Convert to picoseconds for display
         dA_inputs_avg = np.mean(dA_average)
         dA_inputs_med = np.mean(dA_median)
 

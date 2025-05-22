@@ -168,11 +168,11 @@ class Ui_Bottom_right(QObject):
                     if self.step_option_box.currentText() == "Exponential":
                         self.content = generate_timepoints(self.start_from_box.value(), self.finish_time_box.value(), self.steps_box.value())
                     if self.step_option_box.currentText() == "Linear":
-                        self.content = ["ps"]
-                        self.content.append(value for value in np.arange(self.start_from_box.value(), self.finish_time_box.value(), (self.finish_time_box.value()- self.start_from_box.value()/self.steps_box.value())))
+                        self.content = []
+                        self.content.extend(np.arange(self.start_from_box.value(), self.finish_time_box.value(), (self.finish_time_box.value() - self.start_from_box.value()) / self.steps_box.value()))
                     self.trigger_worker_run.emit(self.content, self.stepping_order_box.currentText(), self.integration_time_box.value(), self.nos_box.value())
             except Exception as e:
-                self.show_error_message(f"Start and end time are the same.")
+                self.show_error_message(f"Start and end time are the same. {self.start_from_box.value(), self.finish_time_box.value()}")
         if self.tabWidget.currentIndex() == 1:
             if not self.content:
                 self.show_error_message("No measurement steps defined. Please upload a file or enter values.")

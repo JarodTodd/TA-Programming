@@ -27,8 +27,6 @@ def generate_timepoints(t_start, t_end, num_points, t0=0):
             timepoints = np.concatenate((pre_dense, new_list))
             timepoints.sort()
             timepoints = [value for value in timepoints]
-            timepoints.insert(0, "ps")
-            print(timepoints)
             np.savetxt("time_points.txt", timepoints, fmt="%s")
             return timepoints
 
@@ -37,4 +35,4 @@ def generate_timepoints(t_start, t_end, num_points, t0=0):
 
         times = log_post  
 
-generate_timepoints(-10, 3000, 2000)
+# generate_timepoints(-10, 3000, 2000)

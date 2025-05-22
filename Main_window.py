@@ -37,7 +37,6 @@ if __name__ == "__main__":
     output_signal = Signal(str)
 
     """These connections update the heatmap, and the two corresponding graphs."""
-    worker.parsed_content_signal.connect(main_app.shot_delay_app.ta_widgets.update_delay_stages, Qt.BlockingQueuedConnection)
     worker.plot_row_update.connect(main_app.shot_delay_app.ta_widgets.update_row, Qt.QueuedConnection)
     worker.measurement_data_updated.connect(main_app.shot_delay_app.update_graph, Qt.QueuedConnection)
     main_app.shot_delay_app.bottomright.parsed_content_signal.connect(main_app.shot_delay_app.ta_widgets.update_delay_stages, Qt.QueuedConnection)
@@ -54,6 +53,7 @@ if __name__ == "__main__":
     """These connections update sliders and progress bars to display the correct delay time."""
     worker.update_delay_bar_signal.connect(main_app.shot_delay_app.update_current_delay)
     worker.update_delay_bar_signal.connect(main_app.dls_window.update_delay_bar)
+    worker.update_ref_signal.connect(main_app.shot_delay_app.update_t0)
 
     """This connection handles error messages from all applications/functions."""
     worker.error_occurred.connect(main_app.shot_delay_app.show_error_message)

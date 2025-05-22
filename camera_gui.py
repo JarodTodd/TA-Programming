@@ -22,9 +22,7 @@ class ShotDelayApp(QWidget):
         self.bottomright = Ui_Bottom_right()
         self.dAwindow = dA_Window()
         self.setup_ui()
-        self.worker.update_ref_signal.connect(self.update_t0, Qt.QueuedConnection)
-        self.worker.update_delay_bar_signal.connect(self.update_current_delay, Qt.QueuedConnection)
-        
+
 
     def setup_ui(self):
         self.t_0 = 0
@@ -74,7 +72,7 @@ class ShotDelayApp(QWidget):
         """Update the t_0 value."""
         print(f"Updating t_0 in UI: {t_0}")  # Debugging
         self.t_0 = round(t_0,2)
-        self.bottomright.t0_line.setText(f"{t_0}")
+        self.bottomright.t0_line.setText(f"{self.t_0}")
         self.dAwindow.t_0 = self.t_0
         self.dAwindow.t0_spinbox.setValue(self.t_0)
         self.dAwindow.verticalSlider.setValue(0)
