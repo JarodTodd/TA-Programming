@@ -54,7 +54,7 @@ class dA_Window(QWidget):
 
         self.verticalSlider = QSlider(Qt.Vertical)
         self.verticalSlider.setRange(0, 8672666)
-        self.verticalSlider.setSingleStep(0.01)
+        self.verticalSlider.setSingleStep(2)
         self.verticalSlider.setTickInterval(250000)
         self.verticalSlider.setTickPosition(QSlider.TicksLeft)
         self.verticalSlider.setInvertedAppearance(True)
@@ -69,7 +69,7 @@ class dA_Window(QWidget):
         self.label.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignBottom)
         vbox.addWidget(self.label)
         self.move_target_box = QDoubleSpinBox()
-        self.move_target_box.setRange(-8626.66, 8626.66)
+        self.move_target_box.setRange(-8672.66, 8672.66)
         vbox.addWidget(self.move_target_box)
         self.label_2 = QLabel("Current absolute position, ps")
         self.label_2.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignBottom)
@@ -81,7 +81,7 @@ class dA_Window(QWidget):
         self.label_3.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignBottom)
         vbox.addWidget(self.label_3)
         self.t0_spinbox = QDoubleSpinBox()
-        self.t0_spinbox.setRange(0, 8626.66)
+        self.t0_spinbox.setRange(0, 8672.66)
         vbox.addWidget(self.t0_spinbox)
         self.set_current_button = QPushButton("Set current")
         self.set_current_button.clicked.connect(self.set_current)
@@ -121,8 +121,8 @@ class dA_Window(QWidget):
 
     def update_abs_rel(self, value):
         value = round(value/1000, 2)
-        self.abs_pos_line.setText(str(value))
-        self.rel_pos_line.setText(str(value - self.t_0))
+        self.abs_pos_line.setText(str(value + self.t_0))
+        self.rel_pos_line.setText(str(value))
 
     def redraw_dA_plot(self):
         self.update_dA_graph(self.dA_inputs_avg, self.dA_inputs_med)

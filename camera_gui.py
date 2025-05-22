@@ -77,9 +77,11 @@ class ShotDelayApp(QWidget):
         self.bottomright.t0_line.setText(f"{t_0}")
         self.dAwindow.t_0 = self.t_0
         self.dAwindow.t0_spinbox.setValue(self.t_0)
-        self.dA.window.verticalSlider.setValue(t_0*1000)
+        self.dAwindow.verticalSlider.setValue(0)
+        self.dAwindow.verticalSlider.setRange(-100000, (8672666 - self.t_0*1000))
         self.dAwindow.abs_pos_line.setText(f"{t_0}")
         self.dAwindow.rel_pos_line.setText(f"{0}")
+
 
 
 

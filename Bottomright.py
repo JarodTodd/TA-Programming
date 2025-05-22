@@ -40,6 +40,7 @@ class Ui_Bottom_right(QObject):
         self.steps_box = QSpinBox()
         self.steps_box.setMaximum(999999)
         self.steps_box.setValue(100)
+        
 
         grid.addWidget(QLabel("Start from, ps:"), 0, 0)
         grid.addWidget(self.exponential_start, 0, 1)
@@ -54,6 +55,7 @@ class Ui_Bottom_right(QObject):
         tab2layout = QHBoxLayout()
         self.file_upload_button = QPushButton("Upload File")
         self.file_upload_button.clicked.connect(self.showFileDialog)
+        self.file_upload_button.setToolTip("File should be either .txt or .csv with delay times in picoseconds.")
 
         # File label and text display
         self.file_label = QLabel("No file selected")
@@ -162,7 +164,11 @@ class Ui_Bottom_right(QObject):
         if self.tabWidget.currentIndex() == 0:
             try:
                 if self.start_from_box.value() != self.finish_time_box.value():
-                    self.content = generate_timepoints(self.start_from_box.value(), self.finish_time_box.value(), self.steps_box.value())
+                    if self.step_option_box.currentText() == "Exponential":
+                        self.content = generate_timepoints(self.start_from_box.value(), self.finish_time_box.value(), self.steps_box.value())
+                    if self.step_option_box.currentText() == "Linear":
+                        self.content = ["ps"]
+                        self.content.append(value for value in np.arange(self.start_from_box.value(), self.finish_time_box.value(), (self.finish_time_box.value()- self.start_from_box.value()/self.steps_box.value())))
                     self.trigger_worker_run.emit(self.content, self.stepping_order_box.currentText(), self.integration_time_box.value(), self.nos_box.value())
             except Exception as e:
                 self.show_error_message(f"Start and end time are the same.")
