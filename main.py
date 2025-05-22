@@ -40,6 +40,8 @@ class ComputeData():
         around the mean.
         """
         if block2 == None:
+            block1 = np.array(block1)
+
             if percentage >= 100:
                 return np.array(block1)
             else:
@@ -67,6 +69,9 @@ class ComputeData():
             return clean_block
         
         else:
+            block1 = np.array(block1)
+            block2 = np.array(block2)
+
             if percentage >= 100:
                 return np.array(block1), np.array(block2)
             else:
@@ -91,11 +96,11 @@ class ComputeData():
             # Identify rejected row indices
             block1_rejected_rows = []
             for i, row in enumerate(block1):
-                if abs(block1_row_averages[i] - block1_average) <= block1_allowed_deviation:
+                if abs(block1_row_averages[i] - block1_average) > block1_allowed_deviation:
                     block1_rejected_rows.append(i)
             block2_rejected_rows = []
             for i, row in enumerate(block2):
-                if abs(block2_row_averages[i] - block2_average) <= block2_allowed_deviation:
+                if abs(block2_row_averages[i] - block2_average) > block2_allowed_deviation:
                    block2_rejected_rows.append(i)
 
             # combined_rejected = list(set(block1_rejected_rows + block2_rejected_rows))
