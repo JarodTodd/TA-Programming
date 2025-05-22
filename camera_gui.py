@@ -112,7 +112,7 @@ class DLSWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Delayline GUI")
-
+        self.probe_worker = ProbeThread()
         self.worker = Measurementworker("", "", 0, 0)
         self.worker.update_delay_bar_signal.connect(self.update_delay_bar)
         # Central widget
@@ -223,7 +223,7 @@ class DLSWindow(QMainWindow):
     def Submitted(self):
         try:
             value = float(self.delay_input.text())
-            current_bar_value = self.delay_bar.value()*1000  # In ps
+            current_bar_value = self.delay_bar.value()  # In ps
 
             if 0 <= current_bar_value + value <= 8672:
                 self.run_command_signal.emit(f"MoveRelative {value}", "ButtonPress", 0, 0)
@@ -240,7 +240,7 @@ class DLSWindow(QMainWindow):
 
     def update_delay_bar(self, value):
         value = max(0, min(value, self.delay_bar.maximum()))  # Keep in picoseconds
-        self.delay_bar.setValue(round(value))
+        self.delay_bar.setValue(round(value/1000))
         self.delay_bar.setFormat(f"{int(value)}/8672")
         self.progress_updated.emit(value)
         pass
@@ -261,17 +261,7 @@ class DLSWindow(QMainWindow):
     def update_probe_data(self, avg_row, med_row):
         self.probe_inputs_avg = avg_row
         self.probe_inputs_med = med_row
-        self.redraw_probe_plot()             
-
-    @Slot(int)
-    def redraw_probe_plot(self, *_):
-        self.probe_avg_graph.clear()
-        if self.probe_combobox.currentText() == "Average":
-            if self.probe_inputs_avg.size:
-                self.probe_avg_graph.plot(self.probe_inputs_avg, pen='r')
-        else:
-            if self.probe_inputs_med.size:
-                self.probe_avg_graph.plot(self.probe_inputs_med, pen='b')
+        self.probe_avg_graph.plot(self.probe_inputs_avg, pen='r')           
 
     @Slot(object, object)
     def update_dA_plot(self, avg_row, med_row):
