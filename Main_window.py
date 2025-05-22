@@ -39,7 +39,7 @@ if __name__ == "__main__":
     main_app.dls_window.probe_worker.dA_update.connect(main_app.dA_window.update_dA_graph, Qt.QueuedConnection)
 
     worker.started.connect(main_app.dls_window.stop_probe_thread, Qt.QueuedConnection)
-    worker.parsed_content_signal.connect(main_app.shot_delay_app.ta_widgets.update_delay_stages, Qt.BlockingQueuedConnection)
+    main_app.shot_delay_app.bottomright.parsed_content_signal.connect(main_app.shot_delay_app.ta_widgets.update_delay_stages, Qt.QueuedConnection)
     worker.plot_row_update.connect(main_app.shot_delay_app.ta_widgets.update_row, Qt.QueuedConnection)
     worker.measurement_data_updated.connect(main_app.shot_delay_app.update_graph, Qt.QueuedConnection)
     worker.update_probe.connect(main_app.dls_window.update_probe_data, Qt.QueuedConnection)

@@ -54,7 +54,6 @@ class Measurementworker(QThread):
     start_process_signal = Signal(str)
     orientation_signal = Signal(str)
 
-    parsed_content_signal = Signal(list)
     plot_row_update = Signal(float, np.ndarray, np.ndarray)
 
     def __init__(self, content, orientation, shots, scans):

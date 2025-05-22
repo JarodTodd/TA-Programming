@@ -7,6 +7,7 @@ from exponential_steps import *
 
 class Ui_Bottom_right(QObject):
     trigger_worker_run = Signal(list, str, int, int)
+    parsed_content_signal = Signal(list)
 
     def __init__(self):
         super().__init__()
@@ -177,6 +178,8 @@ class Ui_Bottom_right(QObject):
                 self.nos_box.value()
             )
         print(f"Self.content = {self.content}")
+
+        self.parsed_content_signal.emit(self.content)
 
 
     def showFileDialog(self):
