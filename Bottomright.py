@@ -190,20 +190,19 @@ class Ui_Bottom_right(QObject):
                 with open(fileName, "r") as file:
                     content = file.read()
                 self.text_display.setText(content)
-
                 # Changing self.content to a list that is accepted by measurement functions
                 lines = [item.strip() for item in content.split(",") if item.strip()]
-                if lines and lines[0].lower() == "ps":
+                if lines[0] == "ps":
                     lines = lines[1:]
                 self.content = [float(item) for item in lines]
 
                 # Changing GUI elements to display correct values after uploading file
-                self.total_steps.setText(f"{(len(self.content) - 1)*self.nos_box.value()}")
+                self.total_steps.setText(f"{(len(self.content))*self.nos_box.value()}")
                 self.current_step.setText(f"{0}")
                 self.current_scan.setText(f"{1}")
                 
 
-                self.start_from_box.setValue(self.content[1])
+                self.start_from_box.setValue(self.content[0])
                 self.finish_time_box.setValue(self.content[-1])         
                                
             except Exception as e:
@@ -212,13 +211,13 @@ class Ui_Bottom_right(QObject):
     def update_start_from_content(self, value):
         if hasattr(self, "content") and self.content:
             # Update the first item to ('ps', value)
-            self.content[0] = ('ps', value)
+            self.content[0] = value
             print(self.content[0])
 
     def update_finish_time_content(self, value):
         if hasattr(self, "content") and self.content:
             # Update the last item to ('ps', value)
-            self.content[-1] = ('ps', value)
+            self.content[-1] = value
             print(self.content[-1])
 
     def on_tab_change(self):

@@ -114,8 +114,8 @@ class dA_Window(QWidget):
 
     def emit_slider_signal(self):
         value = self.verticalSlider.value()
-        print(f"emitting now: {value}")
-        self.run_command_signal.emit(f"MoveRelative {value/1000:.3f}", "ButtonPress", 0, 0)
+        # print(f"emitting now: {value}")
+        # self.run_command_signal.emit(f"MoveRelative {value/1000:.3f}", "ButtonPress", 0, 0)
 
     def update_abs_rel(self, value):
         value = round(value/1000, 2)
@@ -130,10 +130,8 @@ class dA_Window(QWidget):
         self.dA_inputs_avg = avg_list
         self.dA_inputs_med = med_list
         self.dA_plot.clear()
-        if self.dA_plot_combobox.currentText() == "Average":
-            self.dA_plot.plot(range(len(avg_list)), avg_list, pen='r')
-        else:
-            self.dA_plot.plot(range(len(med_list)), med_list, pen='b')
+        self.dA_plot.plot(range(len(avg_list)), avg_list, pen='r')
+
 
 
 

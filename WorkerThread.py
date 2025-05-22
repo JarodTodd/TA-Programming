@@ -211,13 +211,8 @@ class Measurementworker(QThread):
         return self.position
 
     def validate_reference_and_position(self, ref, position, content):
-        unit_multipliers = {'ns': 1, 'ps': 1000, 'fs': 1000000}
-        limits = {'ns': 8.672, 'ps': 8672, 'fs': 8672000}
-
-        for unit, value in content:
-            if unit in unit_multipliers:
-                adjusted_ref = ref * unit_multipliers[unit]
-                if not (0 <= adjusted_ref + value <= limits[unit]):
+        for value in content:
+                if not 0 <= ref + value <= 8672:
                     self.error_occurred.emit(f"Reference point is out of range. {value}")
                     return False
         return True
@@ -226,15 +221,15 @@ class Measurementworker(QThread):
         self.start_process_signal.emit("GoToReference")
         while abs(self.position - ref) > 0.01:
             QCoreApplication.processEvents()  # Wait for the position to update
-        self.update_delay_bar_signal.emit(ref * 1000)
+        self.update_delay_bar_signal.emit(ref)
 
     def start_gui(self):
         self.start_process_signal.emit("StartGUI")
         while self.ref is None or self.position is None:
             QCoreApplication.processEvents()
         print("Signal emitted. Current position:", self.position, "Current reference:", self.ref)
-        self.update_delay_bar_signal.emit(self.position * 1000 if self.position else 0)
-        self.update_ref_signal.emit(self.ref * 1000 if self.ref else 0)
+        self.update_delay_bar_signal.emit(self.position if self.position else 0)
+        self.update_ref_signal.emit(self.ref if self.ref else 0)
         return self.ref, self.position
 
 
@@ -248,7 +243,7 @@ class Measurementworker(QThread):
         print(pos)
         pos -= self.last_item
         
-        self.barvalue += pos * 1000
+        self.barvalue += pos
         self.start_process_signal.emit(f"MoveRelative {pos}")
 
         
@@ -263,7 +258,7 @@ class Measurementworker(QThread):
         probe_avg, probe_med, dA_avg, dA_med = self.data_processor.delta_a_block(block_2d_array)
         
         # compute the delay in picoseconds that belongs to this block      
-        delaytime = blk[1]                                     
+        delaytime = blk                                     
 
 
         # last‑shot ΔA row
@@ -276,7 +271,7 @@ class Measurementworker(QThread):
         dA_average = np.mean(dA_avg, axis=0)
         dA_median = np.median(dA_med, axis=0)
 
-        delaytime = self.last_item *1000 # Convert to picoseconds for display
+        delaytime = self.last_item # Convert to picoseconds for display
         dA_inputs_avg = np.mean(dA_average)
         dA_inputs_med = np.mean(dA_median)
 
