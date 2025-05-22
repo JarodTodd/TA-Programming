@@ -133,7 +133,7 @@ class DLSWindow(QMainWindow):
 
         self.shot_input = QLineEdit()
         self.shot_input.setPlaceholderText("Number of shots")
-        self.shot_input.returnPressed.connect(self.Submitted)
+        self.shot_input.returnPressed.connect(self.shot_input_entered)  
         left_layout.addWidget(self.shot_input)
 
         self.start_probe_thread()
@@ -209,7 +209,7 @@ class DLSWindow(QMainWindow):
 
         self.probe_worker: ProbeThread | None = None
 
-    def start_probe_thread(self, shots: int = 10):
+    def start_probe_thread(self, shots: int = 1000):
         """Create and launch the single ProbeThread.  
         Call this exactly once from MainApp after all tabs exist."""
         if self.probe_worker is not None:
@@ -218,6 +218,21 @@ class DLSWindow(QMainWindow):
         self.probe_worker.probe_update.connect(self.update_probe_data, Qt.QueuedConnection)
         self.probe_worker.dA_update.connect(self.update_dA_plot, Qt.QueuedConnection)
         self.probe_worker.start()
+
+    def shot_input_entered(self):
+        text = self.shot_input.text().strip()
+        try:
+            shots = int(text)
+            if shots <= 3:
+                raise ValueError
+        except ValueError:
+            self.show_error_message("Please enter an integer >= 4.")
+            return
+        self.restart_probe_thread(shots)
+
+    def restart_probe_thread(self, shots: int):
+        self.stop_probe_thread()
+        self.start_probe_thread(shots)
 
     def stop_probe_thread(self):
         if self.probe_worker is not None:

@@ -16,9 +16,9 @@ class ProbeThread(QThread):
     probe_update = Signal(np.ndarray, np.ndarray)
     dA_update = Signal(np.ndarray, np.ndarray)
 
-    def __init__(self, shots = 10, parent: QObject | None = None):
+    def __init__(self, shots = 1000, parent: QObject | None = None):
         super().__init__(parent)
-        self.shots = 1000
+        self.shots = shots
         self.running = True
         self.probe_processor = ComputeData()
         self.dA_processor =  ComputeData()
@@ -48,6 +48,7 @@ class Measurementworker(QThread):
     update_ref_signal = Signal(float)
     error_occurred = Signal(str)
     update_probe = Signal(list, list)
+    update_dA = Signal(list, list)
     process_content_signal = Signal(list, float, int, int)
     task_done_signal = Signal()
     start_process_signal = Signal(str)
@@ -261,7 +262,8 @@ class Measurementworker(QThread):
         # last‑shot ΔA row
         row_data_avg = dA_avg[-1]
         row_data_med = dA_med[-1]
-        self.plot_row_update.emit(delaytime, row_data_avg, row_data_med)  
+        self.plot_row_update.emit(delaytime, row_data_avg, row_data_med) 
+        self.update_dA.emit(row_data_avg, row_data_med) 
 
         self.update_probe.emit(probe_avg[self.teller], probe_med[self.teller])  # Emit probe data incrementally
         print("Probe data emitted:", probe_avg[self.teller], probe_med[self.teller])  # Debugging

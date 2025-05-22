@@ -43,6 +43,7 @@ if __name__ == "__main__":
     worker.plot_row_update.connect(main_app.shot_delay_app.ta_widgets.update_row, Qt.QueuedConnection)
     worker.measurement_data_updated.connect(main_app.shot_delay_app.update_graph, Qt.QueuedConnection)
     worker.update_probe.connect(main_app.dls_window.update_probe_data, Qt.QueuedConnection)
+    worker.update_dA.connect(main_app.dA_window.update_dA_graph, Qt.QueuedConnection)
     worker.error_occurred.connect(main_app.shot_delay_app.show_error_message)
     worker.update_delay_bar_signal.connect(main_app.shot_delay_app.update_current_delay)
     worker.update_delay_bar_signal.connect(main_app.dls_window.update_delay_bar)
