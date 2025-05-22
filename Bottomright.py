@@ -192,27 +192,19 @@ class Ui_Bottom_right(QObject):
                 self.text_display.setText(content)
 
                 # Changing self.content to a list that is accepted by measurement functions
-                self.content = [item.strip() for item in content.split(",") if item.strip()]
-                self.content = [(unit, float(value)) for item in self.content for value, unit in [item.strip().split()]]
+                lines = [item.strip() for item in content.split(",") if item.strip()]
+                if lines and lines[0].lower() == "ps":
+                    lines = lines[1:]
+                self.content = [float(item) for item in lines]
 
                 # Changing GUI elements to display correct values after uploading file
-                self.total_steps.setText(f"{len(self.content)*self.nos_box.value()}")
+                self.total_steps.setText(f"{(len(self.content) - 1)*self.nos_box.value()}")
                 self.current_step.setText(f"{0}")
                 self.current_scan.setText(f"{1}")
                 
-                if self.content[0][0] in ['ns', 'nanosecond', 'nanoseconds']:
-                    self.start_from_box.setValue(self.content[0][1]*1000)
-                if self.content[0][0] in ['fs', 'femtosecond', 'femtoseconds']:
-                    self.start_from_box.setValue(self.content[0][1]/1000)
-                if self.content[0][0] in ['ps', 'picosecond', 'picoseconds']:
-                    self.start_from_box.setValue(self.content[0][1])
 
-                if self.content[-1][0] in ['ns', 'nanosecond', 'nanoseconds']:
-                    self.finish_time_box.setValue(self.content[-1][1]*1000)
-                if self.content[-1][0] in ['fs', 'femtosecond', 'femtoseconds']:
-                    self.finish_time_box.setValue(self.content[-1][1]/1000)
-                if self.content[-1][0] in ['ps', 'picosecond', 'picoseconds']:
-                    self.finish_time_box.setValue(self.content[-1][1])         
+                self.start_from_box.setValue(self.content[1])
+                self.finish_time_box.setValue(self.content[-1])         
                                
             except Exception as e:
                 self.show_error_message(f"Failed to load file: {e}")

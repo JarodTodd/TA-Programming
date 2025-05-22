@@ -67,49 +67,19 @@ class Measurementworker(QThread):
         self.ref = None
         self.position = None
         self.data_processor = ComputeData()
-        
-
-    @Slot(list, str, int, int)
-    def start_measurement(self, content: list, orientation: str, shots: int, scans: int) -> None:
-        """
-        Called from the GUI thread.  Stores parameters and kicks off self.run().
-        """
-
-        self._content = content
-        self._orientation = orientation
-        self._shots = shots
-        self._scans = scans
-        self.start()
 
     def update_command(self, content, orientation, shots, scans):
         self._orientation = orientation
         self._content = content
         self._shots = shots
         self._scans = scans
-        # print(content, orientation, shots, scans)
 
     @Slot(str)
     def run(self):
         print(f"This is {self._orientation}")
         if self._orientation in ("Regular", "Backwards", "Random"):
             try:
-                delay_values = []
-                for item in self._content:
-                    value = item[1]
-                    unit = item[0].lower()
-                    if unit in ['ns', 'nanosecond', 'nanoseconds']:            
-                        value = value * 1000                             
-                    elif unit in ['ps', 'picosecond', 'picoseconds']:           
-                        value = value                                     
-                    else:                                                       
-                        value = value / 1000 
-                    delay_values.append(value)
-                self.parsed_content_signal.emit(delay_values)
-                # always parse the raw text first
-                parsed = self._content
-                print(f"Running script with parsed content: {parsed}")
-                print(self._orientation)
-                self._run_measurement_loop(parsed, self._shots, self._scans)
+                self._run_measurement_loop(self._content, self._shots, self._scans)
             except Exception as e:
                 self.error_occurred.emit(str(e))
 
@@ -143,8 +113,14 @@ class Measurementworker(QThread):
         self.barvalue = 0
         self.nos = 0
         ref, position = self.start_gui()
+
         if not self.validate_reference_and_position(ref, position, content):
             return
+        
+        if self._orientation == "Backwards":
+            content.reverse()
+        elif self._orientation == "Random":
+            random.shuffle(content)
 
         if round(ref, 3) != round(position, 3):
             self.move_to_reference(ref)
@@ -161,26 +137,6 @@ class Measurementworker(QThread):
                 
                 result = self.process_content(item, ref, shots)
                 self.counter += 1
-
-
-
-    @Slot(str)
-    def run_script(self, argument):
-        print(f"Running script with argument: {argument}")
-        try:
-            if self.process.state() == QProcess.Running:
-                print("Waiting for the current process to finish...")
-                self.process.waitForFinished()
-
-            self.process.start(ironpython_executable, [script_path, argument])
-            print(f"Command started: {ironpython_executable} {script_path} {argument}")
-        except Exception as e:
-            print(f"Error starting process: {e}")
-            self.error_occurred.emit(str(e))
-
-        self.process.finished.connect(lambda: print("Process finished."))
-        self.process.readyReadStandardOutput.connect(self.handle_process_output)
-        self.process.readyReadStandardError.connect(self.handle_process_error)
 
     def handle_process_output(self):
         stdout_line = self.process.readAllStandardOutput().data().decode('utf-8').strip()
@@ -225,57 +181,6 @@ class Measurementworker(QThread):
         if stderr_line:
             print(f"Error output: {stderr_line}")
             self.error_occurred.emit(stderr_line)
-
-    @Slot(str, str, int)
-    def parse_and_run(self, content: str, orientation: str, shots: int):
-        parsed = self.parse_script_content(content, orientation)
-        if not parsed:
-            self.error_occurred.emit("No valid script content parsed.")
-            return
-        self.RunMeasurement(parsed, shots)
-
-    def parse_script_content(self, content: str, orientation: str):
-        lines = content.splitlines()
-        parsed_content = []
-        for line in lines:
-            items = line.split(",")
-            for item in items:
-                item = item.strip()
-                if item:
-                    letters = ""
-                    numbers = ""
-                    for char in item:
-                        if char.isdigit() or char == "." or char == "-":
-                            numbers += char
-                        else:
-                            letters += char
-                    if numbers:
-                        try:
-                            parsed_content.append((letters.strip(), float(numbers)))
-                        except ValueError:
-                            parsed_content.append((letters.strip(), None))
-                    else:
-                        parsed_content.append((letters.strip(), None))
-        if orientation == 'backwards':
-            parsed_content.reverse()
-        elif orientation == 'random':
-            random.shuffle(parsed_content)
-
-        delay_values = []
-        for item in parsed_content:
-            value = item[1]
-            unit = item[0].lower()
-            if unit in ['ns', 'nanosecond', 'nanoseconds']:            
-                value = value * 1000                             
-            elif unit in ['ps', 'picosecond', 'picoseconds']:           
-                value = value                                     
-            else:                                                       
-                value = value / 1000 
-            delay_values.append(value)
-        self.parsed_content_signal.emit(delay_values)
-
-        #Signal
-        return parsed_content
     
     def stop(self):
         print("Stopping the worker thread...")
@@ -339,12 +244,8 @@ class Measurementworker(QThread):
         delaytime = 0
         dA_inputs_avg = 0
         dA_inputs_med = 0
-        unit = blk[0].lower()
-        pos = blk[1]
-        if unit in ['ps', 'picosecond', 'picoseconds']:
-            pos /= 1000
-        elif unit in ['fs', 'femtosecond', 'femtoseconds']:
-            pos /= 1000000
+        pos = blk
+        print(pos)
         pos -= self.last_item
         
         self.barvalue += pos * 1000
@@ -359,22 +260,11 @@ class Measurementworker(QThread):
         block_2d_array = np.array(block_buffer).reshape(number_of_shots, 1088)
         blocks.append(block_2d_array)
 
-        if unit in ['ns', 'nanosecond', 'nanoseconds']:
-            self.last_item = blk[1]
-        elif unit in ['ps', 'picosecond', 'picoseconds']:
-            self.last_item = blk[1] / 1000
-        elif unit in ['fs', 'femtosecond', 'femtoseconds']:
-            self.last_item = blk[1] / 1000000
-
         probe_avg, probe_med, dA_avg, dA_med = self.data_processor.delta_a_block(block_2d_array)
         
-        # compute the delay in picoseconds that belongs to this block
-        if unit in ['ns', 'nanosecond', 'nanoseconds']:            
-            delaytime = blk[1] * 1000                             
-        elif unit in ['ps', 'picosecond', 'picoseconds']:           
-            delaytime = blk[1]                                     
-        else:                                                       
-            delaytime = blk[1] / 1000 
+        # compute the delay in picoseconds that belongs to this block      
+        delaytime = blk[1]                                     
+
 
         # last‑shot ΔA row
         row_data_avg = dA_avg[-1]

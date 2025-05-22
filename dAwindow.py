@@ -122,7 +122,6 @@ class dA_Window(QWidget):
         self.abs_pos_line.setText(str(value))
         self.rel_pos_line.setText(str(value - self.t_0))
 
-
     def redraw_dA_plot(self):
         self.update_dA_graph(self.dA_inputs_avg, self.dA_inputs_med)
 
