@@ -37,11 +37,14 @@ class TAPlotWidget(QObject):
         self.canvas_heatmap.addItem(self.mesh)
 
         # create a color bar (requires pyqtgraph ≥ 0.13.1)
+        plot_item = self.canvas_heatmap.getPlotItem()  
         self.cbar = pg.ColorBarItem(values=(0, 1), interactive=False)
         self.cbar.setColorMap(cmap)
         self.cbar.setImageItem(self.mesh) 
         self.cbar.setLevels((0, 1))     
-        plot_item = self.canvas_heatmap.getPlotItem()        
+        existing_item = plot_item.layout.itemAt(2, 2)
+        if existing_item is not None:
+            plot_item.layout.removeItem(existing_item)     
         plot_item.layout.addItem(self.cbar, 2, 2)           
                    
         # cursor layout for the heatmap and secondary plots
