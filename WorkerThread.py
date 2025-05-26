@@ -49,10 +49,7 @@ class Measurementworker(QThread):
     error_occurred = Signal(str)
     update_probe = Signal(list, list)
     update_dA = Signal(list, list)
-    process_content_signal = Signal(list, float, int, int)
-    task_done_signal = Signal()
     start_process_signal = Signal(str)
-    orientation_signal = Signal(str)
 
     plot_row_update = Signal(float, np.ndarray, np.ndarray)
 
@@ -96,7 +93,6 @@ class Measurementworker(QThread):
                 self.start_process_signal.emit("StartGUI")
                 ref, pos = self.start_gui()
                 print(f"Position: {pos}, Reference: {ref}")
-                self.task_done_signal.emit()
 
             except Exception as e:
                 self.error_occurred.emit(str(e))
