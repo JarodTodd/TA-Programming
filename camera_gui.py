@@ -107,8 +107,8 @@ class DLSWindow(QMainWindow):
     progress_updated = Signal(int)
     run_command_signal = Signal(str, str, int, int)
 
-    toggle_outlier_rejection = Signal(bool)
-    deviation_threshold_changed = Signal(int)
+    switch_outlier_rejection = Signal(bool)
+    deviation_threshold_changed = Signal(float)
     
 
     def __init__(self):
@@ -152,11 +152,12 @@ class DLSWindow(QMainWindow):
         # Deviation threshold input
         self.deviation_label = QLabel("Remove spectra that deviate more than")
         outlier_layout.addWidget(self.deviation_label, 1, 0, 1, 2)
-        self.deviation_spinbox = QSpinBox()
+        self.deviation_spinbox = QDoubleSpinBox()
         self.deviation_spinbox.valueChanged.connect(self.emit_deviation_change)
         self.deviation_spinbox.setRange(0, 100)
         self.deviation_spinbox.setSuffix(" %")
-        self.deviation_spinbox.setValue(10)
+        self.deviation_spinbox.setSingleStep(0.1)
+        self.deviation_spinbox.setValue(100)
         outlier_layout.addWidget(self.deviation_spinbox, 1, 2)
 
         outlier_group.setLayout(outlier_layout)
@@ -239,9 +240,9 @@ class DLSWindow(QMainWindow):
     def toggle_outlier_rejection(self, selected: bool) -> None:
         self.deviation_label.setVisible(selected)
         self.deviation_spinbox.setVisible(selected)
-        self.toggle_outlier_rejection.emit(selected)
+        self.switch_outlier_rejection.emit(selected)
 
-    def emit_deviation_change(self, value: int):
+    def emit_deviation_change(self, value: float):
         self.deviation_threshold_changed.emit(value)
 
 
@@ -251,6 +252,10 @@ class DLSWindow(QMainWindow):
         if self.probe_worker is not None:
             return                  
         self.probe_worker = ProbeThread(shots)
+
+        self.switch_outlier_rejection.connect(self.probe_worker.data_processor.toggle_outlier_rejection, Qt.QueuedConnection)
+        self.deviation_threshold_changed.connect(self.probe_worker.data_processor.deviation_change, Qt.QueuedConnection)
+
         self.probe_worker.probe_update.connect(self.update_probe_data, Qt.QueuedConnection)
         self.probe_worker.dA_update.connect(self.update_dA_plot, Qt.QueuedConnection)
         self.probe_worker.start()
