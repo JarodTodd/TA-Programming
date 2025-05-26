@@ -121,6 +121,12 @@ class DLSWindow(QMainWindow):
 
         # Layouts
         left_layout = QVBoxLayout()
+
+        self.shot_input = QLineEdit()
+        self.shot_input.setPlaceholderText("Number of shots")
+        self.shot_input.returnPressed.connect(self.shot_input_entered)
+        left_layout.addWidget(self.shot_input)  
+
         self.probe_avg_graph = pg.PlotWidget()
         left_layout.addWidget(self.probe_avg_graph)
         self.probe_avg_graph.setTitle("Probe")
@@ -131,10 +137,29 @@ class DLSWindow(QMainWindow):
         self.probe_inputs_avg = []
         self.probe_inputs_med = []
 
-        self.shot_input = QLineEdit()
-        self.shot_input.setPlaceholderText("Number of shots")
-        self.shot_input.returnPressed.connect(self.shot_input_entered)  
-        left_layout.addWidget(self.shot_input)
+
+        # Outlier rejection layout
+        outlier_group = QGroupBox()
+        outlier_layout = QGridLayout()
+
+        # Checkbox
+        self.outlier_checkbox = QCheckBox("Remove bad spectra")
+        self.outlier_checkbox.toggled.connect(self.toggle_outlier_rejection) 
+        outlier_layout.addWidget(self.outlier_checkbox, 0, 0, 1, 3)
+
+        # Deviation threshold input
+        self.deviation_label = QLabel("Remove spectra that deviate more than")
+        outlier_layout.addWidget(self.deviation_label, 1, 0, 1, 2)
+        self.deviation_spinbox = QSpinBox()
+        self.deviation_spinbox.setRange(0, 100)
+        self.deviation_spinbox.setSuffix(" %")
+        self.deviation_spinbox.setValue(10)
+        outlier_layout.addWidget(self.deviation_spinbox, 1, 2)
+
+        outlier_group.setLayout(outlier_layout)
+        left_layout.addWidget(outlier_group)
+        self.toggle_outlier_rejection(False)
+
 
         self.start_probe_thread()
 
@@ -208,6 +233,10 @@ class DLSWindow(QMainWindow):
         central_widget.setLayout(central_layout)
 
         self.probe_worker: ProbeThread | None = None
+
+    def toggle_outlier_rejection(self, checked: bool) -> None:
+        self.deviation_label.setVisible(checked)
+        self.deviation_spinbox.setVisible(checked)
 
     def start_probe_thread(self, shots: int = 1000):
         """Create and launch the single ProbeThread.  
