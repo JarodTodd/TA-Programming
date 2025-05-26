@@ -104,7 +104,6 @@ class ShotDelayApp(QWidget):
 
 
 class DLSWindow(QMainWindow):
-    progress_updated = Signal(int)
     run_command_signal = Signal(str, str, int, int)
 
     switch_outlier_rejection = Signal(bool)
@@ -303,7 +302,6 @@ class DLSWindow(QMainWindow):
         value = max(0, min(value, self.delay_bar.maximum()))
         self.delay_bar.setValue(round(value/1000))
         self.delay_bar.setFormat(f"{int(value)}/8672")
-        self.progress_updated.emit(value)
         pass
 
 
