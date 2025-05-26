@@ -16,16 +16,9 @@ class dA_Window(QWidget):
         for child in self.findChildren(QWidget):
             child.installEventFilter(self)
 
-        # This timer makes sure the WorkerThread doesn't get too many commands in a short amount of time
-        self.slider_timer = QTimer(self)
-        self.slider_timer.setInterval(300)
-        self.slider_timer.setSingleShot(True)
-        self.slider_timer.timeout.connect(self.emit_slider_signal)
-
 
     def setupUi(self, Form):
         Form.setWindowTitle("dA Window")
-        Form.resize(640, 623)
         main_layout = QHBoxLayout(Form)
 
         # Left vertical layout with spacer
@@ -53,12 +46,16 @@ class dA_Window(QWidget):
 
 
         self.verticalSlider = QSlider(Qt.Vertical)
-        self.verticalSlider.setRange(0, 8672666)
+        if self.t_0 == 0:
+            self.verticalSlider.setRange(0, 8672666)
+        else:
+            self.verticalSlider.setRange(-250000, 8672666 - self.t_0 * 1000)
         self.verticalSlider.setSingleStep(2)
         self.verticalSlider.setTickInterval(250000)
         self.verticalSlider.setTickPosition(QSlider.TicksLeft)
         self.verticalSlider.setInvertedAppearance(True)
-        self.verticalSlider.valueChanged.connect(self.on_slider_change)
+        self.verticalSlider.sliderReleased.connect(self.emit_slider_signal)
+        self.verticalSlider.valueChanged.connect(self.update_abs_rel)
         right_layout.addWidget(self.verticalSlider)
 
         # Grid layout for controls
@@ -95,8 +92,11 @@ class dA_Window(QWidget):
 
     def set_current(self):
         self.run_command_signal.emit("SetReference", "ButtonPress", 0, 0)
-        self.t_0 = self.t0_spinbox.value()
+        self.t_0 = round(self.verticalSlider.value()/1000,2)
         self.rel_pos_line.setText("0")
+        self.t0_spinbox.setValue(self.t_0)
+        self.verticalSlider.setRange(-250000, 8672666 - self.t_0 * 1000)
+        self.verticalSlider.setValue(0)
 
     def eventFilter(self, obj, event):
         if event.type() == QEvent.KeyPress:
@@ -108,21 +108,21 @@ class dA_Window(QWidget):
                 return True
         return super().eventFilter(obj, event)
     
-    def on_slider_change(self, value):
-        self.update_abs_rel(value)
-        self.slider_timer.start()
 
     def emit_slider_signal(self):
         # Add a dummy variable to the function so it doesn't emit signals everytime the slider is updated 
         # because now it updates when a measurement is being done and emits doubled movement signals causing errors
         value = self.verticalSlider.value()
-        # print(f"emitting now: {value}")
-        # self.run_command_signal.emit(f"MoveRelative {value/1000:.3f}", "ButtonPress", 0, 0)
+        print(f"emitting now: {value}")
+        self.run_command_signal.emit(f"MoveRelative {value/1000:.3f}", "ButtonPress", 0, 0)
 
     def update_abs_rel(self, value):
-        value = round(value/1000, 2)
-        self.abs_pos_line.setText(str(value + self.t_0))
-        self.rel_pos_line.setText(str(value))
+        value = value/1000
+        self.move_target_box.setValue(round(value + self.t_0, 2))
+        self.abs_pos_line.setText(str(round(value + self.t_0, 2)))
+        self.rel_pos_line.setText(str(round(value, 2)))
+
+
 
     def redraw_dA_plot(self):
         self.update_dA_graph(self.dA_inputs_avg, self.dA_inputs_med)
