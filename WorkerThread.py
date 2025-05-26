@@ -20,21 +20,21 @@ class ProbeThread(QThread):
         super().__init__(parent)
         self.shots = shots
         self.running = True
-        self.probe_processor = ComputeData()
-        self.dA_processor =  ComputeData()
+        self.data_processor = ComputeData()
     
     def run(self):
         while self.running:
             block_buffer = camera(self.shots, 0)
             block_2d_array = np.array(block_buffer).reshape(self.shots, 1088)
 
-            probe_avg, probe_med, dA_average, dA_median = self.probe_processor.delta_a_block(block_2d_array)
+            probe_avg, probe_med, dA_average, dA_median = self.data_processor.delta_a_block(block_2d_array)
 
             if probe_avg == None or probe_med == None:
                 continue
 
             self.probe_update.emit(probe_avg[-1], probe_med[-1])
             self.dA_update.emit(dA_average[-1], dA_median[-1])
+            print(self.data_processor.outlier_rejection, self.data_processor.deviation_threshold)
     
     def stop(self):
         self.running = False

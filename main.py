@@ -19,7 +19,7 @@ class ComputeData():
         self.delta_A_matrix_avg = []
         self.delta_A_matrix_median = []
 
-        self.outlier_rejection = True
+        self.outlier_rejection = False
         self.deviation_threshold = 100
 
     def repeat_measurement(self):
@@ -73,7 +73,7 @@ class ComputeData():
             block1 = np.array(block1)
             block2 = np.array(block2)
 
-            if percentage >= 100 or self.outlier_rejection == False:
+            if self.deviation_threshold >= 100 or self.outlier_rejection == False:
                 return np.array(block1), np.array(block2)
             else:
                 block1_region = block1[:,range_start:range_end]
@@ -122,12 +122,14 @@ class ComputeData():
         
     def toggle_outlier_rejection(self, selected):
         self.outlier_rejection = selected
+        print("outlier flag set to", self.outlier_rejection, "in", id(self))
 
-    def deviation_change(self, value: int):
+
+    def deviation_change(self, value: float):
         self.deviation_threshold = value
 
 
-    def delta_a_block(self, block, start_pixel=12, end_pixel=1086, percentage = 110):
+    def delta_a_block(self, block, start_pixel=12, end_pixel=1035, percentage = 110):
         #Boolean masks for pump state
         pump_off = block[block[:, 2] < 49152,  start_pixel:end_pixel]
         pump_on  = block[block[:, 2] >= 49152, start_pixel:end_pixel]
@@ -139,10 +141,13 @@ class ComputeData():
 
             # print(len(pump_off), len(pump_on))
         
-        if len(pump_off) == 0 and len(pump_on) == 0:
-            return None, None, None, None
-        elif pump_off.size == 0:
-            return None, None, None, None
+        if len(pump_off) == 0 and len(pump_on) == 0  or pump_off.size == 0:
+            zeros = np.zeros(end_pixel - start_pixel, dtype=float)
+            self.probe_spectrum_avg.append(zeros)
+            self.probe_spectrum_median.append(zeros)
+            self.delta_A_matrix_avg.append(zeros)
+            self.delta_A_matrix_median.append(zeros)
+            return self.probe_spectrum_avg, self.probe_spectrum_median, self.delta_A_matrix_avg, self.delta_A_matrix_median
             
         n_pairs = min(len(pump_off), len(pump_on))
         if n_pairs == 0:
