@@ -39,7 +39,7 @@ def MoveAbsolute(delay):
     if state in ["46", "47", "48", "49"]:
         position = (delay * 10**-9) * c / 8
         myDLS.PA_Set(position)
-        print(f"Moved to absolute position: {myDLS.PA_Get()[1]} mm")
+        print(f"Moved to absolute position: {position} mm")
     else:
         sys.stderr.write("Controller is not in the correct state to move.\n")
 
@@ -112,10 +112,10 @@ if __name__ == "__main__":
             if command == "Initialize":
                 StartUp()
             elif command == "MovePositive":
-                MoveRelative(0.1)  # Adjust value if needed
+                MoveRelative(100)  # Adjust value if needed
                 print("Moved to positive position.")
             elif command == "MoveNegative":
-                MoveRelative(-0.1)
+                MoveRelative(-100)
             elif command == "Disable":
                 DisableReady()
             elif command.startswith("MoveRelative"):
