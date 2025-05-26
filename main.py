@@ -20,6 +20,7 @@ class ComputeData():
         self.delta_A_matrix_median = []
 
         self.outlier_rejection = True
+        self.deviation_threshold = 100
 
     def repeat_measurement(self):
         """
@@ -33,7 +34,7 @@ class ComputeData():
             block_2d_array = np.array(block_buffer).reshape(number_of_shots, 1088)
             self.blocks.append(block_2d_array)
 
-    def reject_outliers(self, block1, block2 = None, percentage=50, range_start = 0, range_end = None):
+    def reject_outliers(self, block1, block2 = None , range_start = 0, range_end = None):
         """
         Returns an array that contains only the rows
         whose average lies inside the chosen percentage bound
@@ -42,7 +43,7 @@ class ComputeData():
         if block2 == None:
             block1 = np.array(block1)
 
-            if percentage >= 100:
+            if self.deviation_threshold >= 100 or self.outlier_rejection == False:
                 return np.array(block1)
             else:
                 block_region = block1[:,range_start:range_end]
@@ -55,7 +56,7 @@ class ComputeData():
             row_averages = row_sums / len(block_region[0])
 
             #Create a list with acceptable rows
-            allowed_deviation = (percentage / 100.0) * average
+            allowed_deviation = (self.deviation_threshold / 100.0) * average
             good_shots = []
             for i, row in enumerate(block1):
                 if abs(row_averages[i] - average) <= allowed_deviation:
@@ -72,7 +73,7 @@ class ComputeData():
             block1 = np.array(block1)
             block2 = np.array(block2)
 
-            if percentage >= 100:
+            if percentage >= 100 or self.outlier_rejection == False:
                 return np.array(block1), np.array(block2)
             else:
                 block1_region = block1[:,range_start:range_end]
@@ -90,8 +91,8 @@ class ComputeData():
             block2_row_averages = block2_row_sums / len(block2_region[0])
 
             #Allowed deviation
-            block1_allowed_deviation = (percentage / 100.0) * block1_average
-            block2_allowed_deviation = (percentage / 100.0) * block2_average
+            block1_allowed_deviation = (self.deviation_threshold / 100.0) * block1_average
+            block2_allowed_deviation = (self.deviation_threshold / 100.0) * block2_average
 
             # Identify rejected row indices
             block1_rejected_rows = []
@@ -118,6 +119,12 @@ class ComputeData():
 
 
             return block1_clean, block2_clean
+        
+    def toggle_outlier_rejection(self, selected):
+        self.outlier_rejection = selected
+
+    def deviation_change(self, value: int):
+        self.deviation_threshold = value
 
 
     def delta_a_block(self, block, start_pixel=12, end_pixel=1086, percentage = 110):
@@ -127,8 +134,8 @@ class ComputeData():
         # print(len(pump_off), len(pump_off))
 
         if self.outlier_rejection == True:
-            pump_off = self.reject_outliers(pump_off, percentage=110)
-            pump_on = self.reject_outliers(pump_on, percentage=110)
+            pump_off = self.reject_outliers(pump_off)
+            pump_on = self.reject_outliers(pump_on)
 
             # print(len(pump_off), len(pump_on))
         

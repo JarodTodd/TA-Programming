@@ -107,6 +107,8 @@ class DLSWindow(QMainWindow):
     progress_updated = Signal(int)
     run_command_signal = Signal(str, str, int, int)
 
+    toggle_outlier_rejection = Signal(bool)
+    deviation_threshold_changed = Signal(int)
     
 
     def __init__(self):
@@ -151,6 +153,7 @@ class DLSWindow(QMainWindow):
         self.deviation_label = QLabel("Remove spectra that deviate more than")
         outlier_layout.addWidget(self.deviation_label, 1, 0, 1, 2)
         self.deviation_spinbox = QSpinBox()
+        self.deviation_spinbox.valueChanged.connect(self.emit_deviation_change)
         self.deviation_spinbox.setRange(0, 100)
         self.deviation_spinbox.setSuffix(" %")
         self.deviation_spinbox.setValue(10)
@@ -159,7 +162,6 @@ class DLSWindow(QMainWindow):
         outlier_group.setLayout(outlier_layout)
         left_layout.addWidget(outlier_group)
         self.toggle_outlier_rejection(False)
-
 
         self.start_probe_thread()
 
@@ -234,9 +236,14 @@ class DLSWindow(QMainWindow):
 
         self.probe_worker: ProbeThread | None = None
 
-    def toggle_outlier_rejection(self, checked: bool) -> None:
-        self.deviation_label.setVisible(checked)
-        self.deviation_spinbox.setVisible(checked)
+    def toggle_outlier_rejection(self, selected: bool) -> None:
+        self.deviation_label.setVisible(selected)
+        self.deviation_spinbox.setVisible(selected)
+        self.toggle_outlier_rejection.emit(selected)
+
+    def emit_deviation_change(self, value: int):
+        self.deviation_threshold_changed.emit(value)
+
 
     def start_probe_thread(self, shots: int = 1000):
         """Create and launch the single ProbeThread.  

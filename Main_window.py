@@ -58,6 +58,10 @@ if __name__ == "__main__":
     """This connection handles error messages from all applications/functions."""
     worker.error_occurred.connect(main_app.shot_delay_app.show_error_message)
 
+    """These connections handle the rejection outlier settings from the GUI"""
+    main_app.dls_window.toggle_outlier_rejection.connect(worker.data_processor.toggle_outlier_rejection)
+    main_app.dls_window.emit_deviation_change.connect(worker.data_processor.deviation_change)
+
 
     
     def start_process(argument):
