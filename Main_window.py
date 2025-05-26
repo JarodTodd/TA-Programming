@@ -4,7 +4,7 @@ from PySide6.QtGui import *
 from WorkerThread import *
 from camera_gui import *
 from dAwindow import *
-
+import time
 ironpython_executable = r"C:\Users\PC026453\Documents\TA-Programming\IronPython 3.4\ipy.exe"
 script_path = r"C:\Users\PC026453\Documents\TA-Programming\IronPythonDLS.py"
 
@@ -87,7 +87,7 @@ if __name__ == "__main__":
                 
             worker.process.readyReadStandardOutput.connect(worker.handle_process_output)
             worker.process.readyReadStandardError.connect(worker.handle_process_error)
-            worker.process.finished.connect(lambda: print("Process finished."))
+            worker.process.finished.connect(lambda: print("Process finished.", time.time()))
 
     worker.start_process_signal.connect(start_process)
 

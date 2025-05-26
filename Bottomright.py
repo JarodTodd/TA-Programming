@@ -41,7 +41,7 @@ class Ui_Bottom_right(QObject):
         self.steps_box = QSpinBox()
         self.steps_box.setMaximum(999999)
         self.steps_box.setValue(100)
-        
+
 
         grid.addWidget(QLabel("Start from, ps:"), 0, 0)
         grid.addWidget(self.exponential_start, 0, 1)
@@ -164,15 +164,27 @@ class Ui_Bottom_right(QObject):
     def on_start_button_clicked(self):
         if self.tabWidget.currentIndex() == 0:
             try:
-                if self.start_from_box.value() != self.finish_time_box.value():
+                start = self.start_from_box.value()
+                finish = self.finish_time_box.value()
+                steps = self.steps_box.value()
+                if start != finish and steps > 1:
                     if self.step_option_box.currentText() == "Exponential":
-                        self.content = generate_timepoints(self.start_from_box.value(), self.finish_time_box.value(), self.steps_box.value())
-                    if self.step_option_box.currentText() == "Linear":
-                        self.content = []
-                        self.content.extend(np.arange(self.start_from_box.value(), self.finish_time_box.value(), (self.finish_time_box.value() - self.start_from_box.value()) / self.steps_box.value()))
-                    self.trigger_worker_run.emit(self.content, self.stepping_order_box.currentText(), self.integration_time_box.value(), self.nos_box.value())
+                        self.content = generate_timepoints(start, finish, steps)
+                    elif self.step_option_box.currentText() == "Linear":
+                        if steps < 2:
+                            self.show_error_message("Number of steps must be at least 2.")
+                            return
+                        self.content = list(np.linspace(start, finish, steps))
+                    self.trigger_worker_run.emit(
+                        self.content,
+                        self.stepping_order_box.currentText(),
+                        self.integration_time_box.value(),
+                        self.nos_box.value()
+                    )
+                else:
+                    self.show_error_message("Start and end time must be different and steps > 1.")
             except Exception as e:
-                self.show_error_message(f"Start and end time are the same. {self.start_from_box.value(), self.finish_time_box.value()}")
+                self.show_error_message(f"Error generating timepoints: {e}")
         if self.tabWidget.currentIndex() == 1:
             if not self.content:
                 self.show_error_message("No measurement steps defined. Please upload a file or enter values.")

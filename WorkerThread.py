@@ -247,7 +247,7 @@ class Measurementworker(QThread):
         
 
         # Simulate measurement
-        QThread.sleep(4)
+        QThread.sleep(2.5)
         self.update_delay_bar_signal.emit(self.barvalue)
         block_buffer = camera(number_of_shots, self.counter)
         block_2d_array = np.array(block_buffer).reshape(number_of_shots, 1088)
@@ -279,4 +279,6 @@ class Measurementworker(QThread):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
+    worker = Measurementworker([], "Regular", 0, 0)
+    worker.speed_test()
     sys.exit(app.exec())
