@@ -22,6 +22,8 @@ class ComputeData():
         self.outlier_rejection = False
         self.outlier_rejection_dA = False
         self.deviation_threshold = 100
+        self.range_start = 0
+        self.range_end = 1023
 
     def repeat_measurement(self):
         """
@@ -35,12 +37,18 @@ class ComputeData():
             block_2d_array = np.array(block_buffer).reshape(number_of_shots, 1088)
             self.blocks.append(block_2d_array)
 
-    def reject_outliers(self, block1, block2 = None , range_start = 0, range_end = None):
+    def reject_outliers(self, block1, block2 = None , range_start: int | None = None, range_end:   int | None = None):
         """
         Returns an array that contains only the rows
         whose average lies inside the chosen percentage bound
         around the mean.
         """
+
+        if range_start is None:
+            range_start = self.range_start
+        if range_end is None:
+            range_end = self.range_end
+
         if block2 == None:
             block1 = np.array(block1)
 
@@ -128,6 +136,10 @@ class ComputeData():
 
     def deviation_change(self, value: float):
         self.deviation_threshold = value
+
+    def update_outlier_range(self, start: int, end: int) -> None:
+        self.range_start, self.range_end = sorted((int(start), int(end)))
+        print(f"Outlier range updated → {self.range_start}–{self.range_end}")
 
 
     def delta_a_block(self, block, start_pixel=12, end_pixel=1035):

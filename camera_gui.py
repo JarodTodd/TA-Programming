@@ -135,6 +135,23 @@ class DLSWindow(QMainWindow):
         self.probe_avg_graph.setLabel('bottom', 'Wavelength (nm)')
         self.probe_avg_graph.setBackground('w')
 
+        # vertical, draggable guide-lines 
+        self.range_line_left  = pg.InfiniteLine(pos=0, angle=90, movable=True, pen=pg.mkPen(color='#C0D5DC', width=1))
+        self.labelled_line_left = pg.InfLineLabel(self.range_line_left, text="{value:.0f}", position=0.9, color='black', fill=(255, 255, 255, 180)) 
+        self.range_line_right = pg.InfiniteLine(pos=1023, angle=90, movable=True, pen=pg.mkPen(color='#C0D5DC', width=1))
+        self.labelled_line_right = pg.InfLineLabel(self.range_line_right, text="{value:.0f}", position=0.9, color='black', fill=(255, 255, 255, 180)) 
+        font_size = QFont()
+        font_size.setPointSize(10)
+        self.labelled_line_right.textItem.setFont(font_size)
+        self.labelled_line_left.textItem.setFont(font_size)
+
+        # add guide-lines to probe-graph
+        for line in (self.range_line_left, self.range_line_right):
+            line.setVisible(False)                             
+            line.sigPositionChanged.connect(self.outlier_range_changed)
+            self.probe_avg_graph.addItem(line)
+   
+
         self.probe_inputs_avg = []
         self.probe_inputs_med = []
 
@@ -239,11 +256,25 @@ class DLSWindow(QMainWindow):
     def toggle_outlier_rejection(self, selected: bool) -> None:
         self.deviation_label.setVisible(selected)
         self.deviation_spinbox.setVisible(selected)
+
+        self.range_line_left.setVisible(selected)
+        self.range_line_right.setVisible(selected)
+
         self.switch_outlier_rejection.emit(selected)
 
     def emit_deviation_change(self, value: float):
         self.deviation_threshold_changed.emit(value)
 
+    @Slot()
+    def outlier_range_changed(self):
+        start = int(round(self.range_line_left.value()))
+        end   = int(round(self.range_line_right.value()))
+        if start > end:                   
+            start, end = end, start
+
+        # forward to the data-processor running in the worker thread
+        if self.probe_worker and self.probe_worker.data_processor:
+            self.probe_worker.data_processor.update_outlier_range(start, end)
 
     def start_probe_thread(self, shots: int = 1000):
         """Create and launch the single ProbeThread.  
