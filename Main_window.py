@@ -58,10 +58,7 @@ if __name__ == "__main__":
     """This connection handles error messages from all applications/functions."""
     worker.error_occurred.connect(main_app.shot_delay_app.show_error_message)
 
-    
 
-
-    
     def start_process(argument):
         if worker.process is None:
             worker.process = QProcess()

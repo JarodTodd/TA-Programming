@@ -6,8 +6,6 @@ import numpy as np
 from main import *
 from camera import *
 import random
-import time
-import threading
 
 ironpython_executable = r"C:\Users\PC026453\Documents\TA-Programming\IronPython 3.4\ipy.exe"
 script_path = r"C:\Users\PC026453\Documents\TA-Programming\IronPythonDLS.py"

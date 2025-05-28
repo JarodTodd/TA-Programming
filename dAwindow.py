@@ -31,6 +31,13 @@ class dA_Window(QWidget):
         self.dA_plot.setLabel('left', 'Intensity (counts)')
         self.dA_plot.setLabel('bottom', 'Wavelength (nm)')
         self.dA_plot.setBackground('w')
+        self.dA_plot.getViewBox().enableAutoRange(False, False)
+        self.dA_plot.setContentsMargins(0, 0, 0, 0)
+        self.dA_plot.scene().sigMouseClicked.connect(lambda event: self.on_click(event, self.dA_plot))
+        self.dA_plot.setLimits(xMin=0, xMax=1074, yMin=-1, yMax=1)
+
+    
+
         self.left_layout.addWidget(self.dA_plot)
 
         # Combo box for selecting Average or Median
@@ -92,7 +99,7 @@ class dA_Window(QWidget):
 
     def set_current(self):
         self.run_command_signal.emit("SetReference", "ButtonPress", 0, 0)
-        self.t_0 = round(self.verticalSlider.value()/1000,2)
+        self.t_0 = round(float(self.abs_pos_line.text()),2)
         self.rel_pos_line.setText("0")
         self.t0_spinbox.setValue(self.t_0)
         self.verticalSlider.setRange(-250000, 8672666 - self.t_0 * 1000)
@@ -133,6 +140,44 @@ class dA_Window(QWidget):
         self.dA_inputs_med = med_list
         self.dA_plot.clear()
         self.dA_plot.plot(range(len(avg_list)), avg_list, pen='r')
+
+    def on_click(self, event, plot_widget):
+        pos = event.scenePos()
+        vb = plot_widget.getViewBox()
+        view_rect = vb.sceneBoundingRect()
+
+        # Check if click is close to the left side (minimum X)
+        if 0 < (pos.x() - view_rect.left()) < 20 and 0 < (pos.y() - view_rect.bottom()) < 20:
+            new_min, ok = QInputDialog.getDouble(self, "Set Minimum x-axis", "Enter new x-minimum:")
+            if ok:
+                max_x = plot_widget.viewRange()[0][1]  # Get current max
+                plot_widget.setXRange(new_min, max_x, padding=0)
+
+        
+        # Check if click is close to the right side (maximum X)
+        if abs(pos.x() - view_rect.right()) < 20 and abs(pos.y() - view_rect.bottom()) < 20:
+            new_max, ok = QInputDialog.getDouble(self, "Set Maximum x-axis", "Enter new x-maximum:")
+            if ok:
+                min_x = plot_widget.viewRange()[0][0]
+                plot_widget.setXRange(min_x, new_max, padding=0)
+        
+        # Check if click is close to the top side (maximum Y)
+        if abs(pos.y() - view_rect.top()) < 20 and abs(pos.x() - view_rect.left()) < 20:
+            new_max, ok = QInputDialog.getDouble(self, "Set Maximum y-axis", "Enter new y-maximum:")
+            if ok:
+                max_y = plot_widget.viewRange()[1][1]
+                plot_widget.setYRange(max_y, new_max, padding=0)
+        
+        # Check if click is close to the bottom side (minimum Y)
+        if -20 < (pos.y() - view_rect.bottom()) < 0 and -20 < (pos.x() - view_rect.left()) < 0:
+            new_min, ok = QInputDialog.getDouble(self, "Set Minimum y-axis", "Enter new y-minimum:")
+            if ok:
+                min_y = plot_widget.viewRange()[1][0]
+                plot_widget.setYRange(new_min, min_y, padding=0)
+
+        print(plot_widget.viewRange())
+
+
 
 
 

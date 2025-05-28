@@ -1,6 +1,7 @@
 import numpy as np
 import pyqtgraph as pg
-from PySide6.QtCore import QObject, Qt
+from PySide6.QtCore import *
+from dAwindow import *
 
 
 class TAPlotWidget(QObject):
@@ -21,6 +22,8 @@ class TAPlotWidget(QObject):
         # Heatmap plot
         self.canvas_heatmap = pg.PlotWidget(parent)
         self.canvas_heatmap.setLabels(left="Delay / ps", bottom="Pixel index")
+        self.canvas_heatmap.getViewBox().setMouseEnabled(x=False, y=False)  
+              
 
         # compute grid shape
         self.X_edges = self.compute_edges(self.pixel_indices)
@@ -69,14 +72,18 @@ class TAPlotWidget(QObject):
         self.plot1 = self.canvas_plot1.plot([], [])
         self.vline_pl1 = pg.InfiniteLine(angle=90, movable=True, pen=self.cursor_secondary)
         self.canvas_plot1.addItem(self.vline_pl1)
-        
+        self.canvas_plot1.scene().sigMouseClicked.connect(lambda event: self.dA_window.on_click(event, self.canvas_plot1))
+        self.canvas_plot1.setLimits(xMin = self.delay_times.min(), xMax = self.delay_times.max(),
+                                   yMin = -1, yMax = 1)
 
         self.canvas_plot2 = pg.PlotWidget(parent)
         self.canvas_plot2.setLabels(left="ΔA at delay", bottom="Pixel index")
         self.plot2 = self.canvas_plot2.plot([], [])
         self.vline_pl2 = pg.InfiniteLine(angle=90, movable=True, pen=self.cursor_secondary)
         self.canvas_plot2.addItem(self.vline_pl2)
-
+        self.canvas_plot2.scene().sigMouseClicked.connect(lambda event: self.dA_window.on_click(event, self.canvas_plot2))
+        self.canvas_plot2.setLimits(xMin = self.pixel_indices.min(), xMax = self.pixel_indices.max(),
+                                   yMin = -1, yMax = 1)
 
         # Connections for interaction with the plots
         self.canvas_heatmap.scene().sigMouseClicked.connect(self.on_mouse_clicked)
