@@ -81,8 +81,6 @@ class ShotDelayApp(QWidget):
         self.dAwindow.rel_pos_line.setText(f"{0}")
 
 
-
-
     def show_error_message(self, error_message):
         msgbox = QMessageBox()
         msgbox.setWindowTitle("Error")
@@ -91,8 +89,6 @@ class ShotDelayApp(QWidget):
         msgbox.setIcon(QMessageBox.Critical)
         msgbox.setStandardButtons(QMessageBox.Ok)
         msgbox.exec()
-
-
 
 
     @Slot(float, float, float)
@@ -115,6 +111,7 @@ class DLSWindow(QMainWindow):
         self.setWindowTitle("Delayline GUI")
         self.probe_worker = ProbeThread()
         self.worker = Measurementworker("", "", 0, 0)
+        self.dA_window = dA_Window()
         self.worker.update_delay_bar_signal.connect(self.update_delay_bar)
         # Central widget
         central_widget = QWidget()
@@ -134,6 +131,10 @@ class DLSWindow(QMainWindow):
         self.probe_avg_graph.setLabel('left', 'Intensity (counts)')
         self.probe_avg_graph.setLabel('bottom', 'Wavelength (nm)')
         self.probe_avg_graph.setBackground('w')
+        self.probe_avg_graph.scene().sigMouseClicked.connect(lambda event: self.dA_window.on_click(event, self.probe_avg_graph))
+        self.probe_avg_graph.setLimits(xMin=0, xMax=1074, yMin=0, yMax=16500)
+
+
         self.probe_curve = self.probe_avg_graph.plot([], pen='r')
 
         # vertical, draggable guide-lines 
@@ -306,7 +307,7 @@ class DLSWindow(QMainWindow):
         self.deviation_threshold_changed.connect(self.probe_worker.data_processor.deviation_change, Qt.QueuedConnection)
 
         self.probe_worker.probe_update.connect(self.update_probe_data, Qt.QueuedConnection)
-        self.probe_worker.dA_update.connect(self.update_dA_plot, Qt.QueuedConnection)
+        self.probe_worker.dA_update.connect(self.update_probe_avg_graph, Qt.QueuedConnection)
         self.probe_worker.start()
 
     def shot_input_entered(self):
@@ -373,7 +374,7 @@ class DLSWindow(QMainWindow):
         self.probe_curve.setData(self.probe_inputs_avg)       
 
     @Slot(object, object)
-    def update_dA_plot(self, avg_row, med_row):
+    def update_probe_avg_graph(self, avg_row, med_row):
         self.window().dA_window.update_dA_graph(avg_row, med_row)
 
 
