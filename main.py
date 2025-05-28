@@ -19,8 +19,14 @@ class ComputeData():
         self.delta_A_matrix_avg = []
         self.delta_A_matrix_median = []
 
-        self.outlier_rejection = False
+        self.outlier_rejection_probe = False
+        self.outlier_rejection_dA = False
         self.deviation_threshold = 100
+
+        self.range_start_probe = 0
+        self.range_end_probe = 1023
+        self.range_start_dA = 0
+        self.range_end_dA = 1023
 
     def repeat_measurement(self):
         """
@@ -34,19 +40,28 @@ class ComputeData():
             block_2d_array = np.array(block_buffer).reshape(number_of_shots, 1088)
             self.blocks.append(block_2d_array)
 
-    def reject_outliers(self, block1, block2 = None , range_start = 0, range_end = None):
+    def reject_outliers(self, block1, block2 = None , range_start: int | None = None, range_end:   int | None = None):
         """
         Returns an array that contains only the rows
         whose average lies inside the chosen percentage bound
         around the mean.
         """
+
         if block2 == None:
             block1 = np.array(block1)
 
-            if self.deviation_threshold >= 100 or self.outlier_rejection == False:
+            if self.deviation_threshold >= 100:
                 return np.array(block1)
             else:
+                if range_start is None:
+                    range_start = self.range_start_probe
+                if range_end is None:
+                    range_end = self.range_end_probe
+                if range_start == range_end:
+                    block1[:,:] = 0
+                    return block1
                 block_region = block1[:,range_start:range_end]
+                print(range_start, range_end)
 
             #Calculate overal average of the block
             average = np.mean(block_region)
@@ -61,8 +76,6 @@ class ComputeData():
             for i, row in enumerate(block1):
                 if abs(row_averages[i] - average) <= allowed_deviation:
                     good_shots.append(row)
-                # else:
-                #     print("bad spectra found", flush=True)
 
             #Turn the list back into a NumPy array and return
             clean_block = np.array(good_shots)
@@ -73,11 +86,16 @@ class ComputeData():
             block1 = np.array(block1)
             block2 = np.array(block2)
 
-            if self.deviation_threshold >= 100 or self.outlier_rejection == False:
+            if self.deviation_threshold >= 100:
                 return np.array(block1), np.array(block2)
             else:
+                if range_start is None:
+                    range_start = self.range_start_dA
+                if range_end is None:
+                    range_end = self.range_end_dA
                 block1_region = block1[:,range_start:range_end]
                 block2_region = block2[:,range_start:range_end]
+                print(range_start, range_end)
 
             #Calculate overal average
             block1_average = np.mean(block1_region)
@@ -120,65 +138,58 @@ class ComputeData():
 
             return block1_clean, block2_clean
         
-    def toggle_outlier_rejection(self, selected):
-        self.outlier_rejection = selected
-        print("outlier flag set to", self.outlier_rejection, "in", id(self))
+    def toggle_outlier_rejection_probe(self, selected):
+        self.outlier_rejection_probe = selected
+    def toggle_outlier_rejection_dA(self, selected):
+        self.outlier_rejection_probe = selected
 
 
     def deviation_change(self, value: float):
         self.deviation_threshold = value
 
+    def update_outlier_range(self, start: int, end: int) -> None:
+        self.range_start_probe, self.range_end_probe = sorted((int(start), int(end)))
 
-    def delta_a_block(self, block, start_pixel=12, end_pixel=1035, percentage = 110):
+
+    def delta_a_block(self, block, start_pixel=12, end_pixel=1035):
         #Boolean masks for pump state
-        pump_off = block[block[:, 2] < 49152,  start_pixel:end_pixel]
-        pump_on  = block[block[:, 2] >= 49152, start_pixel:end_pixel]
-        # print(len(pump_off), len(pump_off))
+        pump_off_probe = block[block[:, 2] < 49152,  start_pixel:end_pixel]
+        pump_off_dA = block[block[:, 2] < 49152,  start_pixel:end_pixel]
+        pump_on_dA = block[block[:, 2] >= 49152, start_pixel:end_pixel]
 
-        if self.outlier_rejection == True:
-            pump_off = self.reject_outliers(pump_off)
-            pump_on = self.reject_outliers(pump_on)
 
-            # print(len(pump_off), len(pump_on))
-        
-        if len(pump_off) == 0 and len(pump_on) == 0  or pump_off.size == 0:
-            zeros = np.zeros(end_pixel - start_pixel, dtype=float)
+        # Probe spectra from pump‑off state
+        if self.outlier_rejection_probe == True:
+            pump_off_probe = self.reject_outliers(pump_off_probe)
+        if len(pump_off_probe) == 0:                          # every shot was rejected
+            zeros = np.zeros(end_pixel - start_pixel, float)
             self.probe_spectrum_avg.append(zeros)
             self.probe_spectrum_median.append(zeros)
+        else:
+            self.probe_spectrum_avg.append(np.mean(pump_off_probe, axis=0))
+            self.probe_spectrum_median.append(np.median(pump_off_probe, axis=0)) 
+    
+    
+        # dA calulations from pump‑on and pump‑off states
+        if self.outlier_rejection_dA == True:
+            pump_off_dA, pump_on_dA = self.reject_outliers(pump_off_dA, pump_on_dA)
+
+        if len(pump_off_dA) == 0 or len(pump_on_dA) == 0:
+            zeros = np.zeros(end_pixel - start_pixel, dtype=float)
             self.delta_A_matrix_avg.append(zeros)
             self.delta_A_matrix_median.append(zeros)
             return self.probe_spectrum_avg, self.probe_spectrum_median, self.delta_A_matrix_avg, self.delta_A_matrix_median
             
-        n_pairs = min(len(pump_off), len(pump_on))
-        if n_pairs == 0:
-            print("No pump-on/pump-off pairs found in this block.")
-            pump_off_avg = np.mean(pump_off, axis=0)
-            pump_off_median = np.median(pump_off, axis=0)
-
-            self.probe_spectrum_avg.append(pump_off_avg)
-            self.probe_spectrum_median.append(pump_off_median)
-            zeros = np.zeros(end_pixel - start_pixel, dtype=float)
-            self.delta_A_matrix_avg.append(zeros)
-            self.delta_A_matrix_median.append(zeros)
-
-            return self.probe_spectrum_avg, self.probe_spectrum_median, self.delta_A_matrix_avg, self.delta_A_matrix_median
-
+        # use only fully paired shots (truncate longer block if mismatched)
+        n_pairs = min(len(pump_off_dA), len(pump_on_dA))
+        
         #Pair shots and compute delta A
         with np.errstate(divide='ignore', invalid='ignore'):
-            delta_A = -np.log(np.divide(pump_on[:n_pairs], pump_off[:n_pairs]))
+            delta_A = -np.log(np.divide(pump_on_dA[:n_pairs], pump_off_dA[:n_pairs]))
 
         #Average and median delta_A
-        delta_A_avg = np.mean(delta_A, axis=0)
-        delta_A_median = np.median(delta_A, axis=0)
-
-        # Probe spectra from pump‑off state
-        pump_off_avg = np.mean(pump_off, axis=0)
-        pump_off_median = np.median(pump_off, axis=0)
-
-        self.probe_spectrum_avg.append(pump_off_avg)
-        self.probe_spectrum_median.append(pump_off_median)
-        self.delta_A_matrix_avg.append(delta_A_avg)
-        self.delta_A_matrix_median.append(delta_A_median)
+        self.delta_A_matrix_avg.append(np.mean(delta_A, axis=0))
+        self.delta_A_matrix_median.append(np.median(delta_A, axis=0))
         
         return self.probe_spectrum_avg, self.probe_spectrum_median, self.delta_A_matrix_avg, self.delta_A_matrix_median
 
