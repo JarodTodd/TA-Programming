@@ -12,7 +12,9 @@ script_path = r"C:\Users\PC026453\Documents\TA-Programming\IronPythonDLS.py"
 
 class ProbeThread(QThread):
     probe_update = Signal(np.ndarray, np.ndarray)
+    probe_rejected = Signal(float)
     dA_update = Signal(np.ndarray, np.ndarray)
+    
 
     def __init__(self, shots = 1000, parent: QObject | None = None):
         super().__init__(parent)
@@ -32,6 +34,8 @@ class ProbeThread(QThread):
 
             self.probe_update.emit(probe_avg[-1], probe_med[-1])
             self.dA_update.emit(dA_average[-1], dA_median[-1])
+            self.probe_rejected.emit(self.data_processor.rejected_probe)
+            
             # print(self.data_processor.outlier_rejection_probe, self.data_processor.deviation_threshold)
             # print(self.data_processor.range_start_probe, self.data_processor.range_end_probe)
     

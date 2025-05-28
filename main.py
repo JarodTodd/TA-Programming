@@ -28,6 +28,9 @@ class ComputeData():
         self.range_start_dA = 0
         self.range_end_dA = 1023
 
+        self.rejected_probe = 0
+        self.rejected_dA = 0
+
     def repeat_measurement(self):
         """
         Loops over all delay_stages 
@@ -79,8 +82,8 @@ class ComputeData():
                     good_shots.append(row)
                     count += 1
             
-            percent_rejected = (len(block1) - count) / len(block1) * 100
-            print(f"Rejected {percent_rejected:.2f}% of the shots in this block.")
+            self.rejected_probe = (len(block1) - count) / len(block1) * 100
+            print(f"Rejected {self.rejected_probe:.2f}% of the shots in this block.")
 
             #Turn the list back into a NumPy array and return
             clean_block = np.array(good_shots)

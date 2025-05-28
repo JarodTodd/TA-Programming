@@ -183,7 +183,7 @@ class DLSWindow(QMainWindow):
         self.rejected_value.setPlaceholderText("--")       
         self.rejected_value.setReadOnly(True)              
         outlier_layout.addWidget(self.rejected_label, 2, 0, 1, 2)
-        outlier_layout.addWidget(self.rejected_value, 2, 3)
+        outlier_layout.addWidget(self.rejected_value, 2, 2)
 
         outlier_group.setLayout(outlier_layout)
         left_layout.addWidget(outlier_group)
@@ -269,6 +269,9 @@ class DLSWindow(QMainWindow):
         self.deviation_label.setVisible(selected)
         self.deviation_spinbox.setVisible(selected)
 
+        self.rejected_label.setVisible(selected)
+        self.rejected_value.setVisible(selected)
+
         self.range_line_left.setVisible(selected)
         self.range_line_right.setVisible(selected)
 
@@ -295,6 +298,11 @@ class DLSWindow(QMainWindow):
         # forward to the data-processor running in the worker thread
         if self.probe_worker and self.probe_worker.data_processor:
             self.probe_worker.data_processor.update_outlier_range(start, end)
+    
+    @Slot(float)
+    def update_rejected_percentage(self, percent: float) -> None:
+        """Fill the read-only box with the latest rejected-spectra percentage."""
+        self.rejected_value.setText(f"{percent:.1f}")
 
     def start_probe_thread(self, shots: int = 1000):
         """Create and launch the single ProbeThread.  
