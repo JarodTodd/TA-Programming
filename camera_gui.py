@@ -177,6 +177,16 @@ class DLSWindow(QMainWindow):
         self.deviation_spinbox.setValue(100)
         outlier_layout.addWidget(self.deviation_spinbox, 1, 2)
 
+        self.rejected_label = QLabel("Rejected shots (%)")
+        self.rejected_value = QLineEdit()
+        self.rejected_value.setPlaceholderText("--")       
+        self.rejected_value.setReadOnly(True)              
+        outlier_layout.addWidget(self.rejected_label, 2, 0, 1, 2)
+        outlier_layout.addWidget(self.rejected_value, 2, 3)
+
+        outlier_group.setLayout(outlier_layout)
+        left_layout.addWidget(outlier_group)
+
         outlier_group.setLayout(outlier_layout)
         left_layout.addWidget(outlier_group)
         self.toggle_outlier_rejection(False)

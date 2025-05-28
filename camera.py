@@ -110,7 +110,8 @@ def	camera(number_of_shots, delay_number):
 	settings.camera_settings[drvno].dac_output[0][7] = 55000
 
 	# Load ESLSCDLL.dll
-	dll = WinDLL("./ESLSCDLL")
+	"""Maybe make this a global variable in Main_window.py?"""
+	dll = WinDLL("./ESLSCDLL") 
 	# Set the return type of DLLConvertErrorCodeToMsg to c-string pointer
 	dll.DLLConvertErrorCodeToMsg.restype = c_char_p
 
@@ -174,30 +175,30 @@ def	camera(number_of_shots, delay_number):
 	if(status != 0):
 		raise BaseException(dll.DLLConvertErrorCodeToMsg(status))
 	
-	with open(f"camera_output{delay_number}.csv", mode="w", newline="") as file:
-		writer = csv.writer(file)
+	# with open(f"camera_output{delay_number}.csv", mode="w", newline="") as file:
+	# 	writer = csv.writer(file)
 
-		# Write header
-		header = [f"pixel_{i}" for i in range(settings.camera_settings[drvno].PIXEL)]
-		writer.writerow(header)
+	# 	# Write header
+	# 	header = [f"pixel_{i}" for i in range(settings.camera_settings[drvno].PIXEL)]
+	# 	writer.writerow(header)
 
-		# Write scan rows
-		for scan_idx in range(settings.nos):
-			start = scan_idx * settings.camera_settings[drvno].PIXEL
-			scan_row = block_buffer[start:start + settings.camera_settings[drvno].PIXEL]
-			if (scan_row[2] == 0):
-				scan_row[2] = "OFF/OFF"
-			elif (scan_row[2] == 16384):
-				scan_row[2] = "OFF/ON"
-			elif (scan_row[2] == 32768):
-				scan_row[2] = "ON/OFF"
-			elif (scan_row[2] == 49152):
-				scan_row[2] = "ON/ON"
-			else:
-				print("Unexpected value")
-			writer.writerow(scan_row)
+	# 	# Write scan rows
+	# 	for scan_idx in range(settings.nos):
+	# 		start = scan_idx * settings.camera_settings[drvno].PIXEL
+	# 		scan_row = block_buffer[start:start + settings.camera_settings[drvno].PIXEL]
+	# 		if (scan_row[2] == 0):
+	# 			scan_row[2] = "OFF/OFF"
+	# 		elif (scan_row[2] == 16384):
+	# 			scan_row[2] = "OFF/ON"
+	# 		elif (scan_row[2] == 32768):
+	# 			scan_row[2] = "ON/OFF"
+	# 		elif (scan_row[2] == 49152):
+	# 			scan_row[2] = "ON/ON"
+	# 		else:
+	# 			print("Unexpected value")
+	# 		writer.writerow(scan_row)
 
-	print(f"Data exported to camera_output{delay_number}.csv")
+	# print(f"Data exported to camera_output{delay_number}.csv")
 
 	# This block is showing you how to get all data of the whole measurement with one DLL call
 	# data_buffer = (c_uint16 * (settings.PIXEL * settings.nos * settings.CAMCNT * settings.nob))(0)

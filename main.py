@@ -73,13 +73,17 @@ class ComputeData():
             #Create a list with acceptable rows
             allowed_deviation = (self.deviation_threshold / 100.0) * average
             good_shots = []
+            count = 0 
             for i, row in enumerate(block1):
                 if abs(row_averages[i] - average) <= allowed_deviation:
                     good_shots.append(row)
+                    count += 1
+            
+            percent_rejected = (len(block1) - count) / len(block1) * 100
+            print(f"Rejected {percent_rejected:.2f}% of the shots in this block.")
 
             #Turn the list back into a NumPy array and return
             clean_block = np.array(good_shots)
-
             return clean_block
         
         else:
