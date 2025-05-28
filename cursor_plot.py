@@ -8,6 +8,7 @@ class TAPlotWidget(QObject):
 
     def __init__(self, delay_times, pixel_indices, parent=None):
         super().__init__(parent)
+        self.dA_window = dA_Window()
 
         # start data
         self.delay_times   = np.asarray(delay_times,  dtype=float)
