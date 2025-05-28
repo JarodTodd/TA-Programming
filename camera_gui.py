@@ -134,21 +134,22 @@ class DLSWindow(QMainWindow):
         self.probe_avg_graph.setLabel('left', 'Intensity (counts)')
         self.probe_avg_graph.setLabel('bottom', 'Wavelength (nm)')
         self.probe_avg_graph.setBackground('w')
+        self.probe_curve = self.probe_avg_graph.plot([], pen='r')
 
         # vertical, draggable guide-lines 
         self.range_line_left  = pg.InfiniteLine(pos=0, angle=90, movable=True, pen=pg.mkPen(color='#C0D5DC', width=1))
-        self.labelled_line_left = pg.InfLineLabel(self.range_line_left, text="{value:.0f}", position=0.9, color='black', fill=(255, 255, 255, 180)) 
+        self.labelled_line_left = pg.InfLineLabel(self.range_line_left, text="{value:.0f}", position=0.95, color='black', fill=(255, 255, 255, 180)) 
         self.range_line_right = pg.InfiniteLine(pos=1023, angle=90, movable=True, pen=pg.mkPen(color='#C0D5DC', width=1))
-        self.labelled_line_right = pg.InfLineLabel(self.range_line_right, text="{value:.0f}", position=0.9, color='black', fill=(255, 255, 255, 180)) 
+        self.labelled_line_right = pg.InfLineLabel(self.range_line_right, text="{value:.0f}", position=0.95, color='black', fill=(255, 255, 255, 180)) 
         font_size = QFont()
-        font_size.setPointSize(10)
+        font_size.setPointSize(7)
         self.labelled_line_right.textItem.setFont(font_size)
         self.labelled_line_left.textItem.setFont(font_size)
 
         # add guide-lines to probe-graph
         for line in (self.range_line_left, self.range_line_right):
             line.setVisible(False)                             
-            line.sigPositionChanged.connect(self.outlier_range_changed)
+            line.sigPositionChanged.connect(self.probe_outlier_range_changed)
             self.probe_avg_graph.addItem(line)
    
 
@@ -266,11 +267,19 @@ class DLSWindow(QMainWindow):
         self.deviation_threshold_changed.emit(value)
 
     @Slot()
-    def outlier_range_changed(self):
+    def probe_outlier_range_changed(self):
         start = int(round(self.range_line_left.value()))
         end   = int(round(self.range_line_right.value()))
         if start > end:                   
             start, end = end, start
+            self.range_line_left, self.range_line_right = self.range_line_right, self.range_line_left
+
+        if start < 0:
+            self.range_line_left.setValue(0)
+            start = 0
+        if end > 1023:
+            end = 1023
+            self.range_line_right.setValue(1023)
 
         # forward to the data-processor running in the worker thread
         if self.probe_worker and self.probe_worker.data_processor:
@@ -283,7 +292,7 @@ class DLSWindow(QMainWindow):
             return                  
         self.probe_worker = ProbeThread(shots)
 
-        self.switch_outlier_rejection.connect(self.probe_worker.data_processor.toggle_outlier_rejection, Qt.QueuedConnection)
+        self.switch_outlier_rejection.connect(self.probe_worker.data_processor.toggle_outlier_rejection_probe, Qt.QueuedConnection)
         self.deviation_threshold_changed.connect(self.probe_worker.data_processor.deviation_change, Qt.QueuedConnection)
 
         self.probe_worker.probe_update.connect(self.update_probe_data, Qt.QueuedConnection)
@@ -351,8 +360,7 @@ class DLSWindow(QMainWindow):
     def update_probe_data(self, avg_row, med_row):
         self.probe_inputs_avg = avg_row
         self.probe_inputs_med = med_row
-        self.probe_avg_graph.clear()
-        self.probe_avg_graph.plot(self.probe_inputs_avg, pen='r')           
+        self.probe_curve.setData(self.probe_inputs_avg)       
 
     @Slot(object, object)
     def update_dA_plot(self, avg_row, med_row):

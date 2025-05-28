@@ -32,6 +32,7 @@ class dA_Window(QWidget):
         self.dA_plot.setLabel('bottom', 'Wavelength (nm)')
         self.dA_plot.setBackground('w')
         self.left_layout.addWidget(self.dA_plot)
+        self.dA_curve = self.dA_plot.plot([], pen='r')
 
         # Combo box for selecting Average or Median
         self.dA_inputs_avg = []
@@ -131,8 +132,8 @@ class dA_Window(QWidget):
     def update_dA_graph(self, avg_list, med_list):
         self.dA_inputs_avg = avg_list
         self.dA_inputs_med = med_list
-        self.dA_plot.clear()
-        self.dA_plot.plot(range(len(avg_list)), avg_list, pen='r')
+        
+        self.dA_curve.setData(self.dA_inputs_avg)     
 
 
 

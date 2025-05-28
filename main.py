@@ -19,11 +19,14 @@ class ComputeData():
         self.delta_A_matrix_avg = []
         self.delta_A_matrix_median = []
 
-        self.outlier_rejection = False
+        self.outlier_rejection_probe = False
         self.outlier_rejection_dA = False
         self.deviation_threshold = 100
-        self.range_start = 0
-        self.range_end = 1023
+
+        self.range_start_probe = 0
+        self.range_end_probe = 1023
+        self.range_start_dA = 0
+        self.range_end_dA = 1023
 
     def repeat_measurement(self):
         """
@@ -44,18 +47,21 @@ class ComputeData():
         around the mean.
         """
 
-        if range_start is None:
-            range_start = self.range_start
-        if range_end is None:
-            range_end = self.range_end
-
         if block2 == None:
             block1 = np.array(block1)
 
             if self.deviation_threshold >= 100:
                 return np.array(block1)
             else:
+                if range_start is None:
+                    range_start = self.range_start_probe
+                if range_end is None:
+                    range_end = self.range_end_probe
+                if range_start == range_end:
+                    block1[:,:] = 0
+                    return block1
                 block_region = block1[:,range_start:range_end]
+                print(range_start, range_end)
 
             #Calculate overal average of the block
             average = np.mean(block_region)
@@ -70,8 +76,6 @@ class ComputeData():
             for i, row in enumerate(block1):
                 if abs(row_averages[i] - average) <= allowed_deviation:
                     good_shots.append(row)
-                # else:
-                #     print("bad spectra found", flush=True)
 
             #Turn the list back into a NumPy array and return
             clean_block = np.array(good_shots)
@@ -85,8 +89,13 @@ class ComputeData():
             if self.deviation_threshold >= 100:
                 return np.array(block1), np.array(block2)
             else:
+                if range_start is None:
+                    range_start = self.range_start_dA
+                if range_end is None:
+                    range_end = self.range_end_dA
                 block1_region = block1[:,range_start:range_end]
                 block2_region = block2[:,range_start:range_end]
+                print(range_start, range_end)
 
             #Calculate overal average
             block1_average = np.mean(block1_region)
@@ -129,17 +138,17 @@ class ComputeData():
 
             return block1_clean, block2_clean
         
-    def toggle_outlier_rejection(self, selected):
-        self.outlier_rejection = selected
-        print("outlier flag set to", self.outlier_rejection, "in", id(self))
+    def toggle_outlier_rejection_probe(self, selected):
+        self.outlier_rejection_probe = selected
+    def toggle_outlier_rejection_dA(self, selected):
+        self.outlier_rejection_probe = selected
 
 
     def deviation_change(self, value: float):
         self.deviation_threshold = value
 
     def update_outlier_range(self, start: int, end: int) -> None:
-        self.range_start, self.range_end = sorted((int(start), int(end)))
-        print(f"Outlier range updated → {self.range_start}–{self.range_end}")
+        self.range_start_probe, self.range_end_probe = sorted((int(start), int(end)))
 
 
     def delta_a_block(self, block, start_pixel=12, end_pixel=1035):
@@ -150,7 +159,7 @@ class ComputeData():
 
 
         # Probe spectra from pump‑off state
-        if self.outlier_rejection == True:
+        if self.outlier_rejection_probe == True:
             pump_off_probe = self.reject_outliers(pump_off_probe)
         if len(pump_off_probe) == 0:                          # every shot was rejected
             zeros = np.zeros(end_pixel - start_pixel, float)
