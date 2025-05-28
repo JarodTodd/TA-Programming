@@ -174,13 +174,13 @@ class DLSWindow(QMainWindow):
         self.deviation_spinbox.valueChanged.connect(self.emit_deviation_change)
         self.deviation_spinbox.setRange(0, 100)
         self.deviation_spinbox.setSuffix(" %")
-        self.deviation_spinbox.setSingleStep(0.1)
+        self.deviation_spinbox.setSingleStep(0.01)
         self.deviation_spinbox.setValue(100)
         outlier_layout.addWidget(self.deviation_spinbox, 1, 2)
 
         self.rejected_label = QLabel("Rejected shots (%)")
         self.rejected_value = QLineEdit()
-        self.rejected_value.setPlaceholderText("--")       
+        self.rejected_value.setPlaceholderText("--")    
         self.rejected_value.setReadOnly(True)              
         outlier_layout.addWidget(self.rejected_label, 2, 0, 1, 2)
         outlier_layout.addWidget(self.rejected_value, 2, 2)
@@ -316,6 +316,7 @@ class DLSWindow(QMainWindow):
 
         self.probe_worker.probe_update.connect(self.update_probe_data, Qt.QueuedConnection)
         self.probe_worker.dA_update.connect(self.update_probe_avg_graph, Qt.QueuedConnection)
+        self.probe_worker.probe_rejected.connect(self.update_rejected_percentage, Qt.QueuedConnection)
         self.probe_worker.start()
 
     def shot_input_entered(self):
