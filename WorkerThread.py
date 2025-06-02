@@ -95,7 +95,6 @@ class MeasurementWorker(QThread):
             if argument == "Connect":
                 if hasattr(self, "conn"):
                     self.conn.close()  # Ensure the connection is closed
-                    print("Connection closed.")
                 if hasattr(self, "server_socket"):
                     self.server_socket.close()  # Ensure the server socket is closed
                     print("Server socket closed.")
@@ -115,6 +114,7 @@ class MeasurementWorker(QThread):
             line, self.buffer = self.buffer.split(b"\n", 1)
             data = json.loads(line.decode())
             print(f"Received data: {data}")
+            self.buffer = b""
             return data  # Return the parsed data
         except Exception as e:
             print(f"Error receiving data from client: {e}")
@@ -164,6 +164,7 @@ class MeasurementWorker(QThread):
             finally:
                 self.conn.close()
                 self.server_socket.close()
+                print("Connection closed and server socket shut down.")
 
     def _run_measurement_loop(self, content: list[dict], shots: int, scans) -> None:
         try:
@@ -251,6 +252,16 @@ class MeasurementWorker(QThread):
             self.process.terminate()
             self.process.waitForFinished()
         self.process = None
+
+        if hasattr(self, "conn") and self.conn:
+            print("Closing connection...")
+            self.conn.close()
+            self.conn = None
+        if hasattr(self, "server_socket") and self.server_socket:
+            print("Closing server socket...")
+            self.server_socket.close()
+            self.server_socket = None
+
         self.quit()
         if not self.wait(5000):
             self.terminate()
@@ -303,9 +314,9 @@ class MeasurementWorker(QThread):
         except Exception as e:
             print(f"Error in start_gui: {e}")
             self.error_occurred.emit(str(e))
-        finally:
-            self.conn.close()  # Close the connection
-            print("Connection closed.")
+
+        return self.ref, self.position
+
 
 
     def process_content(self, delay_relative, number_of_shots):

@@ -1,1 +1,1 @@
-Position: 385.58128103409462, Reference: 3600.0105112717683
+Error executing command 'MeasurementLoop [2000.0, -1000.0, 500.0, 1000.0]': could not convert string to float: '[2000.0,'
