@@ -8,6 +8,7 @@ class TAPlotWidget(QObject):
 
     def __init__(self, delay_times, pixel_indices, parent=None):
         super().__init__(parent)
+        self.dA_window = dA_Window()
 
         # start data
         self.delay_times   = np.asarray(delay_times,  dtype=float)
@@ -73,8 +74,6 @@ class TAPlotWidget(QObject):
         self.vline_pl1 = pg.InfiniteLine(angle=90, movable=True, pen=self.cursor_secondary)
         self.canvas_plot1.addItem(self.vline_pl1)
         self.canvas_plot1.scene().sigMouseClicked.connect(lambda event: self.dA_window.on_click(event, self.canvas_plot1))
-        self.canvas_plot1.setLimits(xMin = self.delay_times.min(), xMax = self.delay_times.max(),
-                                   yMin = -1, yMax = 1)
 
         self.canvas_plot2 = pg.PlotWidget(parent)
         self.canvas_plot2.setLabels(left="ΔA at delay", bottom="Pixel index")
@@ -82,8 +81,7 @@ class TAPlotWidget(QObject):
         self.vline_pl2 = pg.InfiniteLine(angle=90, movable=True, pen=self.cursor_secondary)
         self.canvas_plot2.addItem(self.vline_pl2)
         self.canvas_plot2.scene().sigMouseClicked.connect(lambda event: self.dA_window.on_click(event, self.canvas_plot2))
-        self.canvas_plot2.setLimits(xMin = self.pixel_indices.min(), xMax = self.pixel_indices.max(),
-                                   yMin = -1, yMax = 1)
+        
 
         # Connections for interaction with the plots
         self.canvas_heatmap.scene().sigMouseClicked.connect(self.on_mouse_clicked)
@@ -117,7 +115,7 @@ class TAPlotWidget(QObject):
         self.delta_A_matrix_avg[row_idx, :] = row_avg
         self.delta_A_matrix_med[row_idx, :] = row_med
         self.active_matrix[row_idx, :] = (row_avg if self.mode == "avg" else row_med)
-        self.refresh_heatmap()
+        self.refresh_heatmap_update()
 
     def update_delay_stages(self, parsed_content):
         self.delay_times = np.sort(np.asarray(parsed_content, dtype=float))
@@ -197,6 +195,10 @@ class TAPlotWidget(QObject):
         # update color bar
         self.cbar.setImageItem(self.mesh)
         self.cbar.setLevels((vmin, vmax))
+
+    def refresh_heatmap_update(self):
+        self.mesh.setData(self.X_grid, self.Y_grid, self.active_matrix)
+
         
     @staticmethod
     def compute_edges(values):

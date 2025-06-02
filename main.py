@@ -11,13 +11,13 @@ class ComputeData():
         #The whole probe_spectrum or delta_A for the first measurement can be requestion by probe_sprectrum[0] or delta_A_matrix[0]
         """
         #stores the 2d arrays of each delay measurement
-        self.blocks = []
+        self.blocks = None
         #stores the probe spectra of each delay measurement
-        self.probe_spectrum_avg = []
-        self.probe_spectrum_median = []
+        self.probe_spectrum_avg = None
+        self.probe_spectrum_median = None
         #Stores the array of each delay delta_A
-        self.delta_A_matrix_avg = []
-        self.delta_A_matrix_median = []
+        self.delta_A_matrix_avg = None
+        self.delta_A_matrix_median = None
 
         self.outlier_rejection_probe = False
         self.outlier_rejection_dA = False
@@ -27,6 +27,9 @@ class ComputeData():
         self.range_end_probe = 1023
         self.range_start_dA = 0
         self.range_end_dA = 1023
+
+        self.rejected_probe = 0
+        self.rejected_dA = 0
 
     def repeat_measurement(self):
         """
@@ -73,13 +76,17 @@ class ComputeData():
             #Create a list with acceptable rows
             allowed_deviation = (self.deviation_threshold / 100.0) * average
             good_shots = []
+            count = 0 
             for i, row in enumerate(block1):
                 if abs(row_averages[i] - average) <= allowed_deviation:
                     good_shots.append(row)
+                    count += 1
+            
+            self.rejected_probe = (len(block1) - count) / len(block1) * 100
+            print(f"Rejected {self.rejected_probe:.2f}% of the shots in this block.")
 
             #Turn the list back into a NumPy array and return
             clean_block = np.array(good_shots)
-
             return clean_block
         
         else:
@@ -163,11 +170,11 @@ class ComputeData():
             pump_off_probe = self.reject_outliers(pump_off_probe)
         if len(pump_off_probe) == 0:                          # every shot was rejected
             zeros = np.zeros(end_pixel - start_pixel, float)
-            self.probe_spectrum_avg.append(zeros)
-            self.probe_spectrum_median.append(zeros)
+            self.probe_spectrum_avg = zeros
+            self.probe_spectrum_median = zeros
         else:
-            self.probe_spectrum_avg.append(np.mean(pump_off_probe, axis=0))
-            self.probe_spectrum_median.append(np.median(pump_off_probe, axis=0)) 
+            self.probe_spectrum_avg = np.mean(pump_off_probe, axis=0)
+            self.probe_spectrum_median = np.median(pump_off_probe, axis=0)
     
     
         # dA calulations from pump‑on and pump‑off states
@@ -176,8 +183,8 @@ class ComputeData():
 
         if len(pump_off_dA) == 0 or len(pump_on_dA) == 0:
             zeros = np.zeros(end_pixel - start_pixel, dtype=float)
-            self.delta_A_matrix_avg.append(zeros)
-            self.delta_A_matrix_median.append(zeros)
+            self.delta_A_matrix_avg = zeros
+            self.delta_A_matrix_median = zeros
             return self.probe_spectrum_avg, self.probe_spectrum_median, self.delta_A_matrix_avg, self.delta_A_matrix_median
             
         # use only fully paired shots (truncate longer block if mismatched)
@@ -188,8 +195,8 @@ class ComputeData():
             delta_A = -np.log(np.divide(pump_on_dA[:n_pairs], pump_off_dA[:n_pairs]))
 
         #Average and median delta_A
-        self.delta_A_matrix_avg.append(np.mean(delta_A, axis=0))
-        self.delta_A_matrix_median.append(np.median(delta_A, axis=0))
+        self.delta_A_matrix_avg = np.mean(delta_A, axis=0)
+        self.delta_A_matrix_median = np.median(delta_A, axis=0)
         
         return self.probe_spectrum_avg, self.probe_spectrum_median, self.delta_A_matrix_avg, self.delta_A_matrix_median
 

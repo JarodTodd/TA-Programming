@@ -174,9 +174,19 @@ class DLSWindow(QMainWindow):
         self.deviation_spinbox.valueChanged.connect(self.emit_deviation_change)
         self.deviation_spinbox.setRange(0, 100)
         self.deviation_spinbox.setSuffix(" %")
-        self.deviation_spinbox.setSingleStep(0.1)
+        self.deviation_spinbox.setSingleStep(0.01)
         self.deviation_spinbox.setValue(100)
         outlier_layout.addWidget(self.deviation_spinbox, 1, 2)
+
+        self.rejected_label = QLabel("Rejected shots (%)")
+        self.rejected_value = QLineEdit()
+        self.rejected_value.setPlaceholderText("--")    
+        self.rejected_value.setReadOnly(True)              
+        outlier_layout.addWidget(self.rejected_label, 2, 0, 1, 2)
+        outlier_layout.addWidget(self.rejected_value, 2, 2)
+
+        outlier_group.setLayout(outlier_layout)
+        left_layout.addWidget(outlier_group)
 
         outlier_group.setLayout(outlier_layout)
         left_layout.addWidget(outlier_group)
@@ -259,6 +269,9 @@ class DLSWindow(QMainWindow):
         self.deviation_label.setVisible(selected)
         self.deviation_spinbox.setVisible(selected)
 
+        self.rejected_label.setVisible(selected)
+        self.rejected_value.setVisible(selected)
+
         self.range_line_left.setVisible(selected)
         self.range_line_right.setVisible(selected)
 
@@ -285,6 +298,11 @@ class DLSWindow(QMainWindow):
         # forward to the data-processor running in the worker thread
         if self.probe_worker and self.probe_worker.data_processor:
             self.probe_worker.data_processor.update_outlier_range(start, end)
+    
+    @Slot(float)
+    def update_rejected_percentage(self, percent: float) -> None:
+        """Fill the read-only box with the latest rejected-spectra percentage."""
+        self.rejected_value.setText(f"{percent:.1f}")
 
     def start_probe_thread(self, shots: int = 1000):
         """Create and launch the single ProbeThread.  
@@ -298,6 +316,7 @@ class DLSWindow(QMainWindow):
 
         self.probe_worker.probe_update.connect(self.update_probe_data, Qt.QueuedConnection)
         self.probe_worker.dA_update.connect(self.update_probe_avg_graph, Qt.QueuedConnection)
+        self.probe_worker.probe_rejected.connect(self.update_rejected_percentage, Qt.QueuedConnection)
         self.probe_worker.start()
 
     def shot_input_entered(self):

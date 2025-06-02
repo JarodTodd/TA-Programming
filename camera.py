@@ -110,7 +110,8 @@ def	camera(number_of_shots, delay_number):
 	settings.camera_settings[drvno].dac_output[0][7] = 55000
 
 	# Load ESLSCDLL.dll
-	dll = WinDLL("./ESLSCDLL")
+	"""Maybe make this a global variable in Main_window.py?"""
+	dll = WinDLL("./ESLSCDLL") 
 	# Set the return type of DLLConvertErrorCodeToMsg to c-string pointer
 	dll.DLLConvertErrorCodeToMsg.restype = c_char_p
 
