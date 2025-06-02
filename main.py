@@ -22,6 +22,7 @@ class ComputeData():
         self.outlier_rejection_probe = False
         self.outlier_rejection_dA = False
         self.deviation_threshold = 100
+        self.deviation_threshold_dA = 100
 
         self.range_start_probe = 0
         self.range_end_probe = 1023
@@ -93,7 +94,7 @@ class ComputeData():
             block1 = np.array(block1)
             block2 = np.array(block2)
 
-            if self.deviation_threshold >= 100:
+            if self.deviation_threshold_dA >= 100:
                 return np.array(block1), np.array(block2)
             else:
                 if range_start is None:
@@ -116,8 +117,8 @@ class ComputeData():
             block2_row_averages = block2_row_sums / len(block2_region[0])
 
             #Allowed deviation
-            block1_allowed_deviation = (self.deviation_threshold / 100.0) * block1_average
-            block2_allowed_deviation = (self.deviation_threshold / 100.0) * block2_average
+            block1_allowed_deviation = (self.deviation_threshold_dA / 100.0) * block1_average
+            block2_allowed_deviation = (self.deviation_threshold_dA / 100.0) * block2_average
 
             # Identify rejected row indices
             block1_rejected_rows = []
@@ -153,7 +154,7 @@ class ComputeData():
     def deviation_change(self, value: float):
         self.deviation_threshold = value
     def dA_deviation_change(self, value: float):
-        self.deviation_threshold = value
+        self.deviation_threshold_dA = value
 
     def update_outlier_range(self, start: int, end: int) -> None:
         self.range_start_probe, self.range_end_probe = sorted((int(start), int(end)))

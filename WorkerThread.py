@@ -36,8 +36,8 @@ class ProbeThread(QThread):
             self.dA_update.emit(dA_average, dA_median)
             self.probe_rejected.emit(self.data_processor.rejected_probe)
             
-            # print(self.data_processor.outlier_rejection_probe, self.data_processor.deviation_threshold)
-            # print(self.data_processor.range_start_probe, self.data_processor.range_end_probe)
+            print(self.data_processor.outlier_rejection_dA, self.data_processor.deviation_threshold_dA)
+            print(self.data_processor.range_start_dA, self.data_processor.range_end_dA)
     
     def stop(self):
         self.running = False

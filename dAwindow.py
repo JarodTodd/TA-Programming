@@ -37,7 +37,7 @@ class dA_Window(QWidget):
         self.dA_plot.getViewBox().enableAutoRange(False, False)
         self.dA_plot.setContentsMargins(0, 0, 0, 0)
         self.dA_plot.scene().sigMouseClicked.connect(lambda event: self.on_click(event, self.dA_plot))
-        self.dA_plot.setLimits(xMin=0, xMax=1074, yMin=0, yMax=16500)
+        # self.dA_plot.setLimits(xMin=0, xMax=1074, yMin=0, yMax=16500)
 
         # vertical, draggable guide-lines 
         self.range_line_left  = pg.InfiniteLine(pos=0, angle=90, movable=True, pen=pg.mkPen(color='#C0D5DC', width=1))
