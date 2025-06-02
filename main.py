@@ -51,7 +51,7 @@ class ComputeData():
         around the mean.
         """
 
-        if block2 == None:
+        if block2 is None:
             block1 = np.array(block1)
 
             if self.deviation_threshold >= 100:
@@ -77,18 +77,16 @@ class ComputeData():
             #Create a list with acceptable rows
             allowed_deviation = (self.deviation_threshold / 100.0) * average
             good_shots = []
-            count = 0 
             for i, row in enumerate(block1):
                 if abs(row_averages[i] - average) <= allowed_deviation:
                     good_shots.append(row)
-                    count += 1
             
-            self.rejected_probe = (len(block1) - count) / len(block1) * 100
+            self.rejected_probe = (len(block1) - len(good_shots)) / len(block1) * 100
             print(f"Rejected {self.rejected_probe:.2f}% of the shots in this block.")
 
             #Turn the list back into a NumPy array and return
-            clean_block = np.array(good_shots)
-            return clean_block
+            block1_clean = np.array(good_shots)
+            return block1_clean
         
         else:
             block1 = np.array(block1)
@@ -103,7 +101,6 @@ class ComputeData():
                     range_end = self.range_end_dA
                 block1_region = block1[:,range_start:range_end]
                 block2_region = block2[:,range_start:range_end]
-                print(range_start, range_end)
 
             #Calculate overal average
             block1_average = np.mean(block1_region)
@@ -142,6 +139,8 @@ class ComputeData():
             #Turn the list back into a NumPy array and return
             block1_clean = np.delete(block1, block1_rejected_rows, axis=0)
             block2_clean = np.delete(block2, block2_rejected_rows, axis=0)
+
+            self.rejected_dA = (len(block1) - len(block1_clean)) / len(block1) * 100
 
 
             return block1_clean, block2_clean

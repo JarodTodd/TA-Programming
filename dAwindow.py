@@ -183,7 +183,12 @@ class dA_Window(QWidget):
 
         # forward to the data-processor running in the worker thread
         if self.probe_worker and self.probe_worker.data_processor:
-            self.probe_worker.data_processor.update_outlier_range(start, end)
+            self.probe_worker.data_processor.update_outlier_range_dA(start, end)
+
+    @Slot(float)
+    def update_rejected_percentage(self, percent: float) -> None:
+        """Fill the read-only box with the latest rejected-spectra percentage."""
+        self.rejected_value.setText(f"{percent:.1f}")
 
     def set_current(self):
         self.run_command_signal.emit("SetReference", "ButtonPress", 0, 0)

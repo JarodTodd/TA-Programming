@@ -14,6 +14,7 @@ class ProbeThread(QThread):
     probe_update = Signal(np.ndarray, np.ndarray)
     probe_rejected = Signal(float)
     dA_update = Signal(np.ndarray, np.ndarray)
+    dA_rejected = Signal(float)
     
 
     def __init__(self, shots = 1000, parent: QObject | None = None):
@@ -35,6 +36,7 @@ class ProbeThread(QThread):
             self.probe_update.emit(probe_avg, probe_med)
             self.dA_update.emit(dA_average, dA_median)
             self.probe_rejected.emit(self.data_processor.rejected_probe)
+            self.dA_rejected.emit(self.data_processor.rejected_dA)
             
             print(self.data_processor.outlier_rejection_dA, self.data_processor.deviation_threshold_dA)
             print(self.data_processor.range_start_dA, self.data_processor.range_end_dA)

@@ -14,13 +14,13 @@ from PySide6 import QtCore
 class ShotDelayApp(QWidget):
 
 
-    def __init__(self, dls_window):
+    def __init__(self, dls_window, dA_Window):
         super().__init__()
         self.setWindowTitle("Camera Interface")
         self.DLSWindow = dls_window
         self.worker = Measurementworker("", "", 0, 0)
         self.bottomright = Ui_Bottom_right()
-        self.dAwindow = dA_Window()
+        self.dAwindow = dA_Window
         self.setup_ui()
 
 
@@ -106,13 +106,12 @@ class DLSWindow(QMainWindow):
     deviation_threshold_changed = Signal(float)
     
 
-    def __init__(self):
+    def __init__(self, dA_Window):
         super().__init__()
         self.setWindowTitle("Delayline GUI")
         self.probe_worker = ProbeThread()
         self.worker = Measurementworker("", "", 0, 0)
-        self.dA_window = dA_Window()
-        self.dA_window.probe_worker = self.probe_worker
+        self.dA_window = dA_Window
         self.worker.update_delay_bar_signal.connect(self.update_delay_bar)
         # Central widget
         central_widget = QWidget()
@@ -311,6 +310,7 @@ class DLSWindow(QMainWindow):
         if self.probe_worker is not None:
             return                  
         self.probe_worker = ProbeThread(shots)
+        self.dA_window.probe_worker = self.probe_worker   # ← give dA_Window the thread
 
         self.switch_outlier_rejection.connect(self.probe_worker.data_processor.toggle_outlier_rejection_probe, Qt.QueuedConnection)
         self.dA_window.dA_switch_outlier_rejection.connect(self.probe_worker.data_processor.toggle_outlier_rejection_dA, Qt.QueuedConnection)
@@ -320,6 +320,7 @@ class DLSWindow(QMainWindow):
         self.probe_worker.probe_update.connect(self.update_probe_data, Qt.QueuedConnection)
         self.probe_worker.dA_update.connect(self.update_probe_avg_graph, Qt.QueuedConnection)
         self.probe_worker.probe_rejected.connect(self.update_rejected_percentage, Qt.QueuedConnection)
+        self.probe_worker.dA_rejected.connect(self.dA_window.update_rejected_percentage, Qt.QueuedConnection)
         self.probe_worker.start()
 
     def shot_input_entered(self):
