@@ -29,11 +29,11 @@ class ProbeThread(QThread):
 
             probe_avg, probe_med, dA_average, dA_median = self.data_processor.delta_a_block(block_2d_array)
 
-            if probe_avg == None or probe_med == None:
-                continue
+            # if probe_avg == None or probe_med == None:
+            #     continue
 
-            self.probe_update.emit(probe_avg[-1], probe_med[-1])
-            self.dA_update.emit(dA_average[-1], dA_median[-1])
+            self.probe_update.emit(probe_avg, probe_med)
+            self.dA_update.emit(dA_average, dA_median)
             self.probe_rejected.emit(self.data_processor.rejected_probe)
             
             # print(self.data_processor.outlier_rejection_probe, self.data_processor.deviation_threshold)
@@ -256,13 +256,13 @@ class Measurementworker(QThread):
         
         delaytime = delay_relative                                     
         # last‑shot ΔA row
-        row_data_avg = dA_avg[-1]
-        row_data_med = dA_med[-1]
+        row_data_avg = dA_avg
+        row_data_med = dA_med
         self.plot_row_update.emit(delaytime, row_data_avg, row_data_med) 
         self.update_dA.emit(row_data_avg, row_data_med) 
 
-        self.update_probe.emit(probe_avg[self.teller], probe_med[self.teller])  # Emit probe data incrementally
-        print("Probe data emitted:", probe_avg[self.teller], probe_med[self.teller])  # Debugging
+        self.update_probe.emit(probe_avg, probe_med)  # Emit probe data incrementally
+        print("Probe data emitted:", probe_avg, probe_med)  # Debugging
         dA_average = np.mean(dA_avg, axis=0)
         dA_median = np.median(dA_med, axis=0)
 
