@@ -70,7 +70,7 @@ if __name__ == "__main__":
         print(type(argument))
         worker.process.setProgram(ironpython_executable)
         if isinstance(argument, list):  # Handle list arguments
-            worker.start()
+            worker.process.start()
         elif isinstance(argument, str):  # Handle string arguments
             worker.process.setArguments([script_path, argument])
             worker.process.start()

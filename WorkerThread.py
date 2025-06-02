@@ -6,6 +6,8 @@ import numpy as np
 from main import *
 from camera import *
 import random
+import socket
+import json
 
 ironpython_executable = r"C:\Users\PC026453\Documents\TA-Programming\IronPython 3.4\ipy.exe"
 script_path = r"C:\Users\PC026453\Documents\TA-Programming\IronPythonDLS.py"
@@ -51,7 +53,7 @@ class Measurementworker(QThread):
 
     plot_row_update = Signal(float, np.ndarray, np.ndarray)
 
-    def __init__(self, content, orientation, shots, scans):
+    def __init__(self, content, orientation, shots, scans, host='localhost', port=99999):
         super().__init__()
         self._is_running = True
         self.process = None
@@ -62,6 +64,24 @@ class Measurementworker(QThread):
         self.ref = None
         self.position = None
         self.data_processor = ComputeData()
+        self.socket_host = host
+        self.socket_port = port
+        self.sock = None
+
+    def setup_socket(self):
+        self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.server_socket.bind((self.socket_host, self.socket_port))
+        self.server_socket.listen(1)
+        print("Waiting for connection from IronPython...")
+        self.conn, _ = self.server_socket.accept()
+        print("Connected.")
+        self.buffer = b""
+
+    def send_data(self, data: dict):
+        if self.sock:
+            message = json.dumps(data) + "\n"
+            self.sock.sendall(message.encode())
 
     def update_command(self, content, orientation, shots, scans):
         self._orientation = orientation
@@ -96,41 +116,41 @@ class Measurementworker(QThread):
                 self.error_occurred.emit(str(e))
         
     def _run_measurement_loop(self, content: list[dict], shots: int, scans) -> None:
-        """
-        Example loop that calls your existing RunMeasurement() and streams data.
-        Modify freely to match your real-world needs.
-        """
-        print("Starting measurement loop...")
-        self.counter = 0
-        self.teller = 0
-        self.last_item = 0
-        self.barvalue = 0
-        self.nos = 0
-        ref, position = self.start_gui()
+        print("Waiting to receive measurement data...")
+        self.setup_socket()
 
-        if not self.validate_reference_and_position(ref, position, content):
-            return
-        
-        if self._orientation == "Backwards":
-            content.reverse()
-        elif self._orientation == "Random":
-            random.shuffle(content)
+        try:
+            self.ref, self.position = self.start_gui()
+            if not self.validate_reference_and_position(self.ref, self.position, content):
+                return
+            
+            self.barvalue = self.ref
+            self.update_delay_bar_signal.emit(self.ref)
+            self.start_process_signal.emit(f"MeasurementLoop {content}")
+            while self._is_running:
+                while b"\n" not in self.buffer:
+                    chunk = self.conn.recv(1024)
+                    if not chunk:
+                        print("Connection closed.")
+                        return
+                    self.buffer += chunk
 
-        if round(ref, 3) != round(position, 3):
-            self.move_to_reference(ref)
-        self.barvalue = ref
-        self.update_delay_bar_signal.emit(ref)
-        for i in range(0, scans):
-            for item in content:
-                if item == content[0]:
-                    self.nos += 1
-                    print(f"Starting scan {self.nos} of {scans}")
-                print(item)
-                if self.isInterruptionRequested():
-                    break
+                line, self.buffer = self.buffer.split(b"\n", 1)
+                data = json.loads(line.decode())
+
+                # You receive one data point here
+                print(f"Received: {data}")
                 
-                result = self.process_content(item, ref, shots)
+                # Example: assuming data includes 'delay'
+                result = self.process_content(data, self.ref, shots)
                 self.counter += 1
+
+        except Exception as e:
+            self.error_occurred.emit(str(e))
+        finally:
+            self.conn.close()
+            self.server_socket.close()
+
 
     def handle_process_output(self):
         stdout_line = self.process.readAllStandardOutput().data().decode('utf-8').strip()
@@ -227,8 +247,7 @@ class Measurementworker(QThread):
         return self.ref, self.position
 
 
-    @Slot(list, float, int)
-    def process_content(self, delay_relative, ref, number_of_shots):
+    def process_content(self, delay_relative, number_of_shots):
         blocks = []
         dA_inputs_avg = 0
         dA_inputs_med = 0
@@ -236,12 +255,7 @@ class Measurementworker(QThread):
         pos -= self.last_item
         
         self.barvalue += pos
-        self.start_process_signal.emit(f"MoveRelative {pos}")
 
-        
-
-        # Simulate measurement
-        QThread.sleep(2.5)
         self.update_delay_bar_signal.emit(self.barvalue)
         block_buffer = camera(number_of_shots, self.counter)
         block_2d_array = np.array(block_buffer).reshape(number_of_shots, 1088)

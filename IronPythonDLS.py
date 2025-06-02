@@ -1,6 +1,8 @@
 import sys
 import time
 import clr
+import socket
+import json
 # Add the path to the Newport DLS Command Interface DLL
 sys.path.append(
     r"C:\Windows\Microsoft.NET\assembly\GAC_64\Newport.DLS.CommandInterface\v4.0_1.0.1.0__90ac4f829985d2bf"
@@ -15,6 +17,11 @@ instrument = "COM6"  # Change this to the port the DLS is connected to
 # Initialize the DLS
 myDLS = DLS()
 result = myDLS.OpenInstrument(instrument)
+
+# Make a socket to communicate with the Python GUI
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s.connect(('localhost', 9999))
+
 if result != 0:
     sys.stderr.write(f"Failed to open instrument on {instrument}. Error code: {result}\n")
     sys.exit(1)
@@ -52,6 +59,27 @@ def MoveRelative(delay):
         print(f"Moved to relative position: {new_position} ps")
     else:
         sys.stderr.write("Controller is not in the correct state to move.\n")
+
+def MeasurementLoop(delays):
+    for delay in delays:
+          # or get this from some measurement logic
+        ps_position = MoveRelative(delay)
+
+        if ps_position is not None:
+            # Send data to CPython for calculation
+            data = {"delay": delay}
+            message = json.dumps(data) + "\n"
+            s.sendall(message.encode())
+
+            # Wait for response
+            buffer = b""
+            while b"\n" not in buffer:
+                buffer += s.recv(1024)
+
+            response = json.loads(buffer.decode().strip())
+            print(f"Python response for point {delay}: {response}")
+        else:
+            print(f"Skipping point {delay} due to hardware state.")
 
 def DisableReady():
     state = myDLS.TS()[3]
@@ -121,6 +149,9 @@ if __name__ == "__main__":
             elif command.startswith("MoveRelative"):
                 value = float(command.split()[1])
                 MoveRelative(value)
+            elif command.startswith("MeasurementLoop"):
+                delays = list(map(float, command.split()[1:]))
+                MeasurementLoop(delays)
             elif command == "SetReference":
                 SetReference()
             elif command == "GoToReference":
