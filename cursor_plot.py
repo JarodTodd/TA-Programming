@@ -118,7 +118,7 @@ class TAPlotWidget(QObject):
         self.delta_A_matrix_avg[row_idx, :] = row_avg
         self.delta_A_matrix_med[row_idx, :] = row_med
         self.active_matrix[row_idx, :] = (row_avg if self.mode == "avg" else row_med)
-        self.refresh_heatmap()
+        self.refresh_heatmap_update()
 
     def update_delay_stages(self, parsed_content):
         self.delay_times = np.sort(np.asarray(parsed_content, dtype=float))
@@ -198,6 +198,10 @@ class TAPlotWidget(QObject):
         # update color bar
         self.cbar.setImageItem(self.mesh)
         self.cbar.setLevels((vmin, vmax))
+
+    def refresh_heatmap_update(self):
+        self.mesh.setData(self.X_grid, self.Y_grid, self.active_matrix)
+
         
     @staticmethod
     def compute_edges(values):
