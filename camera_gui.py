@@ -112,6 +112,7 @@ class DLSWindow(QMainWindow):
         self.probe_worker = ProbeThread()
         self.worker = Measurementworker("", "", 0, 0)
         self.dA_window = dA_Window()
+        self.dA_window.probe_worker = self.probe_worker
         self.worker.update_delay_bar_signal.connect(self.update_delay_bar)
         # Central widget
         central_widget = QWidget()

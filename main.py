@@ -149,7 +149,7 @@ class ComputeData():
     def toggle_outlier_rejection_probe(self, selected):
         self.outlier_rejection_probe = selected
     def toggle_outlier_rejection_dA(self, selected):
-        self.outlier_rejection_probe = selected
+        self.outlier_rejection_dA = selected
 
     def deviation_change(self, value: float):
         self.deviation_threshold = value
@@ -158,6 +158,8 @@ class ComputeData():
 
     def update_outlier_range(self, start: int, end: int) -> None:
         self.range_start_probe, self.range_end_probe = sorted((int(start), int(end)))
+    def update_outlier_range_dA(self, start: int, end: int) -> None:
+        self.range_start_dA, self.range_end_dA = sorted((int(start), int(end)))
 
 
     def delta_a_block(self, block, start_pixel=12, end_pixel=1035):

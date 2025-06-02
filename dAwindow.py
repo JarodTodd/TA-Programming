@@ -18,6 +18,8 @@ class dA_Window(QWidget):
         self.setupUi(self)
         for child in self.findChildren(QWidget):
             child.installEventFilter(self)
+        
+        self.probe_worker = None
 
 
     def setupUi(self, Form):
@@ -181,7 +183,7 @@ class dA_Window(QWidget):
 
         # forward to the data-processor running in the worker thread
         if self.probe_worker and self.probe_worker.data_processor:
-            self.dA_worker.data_processor.update_outlier_range(start, end)
+            self.probe_worker.data_processor.update_outlier_range(start, end)
 
     def set_current(self):
         self.run_command_signal.emit("SetReference", "ButtonPress", 0, 0)
