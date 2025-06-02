@@ -8,6 +8,7 @@ from camera import *
 import random
 import socket
 import json
+import time
 
 ironpython_executable = r"C:\Users\PC026453\Documents\TA-Programming\IronPython 3.4\ipy.exe"
 script_path = r"C:\Users\PC026453\Documents\TA-Programming\IronPythonDLS.py"
@@ -47,7 +48,7 @@ class ProbeThread(QThread):
         self.wait()
             
 
-class Measurementworker(QThread):
+class MeasurementWorker(QThread):
     measurement_data_updated = Signal(float, float, float)
     update_delay_bar_signal = Signal(float)
     update_ref_signal = Signal(float)
@@ -58,7 +59,7 @@ class Measurementworker(QThread):
 
     plot_row_update = Signal(float, np.ndarray, np.ndarray)
 
-    def __init__(self, content, orientation, shots, scans, host='localhost', port=99999):
+    def __init__(self, content, orientation, shots, scans, host='localhost', port=9999):
         super().__init__()
         self._is_running = True
         self.process = None
@@ -73,15 +74,53 @@ class Measurementworker(QThread):
         self.socket_port = port
         self.sock = None
 
-    def setup_socket(self):
-        self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.server_socket.bind((self.socket_host, self.socket_port))
-        self.server_socket.listen(1)
-        print("Waiting for connection from IronPython...")
-        self.conn, _ = self.server_socket.accept()
-        print("Connected.")
-        self.buffer = b""
+    def setup_socket(self, argument):
+        try:
+            if not hasattr(self, "server_socket") or self.server_socket.fileno() == -1:
+                self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                self.server_socket.bind((self.socket_host, self.socket_port))
+                self.server_socket.listen(1)
+                print(f"Server is listening on {self.socket_host}:{self.socket_port}")
+            time.sleep(1)  # Allow time for the server to start listening
+            self.start_process_signal.emit(argument)
+            print("Waiting for connection from IronPython...")
+            self.conn, _ = self.server_socket.accept()
+            print("Connected.")
+            self.buffer = b""
+        except Exception as e:
+            print(f"Error in setup_socket: {e}")
+            self.error_occurred.emit(str(e))
+        finally:
+            if argument == "Connect":
+                if hasattr(self, "conn"):
+                    self.conn.close()  # Ensure the connection is closed
+                    print("Connection closed.")
+                if hasattr(self, "server_socket"):
+                    self.server_socket.close()  # Ensure the server socket is closed
+                    print("Server socket closed.")
+
+
+    def receive_data_from_client(self):
+        try:
+            print("Waiting for data from IronPython...")
+            while b"\n" not in self.buffer:
+                chunk = self.conn.recv(1024)  # Receive data from the client
+                if not chunk:
+                    print("Connection closed by client.")
+                    return None  # Return None if the connection is closed
+                self.buffer += chunk
+
+            # Parse the received message
+            line, self.buffer = self.buffer.split(b"\n", 1)
+            data = json.loads(line.decode())
+            print(f"Received data: {data}")
+            return data  # Return the parsed data
+        except Exception as e:
+            print(f"Error receiving data from client: {e}")
+            self.error_occurred.emit(str(e))
+            return None
+        
 
     def send_data(self, data: dict):
         if self.sock:
@@ -96,6 +135,7 @@ class Measurementworker(QThread):
 
     @Slot(str)
     def run(self):
+        self.setup_socket("Connect")
         print(f"This is {self._orientation}")
         if self._orientation in ("Regular", "Backwards", "Random"):
             try:
@@ -107,23 +147,25 @@ class Measurementworker(QThread):
             argument = self._content
             print(f"Running script with argument: {argument}")
             try:
-                self.start_process_signal.emit(argument)
+                self.setup_socket(argument)
             except Exception as e:
                 self.error_occurred.emit(str(e))
+            finally:
+                self.conn.close()
+                self.server_socket.close()
 
         if self._orientation == "StartUp":
             try:
-                self.start_process_signal.emit("StartGUI")
                 ref, pos = self.start_gui()
                 print(f"Position: {pos}, Reference: {ref}")
 
             except Exception as e:
                 self.error_occurred.emit(str(e))
-        
-    def _run_measurement_loop(self, content: list[dict], shots: int, scans) -> None:
-        print("Waiting to receive measurement data...")
-        self.setup_socket()
+            finally:
+                self.conn.close()
+                self.server_socket.close()
 
+    def _run_measurement_loop(self, content: list[dict], shots: int, scans) -> None:
         try:
             self.ref, self.position = self.start_gui()
             if not self.validate_reference_and_position(self.ref, self.position, content):
@@ -131,7 +173,7 @@ class Measurementworker(QThread):
             
             self.barvalue = self.ref
             self.update_delay_bar_signal.emit(self.ref)
-            self.start_process_signal.emit(f"MeasurementLoop {content}")
+            self.setup_socket(f"MeasurementLoop {content}")
             while self._is_running:
                 while b"\n" not in self.buffer:
                     chunk = self.conn.recv(1024)
@@ -243,13 +285,27 @@ class Measurementworker(QThread):
         self.update_delay_bar_signal.emit(ref)
 
     def start_gui(self):
-        self.start_process_signal.emit("StartGUI")
-        while self.ref is None or self.position is None:
-            QCoreApplication.processEvents()
-        print("Signal emitted. Current position:", self.position, "Current reference:", self.ref)
-        self.update_delay_bar_signal.emit(self.position if self.position else 0)
-        self.update_ref_signal.emit(self.ref if self.ref else 0)
-        return self.ref, self.position
+        self.setup_socket("StartGUI")
+        try:
+            data = self.receive_data_from_client()
+            if data is None:
+                return 
+
+            # Extract position and reference from the received data
+            self.position = data.get("position", 0)
+            self.ref = data.get("reference", 0)
+
+            # Emit signals to update the GUI
+            self.update_delay_bar_signal.emit(self.position)
+            self.update_ref_signal.emit(self.ref)
+            print(f"GUI updated. Position: {self.position}, Reference: {self.ref}")
+
+        except Exception as e:
+            print(f"Error in start_gui: {e}")
+            self.error_occurred.emit(str(e))
+        finally:
+            self.conn.close()  # Close the connection
+            print("Connection closed.")
 
 
     def process_content(self, delay_relative, number_of_shots):
@@ -288,10 +344,3 @@ class Measurementworker(QThread):
         self.teller += 1
 
         return blocks
-
-
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    worker = Measurementworker([], "Regular", 0, 0)
-    worker.speed_test()
-    sys.exit(app.exec())

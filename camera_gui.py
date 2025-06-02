@@ -18,7 +18,7 @@ class ShotDelayApp(QWidget):
         super().__init__()
         self.setWindowTitle("Camera Interface")
         self.DLSWindow = dls_window
-        self.worker = Measurementworker("", "", 0, 0)
+        self.worker = MeasurementWorker("", "StartUp", 0, 0, 'localhost', 9999)
         self.bottomright = Ui_Bottom_right()
         self.dAwindow = dA_Window()
         self.setup_ui()
@@ -27,7 +27,6 @@ class ShotDelayApp(QWidget):
     def setup_ui(self):
         self.t_0 = 0
         self.layout = QVBoxLayout()
-        print("Setting up UI")
         # Main layout as a grid
         self.grid_layout = QGridLayout()
 
@@ -110,7 +109,7 @@ class DLSWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle("Delayline GUI")
         self.probe_worker = ProbeThread()
-        self.worker = Measurementworker("", "", 0, 0)
+        self.worker = MeasurementWorker("", "StartUp", 0, 0, 'localhost', 9999)
         self.dA_window = dA_Window()
         self.worker.update_delay_bar_signal.connect(self.update_delay_bar)
         # Central widget

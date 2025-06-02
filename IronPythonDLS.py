@@ -18,13 +18,19 @@ instrument = "COM6"  # Change this to the port the DLS is connected to
 myDLS = DLS()
 result = myDLS.OpenInstrument(instrument)
 
-# Make a socket to communicate with the Python GUI
-s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-s.connect(('localhost', 9999))
+# Redirect stdout and stderr to a log file
+log_file = open("debug_log.txt", "w")
+sys.stdout = log_file
+sys.stderr = log_file
 
 if result != 0:
     sys.stderr.write(f"Failed to open instrument on {instrument}. Error code: {result}\n")
     sys.exit(1)
+
+def Connect():
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.connect(('localhost', 9999))  # Change to your server address and port
+    s.close()
 
 def StartUp():
     errorcode = myDLS.TS()[2]
@@ -61,6 +67,8 @@ def MoveRelative(delay):
         sys.stderr.write("Controller is not in the correct state to move.\n")
 
 def MeasurementLoop(delays):
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.connect(('localhost', 9999))
     for delay in delays:
           # or get this from some measurement logic
         ps_position = MoveRelative(delay)
@@ -80,6 +88,7 @@ def MeasurementLoop(delays):
             print(f"Python response for point {delay}: {response}")
         else:
             print(f"Skipping point {delay} due to hardware state.")
+    s.close()
 
 def DisableReady():
     state = myDLS.TS()[3]
@@ -113,10 +122,28 @@ def GetPosition():
     print(f"Current position: {position} ps")
     return position
 
-def StartGUI(): 
-    position = myDLS.PA_Get()[1] * 10**9 * 8 / c
-    reference = myDLS.RF_Get()[1] * 10**9 * 8 / c
-    print(f"Starting GUI with position: {position} ps and reference: {reference} ps")
+def StartGUI():
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        s.connect(('localhost', 9999))  # Connect to the server
+
+        # Gather data
+        position = myDLS.PA_Get()[1] * 10**9 * 8 / c
+        reference = myDLS.RF_Get()[1] * 10**9 * 8 / c
+        print(f"Position: {position}, Reference: {reference}")
+
+        # Prepare and send data
+        data = {
+            "position": position,
+            "reference": reference,
+        }
+        message = json.dumps(data) + "\n"
+        s.sendall(message.encode())
+    except Exception as e:
+        print(f"Error in StartGUI: {e}")
+        raise  # Re-raise the exception for debugging
+    finally:
+        s.close()  # Ensure the socket is closed
     return position, reference
 
 def Error(errorCode):
@@ -162,6 +189,8 @@ if __name__ == "__main__":
                 GetReference()
             elif command == "StartGUI":
                 StartGUI()
+            elif command == "Connect":
+                Connect()
             else:
                 sys.stderr.write(f"Unknown command: {command}\n")
         except Exception as e:
@@ -171,3 +200,8 @@ if __name__ == "__main__":
 
 # Close the instrument
 myDLS.CloseInstrument()
+import atexit
+
+@atexit.register
+def cleanup():
+    log_file.close()

@@ -33,7 +33,7 @@ if __name__ == "__main__":
     app = QApplication([])
     main_app = MainApp()
     main_app.show()
-    worker = Measurementworker("", "StartUp", 0, 0)
+    worker = MeasurementWorker("", "StartUp", 0, 0, 'localhost', 9999)
     output_signal = Signal(str)
 
     """These connections update the heatmap, and the two corresponding graphs."""
@@ -70,15 +70,16 @@ if __name__ == "__main__":
         print(type(argument))
         worker.process.setProgram(ironpython_executable)
         if isinstance(argument, list):  # Handle list arguments
-            worker.process.start()
+            worker.start()
         elif isinstance(argument, str):  # Handle string arguments
             worker.process.setArguments([script_path, argument])
             worker.process.start()
 
-            try:
-                worker.process.finished.disconnect()
-            except Exception:
-                print("Signals already disconnected.")
+            if worker.process and worker.process.state() == QProcess.Running:
+                try:
+                    worker.process.finished.disconnect()
+                except RuntimeError:
+                    print("Signal 'finished' was already disconnected or not connected.")
                 
             worker.process.readyReadStandardOutput.connect(worker.handle_process_output)
             worker.process.readyReadStandardError.connect(worker.handle_process_error)
