@@ -150,8 +150,9 @@ class ComputeData():
     def toggle_outlier_rejection_dA(self, selected):
         self.outlier_rejection_probe = selected
 
-
     def deviation_change(self, value: float):
+        self.deviation_threshold = value
+    def dA_deviation_change(self, value: float):
         self.deviation_threshold = value
 
     def update_outlier_range(self, start: int, end: int) -> None:

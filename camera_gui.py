@@ -312,7 +312,9 @@ class DLSWindow(QMainWindow):
         self.probe_worker = ProbeThread(shots)
 
         self.switch_outlier_rejection.connect(self.probe_worker.data_processor.toggle_outlier_rejection_probe, Qt.QueuedConnection)
+        self.dA_window.dA_switch_outlier_rejection.connect(self.probe_worker.data_processor.toggle_outlier_rejection_dA, Qt.QueuedConnection)
         self.deviation_threshold_changed.connect(self.probe_worker.data_processor.deviation_change, Qt.QueuedConnection)
+        self.dA_window.dA_deviation_threshold_changed.connect(self.probe_worker.data_processor.dA_deviation_change, Qt.QueuedConnection)
 
         self.probe_worker.probe_update.connect(self.update_probe_data, Qt.QueuedConnection)
         self.probe_worker.dA_update.connect(self.update_probe_avg_graph, Qt.QueuedConnection)
