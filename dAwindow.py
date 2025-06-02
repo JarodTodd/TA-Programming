@@ -163,6 +163,11 @@ class dA_Window(QWidget):
 
         self.dA_switch_outlier_rejection.emit(selected)
 
+        if selected and self.probe_worker and self.probe_worker.data_processor:
+            self.emit_deviation_change(self.deviation_spinbox.value())
+            self.dA_outlier_range_changed() 
+
+
     def emit_deviation_change(self, value: float):
         self.dA_deviation_threshold_changed.emit(value)
 

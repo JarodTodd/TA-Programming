@@ -276,6 +276,11 @@ class DLSWindow(QMainWindow):
         self.range_line_right.setVisible(selected)
 
         self.switch_outlier_rejection.emit(selected)
+        
+        if selected and self.probe_worker and self.probe_worker.data_processor:
+            self.emit_deviation_change(self.deviation_spinbox.value())
+            self.probe_outlier_range_changed() 
+
 
     def emit_deviation_change(self, value: float):
         self.deviation_threshold_changed.emit(value)
@@ -340,9 +345,14 @@ class DLSWindow(QMainWindow):
 
     def stop_probe_thread(self):
         if self.probe_worker is not None:
+            self.probe_worker.data_processor.toggle_outlier_rejection_probe(False)
+            self.probe_worker.data_processor.toggle_outlier_rejection_dA(False)
             self.probe_worker.stop()
             self.probe_worker.wait()
             self.probe_worker = None
+
+        self.toggle_outlier_rejection(False)        # hides UI elements in Probe tab
+        self.dA_window.toggle_outlier_rejection(False)  # hides UI elements in dA tab
 
     def Submitted(self):
         try:
