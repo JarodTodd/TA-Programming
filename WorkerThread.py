@@ -174,7 +174,10 @@ class MeasurementWorker(QThread):
             
             self.barvalue = self.ref
             self.update_delay_bar_signal.emit(self.ref)
-            self.setup_socket(f"MeasurementLoop {content}")
+            self.last_item = 0
+            self.counter = 0
+            self.teller = 0
+            self.setup_socket(f"MeasurementLoop {content} {scans}")
             while self._is_running:
                 while b"\n" not in self.buffer:
                     chunk = self.conn.recv(1024)
@@ -188,9 +191,12 @@ class MeasurementWorker(QThread):
 
                 # You receive one data point here
                 print(f"Received: {data}")
-                
-                # Example: assuming data includes 'delay'
-                result = self.process_content(data, self.ref, shots)
+                result = self.process_content(data, shots)
+
+                # Send a message back to the client socket
+                response = {"status": "processed", "counter": self.counter}
+                self.conn.sendall((json.dumps(response) + "\n").encode())
+
                 self.counter += 1
 
         except Exception as e:
@@ -254,11 +260,9 @@ class MeasurementWorker(QThread):
         self.process = None
 
         if hasattr(self, "conn") and self.conn:
-            print("Closing connection...")
             self.conn.close()
             self.conn = None
         if hasattr(self, "server_socket") and self.server_socket:
-            print("Closing server socket...")
             self.server_socket.close()
             self.server_socket = None
 
@@ -309,7 +313,6 @@ class MeasurementWorker(QThread):
             # Emit signals to update the GUI
             self.update_delay_bar_signal.emit(self.position)
             self.update_ref_signal.emit(self.ref)
-            print(f"GUI updated. Position: {self.position}, Reference: {self.ref}")
 
         except Exception as e:
             print(f"Error in start_gui: {e}")
@@ -328,7 +331,8 @@ class MeasurementWorker(QThread):
         
         self.barvalue += pos
 
-        self.update_delay_bar_signal.emit(self.barvalue)
+        if self.teller // 10:
+            self.update_delay_bar_signal.emit(self.barvalue)
         block_buffer = camera(number_of_shots, self.counter)
         block_2d_array = np.array(block_buffer).reshape(number_of_shots, 1088)
         blocks.append(block_2d_array)
@@ -353,5 +357,4 @@ class MeasurementWorker(QThread):
 
         self.measurement_data_updated.emit(delaytime, dA_inputs_avg, dA_inputs_med)
         self.teller += 1
-
         return blocks

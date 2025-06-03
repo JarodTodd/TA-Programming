@@ -69,13 +69,25 @@ def MoveRelative(delay):
 def MeasurementLoop(delays):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect(('localhost', 9999))
+    last_item = 0
+    reference = myDLS.RF_Get()[1]
+    while myDLS.TS()[3] not in ["46", "47", "48", "49"]:
+        print("Sleeping for Reference")
+        time.sleep(0.05)
+    myDLS.PA_Set(reference)
+    reference = myDLS.PA_Get()[1] * 10**9 * 8 / c
+    print("Moved to Reference")  # Set position to reference before starting measurements
     for delay in delays:
-          # or get this from some measurement logic
-        ps_position = MoveRelative(delay)
-
+        pos = delay - last_item
+        print(pos, delay, last_item)
+        while myDLS.TS()[3] not in ["46", "47", "48", "49"]:
+            print("Controller not ready, waiting...")  
+            time.sleep(0.05)
+        ps_position = myDLS.PR_Set(pos * 10**-9 * c / 8)  # Set relative position in mm
+        last_item = delay
         if ps_position is not None:
             # Send data to CPython for calculation
-            data = {"delay": delay}
+            data = delay
             message = json.dumps(data) + "\n"
             s.sendall(message.encode())
 
@@ -86,6 +98,7 @@ def MeasurementLoop(delays):
 
             response = json.loads(buffer.decode().strip())
             print(f"Python response for point {delay}: {response}")
+        
         else:
             print(f"Skipping point {delay} due to hardware state.")
     s.close()
@@ -125,7 +138,19 @@ def GetPosition():
 def StartGUI():
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
-        s.connect(('localhost', 9999))  # Connect to the server
+        print("Attempting to connect to the server...")
+        for _ in range(5):  # Retry up to 5 times
+            try:
+                s.connect(('localhost', 9999))  # Connect to the server
+                break
+            except ConnectionRefusedError:
+                print("Server not ready, retrying...")
+                time.sleep(1)
+        else:
+            raise ConnectionRefusedError("Server not ready after multiple attempts.")
+
+        print("Connected to the server.")
+        
 
         # Gather data
         position = myDLS.PA_Get()[1] * 10**9 * 8 / c
@@ -177,8 +202,18 @@ if __name__ == "__main__":
                 value = float(command.split()[1])
                 MoveRelative(value)
             elif command.startswith("MeasurementLoop"):
-                delays = list(map(float, command.split()[1:]))
-                MeasurementLoop(delays)
+                # Parse command: expected format "MeasurementLoop [delays] scans"
+                args = command[len("MeasurementLoop"):].strip()
+                if "]" in args:
+                    delays_part, scans_part = args.split("]", 1)
+                    delays_str = delays_part.strip().lstrip("[")
+                    delays = [float(value.strip()) for value in delays_str.split(",") if value.strip()]
+                    scans = int(scans_part.strip())
+                else:
+                    delays = []
+                    scans = 1
+                for _ in range(scans):
+                    MeasurementLoop(delays)
             elif command == "SetReference":
                 SetReference()
             elif command == "GoToReference":

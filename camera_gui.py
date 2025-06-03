@@ -62,14 +62,12 @@ class ShotDelayApp(QWidget):
     def update_current_delay(self, value):
         """Update the current delay values."""
         value = round(value, 2)
-        print("Updating progress bar with value:", value)
         self.bottomright.current_delay.setText(f"{value}")
         self.dAwindow.verticalSlider.setValue(value*1000)
         self.dAwindow.abs_pos_line.setText(f"{value}")
 
     def update_t0(self, t_0):
         """Update the t_0 value."""
-        print(f"Updating t_0 in UI: {t_0}")  # Debugging
         self.t_0 = round(t_0,2)
         self.bottomright.t0_line.setText(f"{self.t_0}")
         self.dAwindow.t_0 = self.t_0
