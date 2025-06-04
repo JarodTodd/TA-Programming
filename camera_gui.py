@@ -9,6 +9,7 @@ import numpy as np
 from cursor_plot import TAPlotWidget
 from pyqtgraph.exporters import ImageExporter
 from PySide6 import QtCore
+import time
 
 
 class ShotDelayApp(QWidget):
@@ -108,7 +109,7 @@ class DLSWindow(QMainWindow):
         self.setWindowTitle("Delayline GUI")
         self.probe_worker = ProbeThread()
         self.worker = MeasurementWorker("", "StartUp", 0, 0, 'localhost', 9999)
-        self.dA_window = dA_Window()
+        self.dA_window = dA_Window
         self.worker.update_delay_bar_signal.connect(self.update_delay_bar)
         # Central widget
         central_widget = QWidget()
@@ -344,12 +345,11 @@ class DLSWindow(QMainWindow):
         if self.probe_worker is not None:
             self.probe_worker.data_processor.toggle_outlier_rejection_probe(False)
             self.probe_worker.data_processor.toggle_outlier_rejection_dA(False)
+            self.toggle_outlier_rejection(False)        # hides UI elements in Probe tab
+            self.dA_window.toggle_outlier_rejection(False)  # hides UI elements in dA tab
             self.probe_worker.stop()
             self.probe_worker.wait()
             self.probe_worker = None
-
-        self.toggle_outlier_rejection(False)        # hides UI elements in Probe tab
-        self.dA_window.toggle_outlier_rejection(False)  # hides UI elements in dA tab
 
     def Submitted(self):
         try:
