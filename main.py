@@ -22,6 +22,7 @@ class ComputeData():
         self.outlier_rejection_probe = False
         self.outlier_rejection_dA = False
         self.deviation_threshold = 100
+        self.deviation_threshold_dA = 100
 
         self.range_start_probe = 0
         self.range_end_probe = 1023
@@ -50,7 +51,7 @@ class ComputeData():
         around the mean.
         """
 
-        if block2 == None:
+        if block2 is None:
             block1 = np.array(block1)
 
             if self.deviation_threshold >= 100:
@@ -76,24 +77,22 @@ class ComputeData():
             #Create a list with acceptable rows
             allowed_deviation = (self.deviation_threshold / 100.0) * average
             good_shots = []
-            count = 0 
             for i, row in enumerate(block1):
                 if abs(row_averages[i] - average) <= allowed_deviation:
                     good_shots.append(row)
-                    count += 1
             
-            self.rejected_probe = (len(block1) - count) / len(block1) * 100
+            self.rejected_probe = (len(block1) - len(good_shots)) / len(block1) * 100
             print(f"Rejected {self.rejected_probe:.2f}% of the shots in this block.")
 
             #Turn the list back into a NumPy array and return
-            clean_block = np.array(good_shots)
-            return clean_block
+            block1_clean = np.array(good_shots)
+            return block1_clean
         
         else:
             block1 = np.array(block1)
             block2 = np.array(block2)
 
-            if self.deviation_threshold >= 100:
+            if self.deviation_threshold_dA >= 100:
                 return np.array(block1), np.array(block2)
             else:
                 if range_start is None:
@@ -102,7 +101,6 @@ class ComputeData():
                     range_end = self.range_end_dA
                 block1_region = block1[:,range_start:range_end]
                 block2_region = block2[:,range_start:range_end]
-                print(range_start, range_end)
 
             #Calculate overal average
             block1_average = np.mean(block1_region)
@@ -116,8 +114,8 @@ class ComputeData():
             block2_row_averages = block2_row_sums / len(block2_region[0])
 
             #Allowed deviation
-            block1_allowed_deviation = (self.deviation_threshold / 100.0) * block1_average
-            block2_allowed_deviation = (self.deviation_threshold / 100.0) * block2_average
+            block1_allowed_deviation = (self.deviation_threshold_dA / 100.0) * block1_average
+            block2_allowed_deviation = (self.deviation_threshold_dA / 100.0) * block2_average
 
             # Identify rejected row indices
             block1_rejected_rows = []
@@ -142,20 +140,25 @@ class ComputeData():
             block1_clean = np.delete(block1, block1_rejected_rows, axis=0)
             block2_clean = np.delete(block2, block2_rejected_rows, axis=0)
 
+            self.rejected_dA = (len(block1) - len(block1_clean)) / len(block1) * 100
+
 
             return block1_clean, block2_clean
         
     def toggle_outlier_rejection_probe(self, selected):
         self.outlier_rejection_probe = selected
     def toggle_outlier_rejection_dA(self, selected):
-        self.outlier_rejection_probe = selected
-
+        self.outlier_rejection_dA = selected
 
     def deviation_change(self, value: float):
         self.deviation_threshold = value
+    def dA_deviation_change(self, value: float):
+        self.deviation_threshold_dA = value
 
     def update_outlier_range(self, start: int, end: int) -> None:
         self.range_start_probe, self.range_end_probe = sorted((int(start), int(end)))
+    def update_outlier_range_dA(self, start: int, end: int) -> None:
+        self.range_start_dA, self.range_end_dA = sorted((int(start), int(end)))
 
 
     def delta_a_block(self, block, start_pixel=12, end_pixel=1035):

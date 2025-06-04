@@ -2,6 +2,7 @@ import numpy as np
 import pyqtgraph as pg
 from PySide6.QtCore import *
 from dAwindow import *
+pg.setConfigOptions(useOpenGL=True, imageAxisOrder='row-major')
 
 
 class TAPlotWidget(QObject):
@@ -20,37 +21,29 @@ class TAPlotWidget(QObject):
         self.active_matrix = self.delta_A_matrix_avg
 
 
-        # Heatmap plot
+        # HEATMAP
         self.canvas_heatmap = pg.PlotWidget(parent)
+        self.delay_axis = pg.AxisItem(orientation='left')
+        self.canvas_heatmap.setAxisItems({'left': self.delay_axis})
         self.canvas_heatmap.setLabels(left="Delay / ps", bottom="Pixel index")
         self.canvas_heatmap.getViewBox().setMouseEnabled(x=False, y=False)  
-              
 
-        # compute grid shape
-        self.X_edges = self.compute_edges(self.pixel_indices)
-        self.Y_edges = self.compute_edges(self.delay_times)
-        self.X_grid, self.Y_grid = np.meshgrid(self.X_edges, self.Y_edges)
-
-        # create heatmap
-        self.mesh = pg.PColorMeshItem(self.X_grid, self.Y_grid, self.active_matrix)
-        self.mesh.setZValue(0) # set heatmap to background
-        pg.setConfigOptions(imageAxisOrder="row-major")
-        # create color map
+        # create heatmap ImageItem
+        self.mesh = pg.ImageItem(self.active_matrix, axisOrder='row-major')
+        self.mesh.setRect(QRectF(self.pixel_indices.min(), self.delay_times.min(),self.pixel_indices.size, self.delay_times.max() - self.delay_times.min()))
         cmap = pg.colormap.get('viridis')
         self.mesh.setColorMap(cmap)
+        self.mesh.setZValue(0)  
         self.canvas_heatmap.addItem(self.mesh)
 
         # create a color bar (requires pyqtgraph ≥ 0.13.1)
         plot_item = self.canvas_heatmap.getPlotItem()  
-        self.cbar = pg.ColorBarItem(values=(0, 1), interactive=False)
+        self.cbar = pg.ColorBarItem(values=(0, 1))
         self.cbar.setColorMap(cmap)
         self.cbar.setImageItem(self.mesh) 
-        self.cbar.setLevels((0, 1))     
-        existing_item = plot_item.layout.itemAt(2, 2)
-        if existing_item is not None:
-            plot_item.layout.removeItem(existing_item)     
-        plot_item.layout.addItem(self.cbar, 2, 2)           
-                   
+        self.cbar.setLevels((0, 1))
+        plot_item.layout.addItem(self.cbar, 2, 2)     
+                           
         # cursor layout for the heatmap and secondary plots
         self.cursor_heatmap   = pg.mkPen('r', width=1)
         self.cursor_secondary = pg.mkPen('lightgray', width=1)
@@ -62,8 +55,6 @@ class TAPlotWidget(QObject):
         self.canvas_heatmap.addItem(self.hline_heatmap)
         self.vline_heatmap.setZValue(10)
         self.hline_heatmap.setZValue(10)
-
-        # create viewbox for handling zooming and graph transformations
         self.vb = self.canvas_heatmap.getViewBox()
 
 
@@ -91,12 +82,9 @@ class TAPlotWidget(QObject):
         self.vline_pl1.sigPositionChanged.connect(self.on_delay_line_moved)
         self.vline_pl2.sigPositionChanged.connect(self.on_pixel_line_moved)
 
-
-        # mapping from delay time to row index
         self.delay_to_index = {float(d): i for i, d in enumerate(self.delay_times)}
 
-
-        # initial draw
+        # first draw
         self.refresh_heatmap()
 
 
@@ -110,8 +98,6 @@ class TAPlotWidget(QObject):
 
     def update_row(self, delay_time, row_avg, row_med):
         row_idx = (np.abs(self.delay_times - float(delay_time))).argmin()
-        if row_idx is None:
-            return
         self.delta_A_matrix_avg[row_idx, :] = row_avg
         self.delta_A_matrix_med[row_idx, :] = row_med
         self.active_matrix[row_idx, :] = (row_avg if self.mode == "avg" else row_med)
@@ -127,7 +113,23 @@ class TAPlotWidget(QObject):
         self.active_matrix = (self.delta_A_matrix_avg if self.mode == "avg" else self.delta_A_matrix_med)
 
         self.canvas_heatmap.setYRange(self.delay_times.min(), self.delay_times.max())
+        self.mesh.setRect(QRectF(self.pixel_indices.min(), self.delay_times.min(), self.pixel_indices.size, self.delay_times.max() - self.delay_times.min()))
         self.refresh_heatmap()
+        self.update_delay_axis_labels()
+    
+    def update_delay_axis_labels(self):
+        # Estimate the vertical step size
+        n = len(self.delay_times)
+        if n < 2:
+            return
+
+        y_positions = np.linspace(self.delay_times.min(), self.delay_times.max(), n, endpoint=False)
+        dy = (self.delay_times.max() - self.delay_times.min()) / n
+        tick_positions = y_positions + dy / 2
+
+        # Create tick labels
+        ticks = [(y, f"{t:.0f}") for y, t in zip(tick_positions, self.delay_times)]
+        self.delay_axis.setTicks([ticks])
 
 
     # Internal helpers for plot interactions
@@ -177,35 +179,22 @@ class TAPlotWidget(QObject):
         if self.mesh in self.canvas_heatmap.items():
             self.canvas_heatmap.removeItem(self.mesh)
 
-        # compute mesh in case size changed (in case delay times or pixel indicespixel_indices change)
-        self.X_edges = self.compute_edges(self.pixel_indices)
-        self.Y_edges = self.compute_edges(self.delay_times)
-        self.X_grid, self.Y_grid = np.meshgrid(self.X_edges, self.Y_edges)
-
-        # create new mesh
-        self.mesh = pg.PColorMeshItem(self.X_grid, self.Y_grid, self.active_matrix)
+        # create new image item
+        self.mesh = pg.ImageItem(self.active_matrix, axisOrder='row-major')
+        self.mesh.setRect(QRectF(self.pixel_indices.min(), self.delay_times.min(), self.pixel_indices.size, self.delay_times.max() - self.delay_times.min()))
         cmap = pg.colormap.get('viridis')
         self.mesh.setColorMap(cmap)
-        self.mesh.setLevels((vmin, vmax))
         self.mesh.setZValue(0)
-        
-        # add new mesh
         self.canvas_heatmap.addItem(self.mesh)
 
         # update color bar
         self.cbar.setImageItem(self.mesh)
         self.cbar.setLevels((vmin, vmax))
+        self.update_delay_axis_labels()
 
     def refresh_heatmap_update(self):
-        self.mesh.setData(self.X_grid, self.Y_grid, self.active_matrix)
+        # fastest update – send only the new Z (image) values
+        self.mesh.setImage(self.active_matrix, autoLevels=False, autoRange=False)
 
-        
-    @staticmethod
-    def compute_edges(values):
-        """Compute bin edges from center values for use in PColorMeshItem."""
-        values = np.asarray(values)
-        edges = np.empty(values.size + 1)
-        edges[1:-1] = (values[:-1] + values[1:]) / 2
-        edges[0] = values[0] - (edges[1] - values[0])
-        edges[-1] = values[-1] + (values[-1] - edges[-2])
-        return edges
+    
+    
