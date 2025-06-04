@@ -9,6 +9,7 @@ import random
 import socket
 import json
 import time
+import csv
 
 ironpython_executable = r"C:\Users\PC026453\Documents\TA-Programming\IronPython 3.4\ipy.exe"
 script_path = r"C:\Users\PC026453\Documents\TA-Programming\IronPythonDLS.py"
@@ -179,6 +180,9 @@ class MeasurementWorker(QThread):
             self.last_item = 0
             self.counter = 0
             self.teller = 0
+            self.content = content
+            self.scans = 1
+            self.averaged_probe_measurement = []
             self.setup_socket(f"MeasurementLoop {content} {scans}")
             while self._is_running:
                 while b"\n" not in self.buffer:
@@ -330,6 +334,8 @@ class MeasurementWorker(QThread):
         dA_inputs_med = 0
         pos = delay_relative
         pos -= self.last_item
+        if delay_relative == self.content[0]:
+            self.averaged_probe_measurement = []
         
         self.barvalue += pos
 
@@ -340,7 +346,7 @@ class MeasurementWorker(QThread):
         blocks.append(block_2d_array)
 
         probe_avg, probe_med, dA_avg, dA_med = self.data_processor.delta_a_block(block_2d_array)
-        
+        self.averaged_probe_measurement.append(delay_relative, probe_avg)
         delaytime = delay_relative                                     
         # last‑shot ΔA row
         row_data_avg = dA_avg
@@ -352,11 +358,22 @@ class MeasurementWorker(QThread):
         print("Probe data emitted:", probe_avg, probe_med)  # Debugging
         dA_average = np.mean(dA_avg, axis=0)
         dA_median = np.median(dA_med, axis=0)
-
+        
         self.last_item = delaytime # Convert to picoseconds for display
         dA_inputs_avg = np.mean(dA_average)
         dA_inputs_med = np.mean(dA_median)
 
         self.measurement_data_updated.emit(delaytime, dA_inputs_avg, dA_inputs_med)
         self.teller += 1
+
+        if delay_relative == self.content[-1]:
+            print(f"Scan {self.scans} completed.")
+            filename = f"Measurement_scan_{self.scans}.csv"
+            with open(filename, mode='w', newline='') as file:
+                writer = csv.writer(file)
+                writer.writerow(['Delay', 'Probe_Avg'])  # Header
+                for row in self.averaged_probe_measurement:
+                    writer.writerow(row)
+            print(f"Saved measurement data to {filename}")
+            self.update_delay_bar_signal.emit(self.ref)
         return blocks
