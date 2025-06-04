@@ -9,7 +9,9 @@ class TAPlotWidget(QObject):
 
     def __init__(self, delay_times, pixel_indices, parent=None):
         super().__init__(parent)
-        self.dA_window = dA_Window()
+        # add in __init__
+        self.sync_from_hline = False
+        self.sync_from_pixel = False
 
         # start data
         self.delay_times   = np.asarray(delay_times,  dtype=float)
@@ -24,9 +26,11 @@ class TAPlotWidget(QObject):
         # HEATMAP
         self.canvas_heatmap = pg.PlotWidget(parent)
         self.delay_axis = pg.AxisItem(orientation='left')
+        self.delay_axis.setStyle(showValues=False, tickLength=-5)
+        self.delay_axis.setPen(None) 
         self.canvas_heatmap.setAxisItems({'left': self.delay_axis})
         self.canvas_heatmap.setLabels(left="Delay / ps", bottom="Pixel index")
-        self.canvas_heatmap.getViewBox().setMouseEnabled(x=False, y=False)  
+        self.canvas_heatmap.getViewBox().setMouseEnabled(x=True, y=True)  
 
         # create heatmap ImageItem
         self.mesh = pg.ImageItem(self.active_matrix, axisOrder='row-major')
@@ -41,12 +45,11 @@ class TAPlotWidget(QObject):
         self.cbar = pg.ColorBarItem(values=(0, 1))
         self.cbar.setColorMap(cmap)
         self.cbar.setImageItem(self.mesh) 
-        self.cbar.setLevels((0, 1))
         plot_item.layout.addItem(self.cbar, 2, 2)     
                            
         # cursor layout for the heatmap and secondary plots
         self.cursor_heatmap   = pg.mkPen('r', width=1)
-        self.cursor_secondary = pg.mkPen('lightgray', width=1)
+        self.cursor_secondary = pg.mkPen('r', width=1)
 
         # cursor for the heatmap
         self.vline_heatmap = pg.InfiniteLine(angle=90, movable=True, pen=self.cursor_heatmap)
@@ -64,14 +67,12 @@ class TAPlotWidget(QObject):
         self.plot1 = self.canvas_plot1.plot([], [])
         self.vline_pl1 = pg.InfiniteLine(angle=90, movable=True, pen=self.cursor_secondary)
         self.canvas_plot1.addItem(self.vline_pl1)
-        self.canvas_plot1.scene().sigMouseClicked.connect(lambda event: self.dA_window.on_click(event, self.canvas_plot1))
 
         self.canvas_plot2 = pg.PlotWidget(parent)
         self.canvas_plot2.setLabels(left="ΔA at delay", bottom="Pixel index")
         self.plot2 = self.canvas_plot2.plot([], [])
         self.vline_pl2 = pg.InfiniteLine(angle=90, movable=True, pen=self.cursor_secondary)
         self.canvas_plot2.addItem(self.vline_pl2)
-        self.canvas_plot2.scene().sigMouseClicked.connect(lambda event: self.dA_window.on_click(event, self.canvas_plot2))
         
 
         # Connections for interaction with the plots
@@ -102,6 +103,7 @@ class TAPlotWidget(QObject):
         self.delta_A_matrix_med[row_idx, :] = row_med
         self.active_matrix[row_idx, :] = (row_avg if self.mode == "avg" else row_med)
         self.refresh_heatmap_update()
+        self.update_secondary()
 
     def update_delay_stages(self, parsed_content):
         self.delay_times = np.sort(np.asarray(parsed_content, dtype=float))
@@ -145,17 +147,49 @@ class TAPlotWidget(QObject):
         mouse_event.accept()
 
     def on_delay_line_moved(self):
-        self.hline_heatmap.setValue(self.vline_pl1.value())
+        # Update the horizontal line position based on the vertical line position
+        if self.sync_from_hline:
+            return
+
+        # self.hline_heatmap.setValue(self.vline_pl1.value())
+        y = self.vline_pl1.value()
+        n = len(self.delay_times)
+        dy = (self.delay_times.max() - self.delay_times.min()) / n
+        tick_positions = np.linspace(self.delay_times.min(), self.delay_times.max(), n, endpoint=False) + dy / 2
+
+        # Match click to tick position
+        tick_idx = np.abs(tick_positions - y).argmin()
+        matched_delay_value = self.delay_times[tick_idx]
+        matched_tick_pos = tick_positions[tick_idx]
+        self.hline_heatmap.setValue(matched_tick_pos)
+        self.vline_pl1.setValue(matched_delay_value)
+
 
     def on_pixel_line_moved(self):
+        if self.sync_from_pixel:
+            return
+
         self.vline_heatmap.setValue(self.vline_pl2.value())
 
     def update_secondary(self):
-        pixel_idx = int(round(self.vline_heatmap.value()))
+        y = self.hline_heatmap.value()
+        n = len(self.delay_times)
+        dy = (self.delay_times.max() - self.delay_times.min()) / n
+        tick_positions = np.linspace(self.delay_times.min(), self.delay_times.max(), n, endpoint=False) + dy / 2
+
+        # Match click to tick position
+        tick_idx = np.abs(tick_positions - y).argmin()
+        matched_delay_value = self.delay_times[tick_idx]
+        matched_tick_pos = tick_positions[tick_idx]
+        
+        pixel_idx = int(np.floor(self.vline_heatmap.value()))
         pixel_idx = int(np.clip(pixel_idx, self.pixel_indices.min(), self.pixel_indices.max())) # handles input out of bounds
 
-        delay_val = self.hline_heatmap.value()
-        delay_idx = np.abs(self.delay_times - delay_val).argmin()
+        delay_idx = np.abs(self.delay_times - matched_delay_value).argmin()
+
+        # Disable syncing while updating
+        self.sync_from_hline = True 
+        self.sync_from_pixel = True
 
         self.plot1.setData(self.delay_times, self.active_matrix[:, pixel_idx])
         self.canvas_plot1.setTitle(f"pixel {pixel_idx}")
@@ -164,6 +198,10 @@ class TAPlotWidget(QObject):
         self.plot2.setData(self.pixel_indices, self.active_matrix[delay_idx, :])
         self.canvas_plot2.setTitle(f"delay {self.delay_times[delay_idx]:g}")
         self.vline_pl2.setValue(pixel_idx)
+
+        # Re-enable syncing
+        self.sync_from_hline = False 
+        self.sync_from_pixel = False
 
     def refresh_heatmap(self):
         if self.active_matrix.size == 0:
@@ -193,8 +231,14 @@ class TAPlotWidget(QObject):
         self.update_delay_axis_labels()
 
     def refresh_heatmap_update(self):
+        # compute levels for color scaling
+        vmin, vmax = float(self.active_matrix.min()), float(self.active_matrix.max())
+        if vmin == vmax:
+            vmax = vmin + 1e-12
+
         # fastest update – send only the new Z (image) values
         self.mesh.setImage(self.active_matrix, autoLevels=False, autoRange=False)
 
+        self.cbar.setLevels((vmin, vmax))
     
     
