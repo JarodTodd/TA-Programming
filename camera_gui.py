@@ -343,10 +343,13 @@ class DLSWindow(QMainWindow):
 
     def stop_probe_thread(self):
         if self.probe_worker is not None:
-            self.probe_worker.data_processor.toggle_outlier_rejection_probe(False)
-            self.probe_worker.data_processor.toggle_outlier_rejection_dA(False)
-            self.toggle_outlier_rejection(False)        # hides UI elements in Probe tab
-            self.dA_window.toggle_outlier_rejection(False)  # hides UI elements in dA tab
+            # Ensure UI updates (signals) don't reach a dying thread
+            self.switch_outlier_rejection.disconnect()    
+            self.dA_window.dA_switch_outlier_rejection.disconnect()
+
+            self.toggle_outlier_rejection(False)
+            self.dA_window.toggle_outlier_rejection(False)
+
             self.probe_worker.stop()
             self.probe_worker.wait()
             self.probe_worker = None
