@@ -33,8 +33,8 @@ class dA_Window(QWidget):
         #dA plot
         self.dA_plot = pg.PlotWidget()
         self.dA_plot.setTitle("dA Spectrum")
-        self.dA_plot.setLabel('left', 'Intensity (counts)')
-        self.dA_plot.setLabel('bottom', 'Wavelength (nm)')
+        self.dA_plot.setLabel('left', 'dA')
+        self.dA_plot.setLabel('bottom', 'Pixel index')
         self.dA_plot.setBackground('w')
         self.dA_plot.getViewBox().enableAutoRange(False, False)
         self.dA_plot.setContentsMargins(0, 0, 0, 0)
@@ -161,9 +161,14 @@ class dA_Window(QWidget):
         self.range_line_left.setVisible(selected)
         self.range_line_right.setVisible(selected)
 
+        if not selected:
+            # Ensure the checkbox is unchecked
+            self.outlier_checkbox.setChecked(False) 
+
         self.dA_switch_outlier_rejection.emit(selected)
 
-        if selected and self.probe_worker and self.probe_worker.data_processor:
+        if selected:
+             # If outlier rejection is enabled, set previous settings
             self.emit_deviation_change(self.deviation_spinbox.value())
             self.dA_outlier_range_changed() 
 

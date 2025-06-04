@@ -9,6 +9,7 @@ import numpy as np
 from cursor_plot import TAPlotWidget
 from pyqtgraph.exporters import ImageExporter
 from PySide6 import QtCore
+import time
 
 
 class ShotDelayApp(QWidget):
@@ -109,7 +110,7 @@ class DLSWindow(QMainWindow):
         self.setWindowTitle("Delayline GUI")
         self.probe_worker = ProbeThread()
         self.worker = MeasurementWorker("", "StartUp", 0, 0, 'localhost', 9999)
-        self.dA_window = dA_Window()
+        self.dA_window = dA_Window
         self.worker.update_delay_bar_signal.connect(self.update_delay_bar)
         # Central widget
         central_widget = QWidget()
@@ -127,7 +128,7 @@ class DLSWindow(QMainWindow):
         left_layout.addWidget(self.probe_avg_graph)
         self.probe_avg_graph.setTitle("Probe")
         self.probe_avg_graph.setLabel('left', 'Intensity (counts)')
-        self.probe_avg_graph.setLabel('bottom', 'Wavelength (nm)')
+        self.probe_avg_graph.setLabel('bottom', 'Pixel index')
         self.probe_avg_graph.setBackground('w')
         self.probe_avg_graph.scene().sigMouseClicked.connect(lambda event: self.dA_window.on_click(event, self.probe_avg_graph))
         self.probe_avg_graph.setLimits(xMin=0, xMax=1074, yMin=0, yMax=16500)
@@ -273,9 +274,14 @@ class DLSWindow(QMainWindow):
         self.range_line_left.setVisible(selected)
         self.range_line_right.setVisible(selected)
 
+        if not selected:
+            # Ensure the checkbox is unchecked
+            self.outlier_checkbox.setChecked(False) 
+
         self.switch_outlier_rejection.emit(selected)
-        
-        if selected and self.probe_worker and self.probe_worker.data_processor:
+
+        if selected:
+            # If outlier rejection is enabled, set previous settings
             self.emit_deviation_change(self.deviation_spinbox.value())
             self.probe_outlier_range_changed() 
 
@@ -338,19 +344,32 @@ class DLSWindow(QMainWindow):
         self.restart_probe_thread(shots)
 
     def restart_probe_thread(self, shots: int):
-        self.stop_probe_thread()
+        outlier_rejection_probe = self.outlier_checkbox.isChecked()
+        outlier_rejection_dA = self.dA_window.outlier_checkbox.isChecked()
+        self.stop_probe_thread(False)
         self.start_probe_thread(shots)
 
-    def stop_probe_thread(self):
+        if outlier_rejection_probe:
+            self.toggle_outlier_rejection(True)
+        if outlier_rejection_dA:
+            self.dA_window.toggle_outlier_rejection(True)
+
+
+    def stop_probe_thread(self, hard_stop: bool = True):
         if self.probe_worker is not None:
-            self.probe_worker.data_processor.toggle_outlier_rejection_probe(False)
-            self.probe_worker.data_processor.toggle_outlier_rejection_dA(False)
+            # Ensure UI updates (signals) don't reach a dying thread
+            self.switch_outlier_rejection.disconnect()    
+            self.dA_window.dA_switch_outlier_rejection.disconnect()
+            self.deviation_threshold_changed.disconnect()
+
+            if hard_stop:
+                # If thread is stopped for a measurement, disable outlier rejection
+                self.toggle_outlier_rejection(False)
+                self.dA_window.toggle_outlier_rejection(False)
+
             self.probe_worker.stop()
             self.probe_worker.wait()
             self.probe_worker = None
-
-        self.toggle_outlier_rejection(False)        # hides UI elements in Probe tab
-        self.dA_window.toggle_outlier_rejection(False)  # hides UI elements in dA tab
 
     def Submitted(self):
         try:

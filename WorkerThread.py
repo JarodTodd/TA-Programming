@@ -347,7 +347,7 @@ class MeasurementWorker(QThread):
         blocks.append(block_2d_array)
 
         probe_avg, probe_med, dA_avg, dA_med = self.data_processor.delta_a_block(block_2d_array)
-        self.averaged_probe_measurement.append(delay_relative, probe_avg)
+        self.averaged_probe_measurement.append((delay_relative, *probe_avg))
         delaytime = delay_relative                                     
         # last‑shot ΔA row
         row_data_avg = dA_avg
@@ -367,6 +367,8 @@ class MeasurementWorker(QThread):
         self.measurement_data_updated.emit(delaytime, dA_inputs_avg, dA_inputs_med)
         self.teller += 1
 
+        """When a scan is completed, save the data to a CSV file in the format:
+        Delay, Probe_Avg (per pixel)"""
         if delay_relative == self.content[-1]:
             print(f"Scan {self.scans} completed.")
             filename = f"Measurement_scan_{self.scans}.csv"
