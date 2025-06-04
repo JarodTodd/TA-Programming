@@ -18,9 +18,9 @@ class MainApp(QMainWindow):
         # Create a QTabWidget
         self.tabs = QTabWidget()
         self.setCentralWidget(self.tabs)
-        self.dls_window = DLSWindow()
-        self.shot_delay_app = ShotDelayApp(self.dls_window)
         self.dA_window = dA_Window()
+        self.dls_window = DLSWindow(self.dA_window)
+        self.shot_delay_app = ShotDelayApp(self.dls_window, self.dA_window)
 
         # Add tabs    
         self.tabs.addTab(self.shot_delay_app, "Main Window")

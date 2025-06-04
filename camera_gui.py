@@ -14,13 +14,13 @@ from PySide6 import QtCore
 class ShotDelayApp(QWidget):
 
 
-    def __init__(self, dls_window):
+    def __init__(self, dls_window, dA_Window):
         super().__init__()
         self.setWindowTitle("Camera Interface")
         self.DLSWindow = dls_window
         self.worker = MeasurementWorker("", "StartUp", 0, 0, 'localhost', 9999)
         self.bottomright = Ui_Bottom_right()
-        self.dAwindow = dA_Window()
+        self.dAwindow = dA_Window
         self.setup_ui()
 
 
@@ -103,7 +103,7 @@ class DLSWindow(QMainWindow):
     deviation_threshold_changed = Signal(float)
     
 
-    def __init__(self):
+    def __init__(self, dA_Window):
         super().__init__()
         self.setWindowTitle("Delayline GUI")
         self.probe_worker = ProbeThread()
@@ -273,6 +273,11 @@ class DLSWindow(QMainWindow):
         self.range_line_right.setVisible(selected)
 
         self.switch_outlier_rejection.emit(selected)
+        
+        if selected and self.probe_worker and self.probe_worker.data_processor:
+            self.emit_deviation_change(self.deviation_spinbox.value())
+            self.probe_outlier_range_changed() 
+
 
     def emit_deviation_change(self, value: float):
         self.deviation_threshold_changed.emit(value)
@@ -307,13 +312,17 @@ class DLSWindow(QMainWindow):
         if self.probe_worker is not None:
             return                  
         self.probe_worker = ProbeThread(shots)
+        self.dA_window.probe_worker = self.probe_worker   # ← give dA_Window the thread
 
         self.switch_outlier_rejection.connect(self.probe_worker.data_processor.toggle_outlier_rejection_probe, Qt.QueuedConnection)
+        self.dA_window.dA_switch_outlier_rejection.connect(self.probe_worker.data_processor.toggle_outlier_rejection_dA, Qt.QueuedConnection)
         self.deviation_threshold_changed.connect(self.probe_worker.data_processor.deviation_change, Qt.QueuedConnection)
+        self.dA_window.dA_deviation_threshold_changed.connect(self.probe_worker.data_processor.dA_deviation_change, Qt.QueuedConnection)
 
         self.probe_worker.probe_update.connect(self.update_probe_data, Qt.QueuedConnection)
         self.probe_worker.dA_update.connect(self.update_probe_avg_graph, Qt.QueuedConnection)
         self.probe_worker.probe_rejected.connect(self.update_rejected_percentage, Qt.QueuedConnection)
+        self.probe_worker.dA_rejected.connect(self.dA_window.update_rejected_percentage, Qt.QueuedConnection)
         self.probe_worker.start()
 
     def shot_input_entered(self):
@@ -333,9 +342,14 @@ class DLSWindow(QMainWindow):
 
     def stop_probe_thread(self):
         if self.probe_worker is not None:
+            self.probe_worker.data_processor.toggle_outlier_rejection_probe(False)
+            self.probe_worker.data_processor.toggle_outlier_rejection_dA(False)
             self.probe_worker.stop()
             self.probe_worker.wait()
             self.probe_worker = None
+
+        self.toggle_outlier_rejection(False)        # hides UI elements in Probe tab
+        self.dA_window.toggle_outlier_rejection(False)  # hides UI elements in dA tab
 
     def Submitted(self):
         try:

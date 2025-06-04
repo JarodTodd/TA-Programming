@@ -7,6 +7,9 @@ import pyqtgraph as pg
 
 class dA_Window(QWidget):
     run_command_signal = Signal(str, str, int, int)
+    dA_switch_outlier_rejection = Signal(bool)
+    dA_deviation_threshold_changed = Signal(float)
+
     def __init__(self):
         super().__init__()
         self.t_0 = 0
@@ -15,6 +18,8 @@ class dA_Window(QWidget):
         self.setupUi(self)
         for child in self.findChildren(QWidget):
             child.installEventFilter(self)
+        
+        self.probe_worker = None
 
 
     def setupUi(self, Form):
@@ -34,9 +39,23 @@ class dA_Window(QWidget):
         self.dA_plot.getViewBox().enableAutoRange(False, False)
         self.dA_plot.setContentsMargins(0, 0, 0, 0)
         self.dA_plot.scene().sigMouseClicked.connect(lambda event: self.on_click(event, self.dA_plot))
-        self.dA_plot.setLimits(xMin=0, xMax=1074, yMin=-1, yMax=1)
+        # self.dA_plot.setLimits(xMin=0, xMax=1074, yMin=0, yMax=16500)
 
-    
+        # vertical, draggable guide-lines 
+        self.range_line_left  = pg.InfiniteLine(pos=0, angle=90, movable=True, pen=pg.mkPen(color='#C0D5DC', width=1))
+        self.labelled_line_left = pg.InfLineLabel(self.range_line_left, text="{value:.0f}", position=0.95, color='black', fill=(255, 255, 255, 180)) 
+        self.range_line_right = pg.InfiniteLine(pos=1023, angle=90, movable=True, pen=pg.mkPen(color='#C0D5DC', width=1))
+        self.labelled_line_right = pg.InfLineLabel(self.range_line_right, text="{value:.0f}", position=0.95, color='black', fill=(255, 255, 255, 180)) 
+        font_size = QFont()
+        font_size.setPointSize(7)
+        self.labelled_line_right.textItem.setFont(font_size)
+        self.labelled_line_left.textItem.setFont(font_size)
+
+        # add guide-lines to dA-graph
+        for line in (self.range_line_left, self.range_line_right):
+            line.setVisible(False)                             
+            line.sigPositionChanged.connect(self.dA_outlier_range_changed)
+            self.dA_plot.addItem(line)
 
         self.left_layout.addWidget(self.dA_plot)
         self.dA_curve = self.dA_plot.plot([], pen='r')
@@ -44,6 +63,40 @@ class dA_Window(QWidget):
         # Combo box for selecting Average or Median
         self.dA_inputs_avg = []
         self.dA_inputs_med = []
+
+        # Outlier rejection layout
+        outlier_group = QGroupBox()
+        outlier_layout = QGridLayout()
+
+        # Checkbox
+        self.outlier_checkbox = QCheckBox("Remove bad spectra")
+        self.outlier_checkbox.toggled.connect(self.toggle_outlier_rejection) 
+        outlier_layout.addWidget(self.outlier_checkbox, 0, 0, 1, 3)
+
+        # Deviation threshold input
+        self.deviation_label = QLabel("Remove spectra that deviate more than")
+        outlier_layout.addWidget(self.deviation_label, 1, 0, 1, 2)
+        self.deviation_spinbox = QDoubleSpinBox()
+        self.deviation_spinbox.valueChanged.connect(self.emit_deviation_change)
+        self.deviation_spinbox.setRange(0, 100)
+        self.deviation_spinbox.setSuffix(" %")
+        self.deviation_spinbox.setSingleStep(0.01)
+        self.deviation_spinbox.setValue(100)
+        outlier_layout.addWidget(self.deviation_spinbox, 1, 2)
+
+        self.rejected_label = QLabel("Rejected shots (%)")
+        self.rejected_value = QLineEdit()
+        self.rejected_value.setPlaceholderText("--")    
+        self.rejected_value.setReadOnly(True)              
+        outlier_layout.addWidget(self.rejected_label, 2, 0, 1, 2)
+        outlier_layout.addWidget(self.rejected_value, 2, 2)
+
+        outlier_group.setLayout(outlier_layout)
+        self.left_layout.addWidget(outlier_group)
+
+        outlier_group.setLayout(outlier_layout)
+        self.left_layout.addWidget(outlier_group)
+        self.toggle_outlier_rejection(False)
 
         # Save button
         self.save_data_button = QPushButton("Save Intensity Data")
@@ -97,6 +150,50 @@ class dA_Window(QWidget):
         self.rel_pos_line = QLineEdit()
         self.rel_pos_line.setEnabled(False)
         vbox.addWidget(self.rel_pos_line)
+
+    def toggle_outlier_rejection(self, selected: bool) -> None:
+        self.deviation_label.setVisible(selected)
+        self.deviation_spinbox.setVisible(selected)
+
+        self.rejected_label.setVisible(selected)
+        self.rejected_value.setVisible(selected)
+
+        self.range_line_left.setVisible(selected)
+        self.range_line_right.setVisible(selected)
+
+        self.dA_switch_outlier_rejection.emit(selected)
+
+        if selected and self.probe_worker and self.probe_worker.data_processor:
+            self.emit_deviation_change(self.deviation_spinbox.value())
+            self.dA_outlier_range_changed() 
+
+
+    def emit_deviation_change(self, value: float):
+        self.dA_deviation_threshold_changed.emit(value)
+
+    @Slot()
+    def dA_outlier_range_changed(self):
+        start = int(round(self.range_line_left.value()))
+        end   = int(round(self.range_line_right.value()))
+        if start > end:                   
+            start, end = end, start
+            self.range_line_left, self.range_line_right = self.range_line_right, self.range_line_left
+
+        if start < 0:
+            self.range_line_left.setValue(0)
+            start = 0
+        if end > 1023:
+            end = 1023
+            self.range_line_right.setValue(1023)
+
+        # forward to the data-processor running in the worker thread
+        if self.probe_worker and self.probe_worker.data_processor:
+            self.probe_worker.data_processor.update_outlier_range_dA(start, end)
+
+    @Slot(float)
+    def update_rejected_percentage(self, percent: float) -> None:
+        """Fill the read-only box with the latest rejected-spectra percentage."""
+        self.rejected_value.setText(f"{percent:.1f}")
 
     def set_current(self):
         self.run_command_signal.emit("SetReference", "ButtonPress", 0, 0)
