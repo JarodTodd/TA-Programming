@@ -66,7 +66,7 @@ def MoveRelative(delay):
     else:
         sys.stderr.write("Controller is not in the correct state to move.\n")
 
-def MeasurementLoop(delays):
+def MeasurementLoop(delays, scans=1):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect(('localhost', 9999))
     last_item = 0
@@ -76,8 +76,13 @@ def MeasurementLoop(delays):
         time.sleep(0.05)
     myDLS.PA_Set(reference)
     reference = myDLS.PA_Get()[1] * 10**9 * 8 / c
+    print(delays)
     print("Moved to Reference")  # Set position to reference before starting measurements
-    for delay in delays:
+
+    # Multiply delays for the number of scans
+    repeated_delays = delays * scans
+
+    for delay in repeated_delays:
         pos = delay - last_item
         print(pos, delay, last_item)
         while myDLS.TS()[3] not in ["46", "47", "48", "49"]:
@@ -212,8 +217,7 @@ if __name__ == "__main__":
                 else:
                     delays = []
                     scans = 1
-                for _ in range(scans):
-                    MeasurementLoop(delays)
+                MeasurementLoop(delays, scans)
             elif command == "SetReference":
                 SetReference()
             elif command == "GoToReference":
