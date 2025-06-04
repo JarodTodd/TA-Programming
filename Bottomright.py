@@ -134,7 +134,8 @@ class Ui_Bottom_right(QObject):
             widget.setMinimum(1)
             widget.setMaximum(999999)
             widget.setSingleStep(1)
-            widget.setValue(1)
+            self.nos_box.setValue(1)
+            self.integration_time_box.setValue(1000)
             widget.setMaximum(9999999)
         elif isinstance(widget, QLineEdit):
             widget.setReadOnly(True)

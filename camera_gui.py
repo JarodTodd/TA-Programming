@@ -65,6 +65,7 @@ class ShotDelayApp(QWidget):
         self.bottomright.current_delay.setText(f"{value}")
         self.dAwindow.verticalSlider.setValue(value*1000)
         self.dAwindow.abs_pos_line.setText(f"{value}")
+        self.DLSWindow.delay_bar.setValue(value)
 
     def update_t0(self, t_0):
         """Update the t_0 value."""

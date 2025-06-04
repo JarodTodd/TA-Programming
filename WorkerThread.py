@@ -183,6 +183,7 @@ class MeasurementWorker(QThread):
             self.content = content
             self.scans = 1
             self.averaged_probe_measurement = []
+            self.measurement_average = []
             self.setup_socket(f"MeasurementLoop {content} {scans}")
             while self._is_running:
                 while b"\n" not in self.buffer:
@@ -371,9 +372,19 @@ class MeasurementWorker(QThread):
             filename = f"Measurement_scan_{self.scans}.csv"
             with open(filename, mode='w', newline='') as file:
                 writer = csv.writer(file)
-                writer.writerow(['Delay', 'Probe_Avg'])  # Header
+                writer.writerow(['Delay'] + [f'Pixel_{i}' for i in range(self.averaged_probe_measurement.shape[1])])  # Header
                 for row in self.averaged_probe_measurement:
                     writer.writerow(row)
             print(f"Saved measurement data to {filename}")
-            self.update_delay_bar_signal.emit(self.ref)
+            self.measurement_average.append(np.array(self.averaged_probe_measurement))
+
+        if self.nos == self.scans:
+            all_scans = np.array(self.measurement_average)
+            avg_all_scans = np.mean(all_scans, axis=0)
+            filename = "Average_Probe_Entire_Measurement.csv"
+            with open(filename, mode='w', newline='') as file:
+                writer = csv.writer(file)
+                writer.writerow(['Delay'] + [f'Pixel_{i}' for i in range(avg_all_scans.shape[1])])  # Header
+                for row in self.measurement_average:
+                    writer.writerow(row)
         return blocks
