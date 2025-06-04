@@ -161,9 +161,14 @@ class dA_Window(QWidget):
         self.range_line_left.setVisible(selected)
         self.range_line_right.setVisible(selected)
 
+        if not selected:
+            # Ensure the checkbox is unchecked
+            self.outlier_checkbox.setChecked(False) 
+
         self.dA_switch_outlier_rejection.emit(selected)
 
-        if selected and self.probe_worker and self.probe_worker.data_processor:
+        if selected:
+             # If outlier rejection is enabled, set previous settings
             self.emit_deviation_change(self.deviation_spinbox.value())
             self.dA_outlier_range_changed() 
 

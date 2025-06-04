@@ -273,9 +273,14 @@ class DLSWindow(QMainWindow):
         self.range_line_left.setVisible(selected)
         self.range_line_right.setVisible(selected)
 
+        if not selected:
+            # Ensure the checkbox is unchecked
+            self.outlier_checkbox.setChecked(False) 
+
         self.switch_outlier_rejection.emit(selected)
-        
-        if selected and self.probe_worker and self.probe_worker.data_processor:
+
+        if selected:
+            # If outlier rejection is enabled, set previous settings
             self.emit_deviation_change(self.deviation_spinbox.value())
             self.probe_outlier_range_changed() 
 
@@ -338,17 +343,28 @@ class DLSWindow(QMainWindow):
         self.restart_probe_thread(shots)
 
     def restart_probe_thread(self, shots: int):
-        self.stop_probe_thread()
+        outlier_rejection_probe = self.outlier_checkbox.isChecked()
+        outlier_rejection_dA = self.dA_window.outlier_checkbox.isChecked()
+        self.stop_probe_thread(False)
         self.start_probe_thread(shots)
 
-    def stop_probe_thread(self):
+        if outlier_rejection_probe:
+            self.toggle_outlier_rejection(True)
+        if outlier_rejection_dA:
+            self.dA_window.toggle_outlier_rejection(True)
+
+
+    def stop_probe_thread(self, hard_stop: bool = True):
         if self.probe_worker is not None:
             # Ensure UI updates (signals) don't reach a dying thread
             self.switch_outlier_rejection.disconnect()    
             self.dA_window.dA_switch_outlier_rejection.disconnect()
+            self.deviation_threshold_changed.disconnect()
 
-            self.toggle_outlier_rejection(False)
-            self.dA_window.toggle_outlier_rejection(False)
+            if hard_stop:
+                # If thread is stopped for a measurement, disable outlier rejection
+                self.toggle_outlier_rejection(False)
+                self.dA_window.toggle_outlier_rejection(False)
 
             self.probe_worker.stop()
             self.probe_worker.wait()
