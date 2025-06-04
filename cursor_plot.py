@@ -63,13 +63,13 @@ class TAPlotWidget(QObject):
 
         # Secondary plots
         self.canvas_plot1 = pg.PlotWidget(parent)
-        self.canvas_plot1.setLabels(left="ΔA at pixel", bottom="Delay / ps")
+        self.canvas_plot1.setLabels(left="ΔA", bottom="Delay / ps")
         self.plot1 = self.canvas_plot1.plot([], [])
         self.vline_pl1 = pg.InfiniteLine(angle=90, movable=True, pen=self.cursor_secondary)
         self.canvas_plot1.addItem(self.vline_pl1)
 
         self.canvas_plot2 = pg.PlotWidget(parent)
-        self.canvas_plot2.setLabels(left="ΔA at delay", bottom="Pixel index")
+        self.canvas_plot2.setLabels(left="ΔA", bottom="Pixel index")
         self.plot2 = self.canvas_plot2.plot([], [])
         self.vline_pl2 = pg.InfiniteLine(angle=90, movable=True, pen=self.cursor_secondary)
         self.canvas_plot2.addItem(self.vline_pl2)
@@ -192,11 +192,11 @@ class TAPlotWidget(QObject):
         self.sync_from_pixel = True
 
         self.plot1.setData(self.delay_times, self.active_matrix[:, pixel_idx])
-        self.canvas_plot1.setTitle(f"pixel {pixel_idx}")
+        self.canvas_plot1.setTitle(f"pixel: {pixel_idx}")
         self.vline_pl1.setValue(self.delay_times[delay_idx])
 
         self.plot2.setData(self.pixel_indices, self.active_matrix[delay_idx, :])
-        self.canvas_plot2.setTitle(f"delay {self.delay_times[delay_idx]:g}")
+        self.canvas_plot2.setTitle(f"delay: {self.delay_times[delay_idx]:g} ps")
         self.vline_pl2.setValue(pixel_idx)
 
         # Re-enable syncing

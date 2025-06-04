@@ -33,8 +33,8 @@ class dA_Window(QWidget):
         #dA plot
         self.dA_plot = pg.PlotWidget()
         self.dA_plot.setTitle("dA Spectrum")
-        self.dA_plot.setLabel('left', 'Intensity (counts)')
-        self.dA_plot.setLabel('bottom', 'Wavelength (nm)')
+        self.dA_plot.setLabel('left', 'dA')
+        self.dA_plot.setLabel('bottom', 'Pixel index')
         self.dA_plot.setBackground('w')
         self.dA_plot.getViewBox().enableAutoRange(False, False)
         self.dA_plot.setContentsMargins(0, 0, 0, 0)

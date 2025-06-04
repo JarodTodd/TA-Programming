@@ -127,7 +127,7 @@ class DLSWindow(QMainWindow):
         left_layout.addWidget(self.probe_avg_graph)
         self.probe_avg_graph.setTitle("Probe")
         self.probe_avg_graph.setLabel('left', 'Intensity (counts)')
-        self.probe_avg_graph.setLabel('bottom', 'Wavelength (nm)')
+        self.probe_avg_graph.setLabel('bottom', 'Pixel index')
         self.probe_avg_graph.setBackground('w')
         self.probe_avg_graph.scene().sigMouseClicked.connect(lambda event: self.dA_window.on_click(event, self.probe_avg_graph))
         self.probe_avg_graph.setLimits(xMin=0, xMax=1074, yMin=0, yMax=16500)
