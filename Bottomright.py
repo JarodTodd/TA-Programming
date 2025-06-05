@@ -246,9 +246,14 @@ class Ui_Bottom_right(QObject):
         if self.tabWidget.currentIndex() == 0:
             self.start_from_box.setEnabled(False)
             self.finish_time_box.setEnabled(False)
+            self.start_from_box.setValue(self.exponential_start.value())
+            self.finish_time_box.setValue(self.exponential_finish.value())
         elif self.tabWidget.currentIndex() == 1:
             self.start_from_box.setEnabled(True)
             self.finish_time_box.setEnabled(True)
+            if hasattr(self, "content") and self.content:
+                self.start_from_box.setValue(self.content[0])
+                self.finish_time_box.setValue(self.content[-1])
             
     def show_error_message(self, error_message):
         msgbox = QMessageBox()
