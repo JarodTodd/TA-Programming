@@ -100,7 +100,7 @@ class ShotDelayApp(QWidget):
 
 class DLSWindow(QMainWindow):
     run_command_signal = Signal(str, str, int, int)
-
+    delay_bar_update = Signal(float)
     switch_outlier_rejection = Signal(bool)
     deviation_threshold_changed = Signal(float)
     
@@ -211,10 +211,12 @@ class DLSWindow(QMainWindow):
 
         move_neg_button = QPushButton("Move -100ps")
         move_neg_button.clicked.connect(lambda: self.run_command_signal.emit("MoveNegative", "ButtonPress", 0, 0))
+        move_neg_button.clicked.connect(lambda: self.update_delay_bar(self.delay_bar.value() - 100))  # Update delay bar on button click
         hbox.addWidget(move_neg_button)
 
         move_pos_button = QPushButton("Move +100ps")
         move_pos_button.clicked.connect(lambda: self.run_command_signal.emit("MovePositive", "ButtonPress", 0, 0))
+        move_pos_button.clicked.connect(lambda: self.update_delay_bar(self.delay_bar.value() + 100))  # Update delay bar on button click
         hbox.addWidget(move_pos_button)
 
         right_layout.addLayout(hbox)
@@ -379,7 +381,8 @@ class DLSWindow(QMainWindow):
             if 0 <= current_bar_value + value <= 8672:
                 self.run_command_signal.emit(f"MoveRelative {value}", "ButtonPress", 0, 0)
                 print(f"Emitting command: MoveRelative {value}")
-
+                self.delay_bar_update.emit(current_bar_value + value)
+                self.delay_bar.setFormat(f"{int(current_bar_value + value)}/8672")
             else:
                 raise ValueError("Value is out of range.")
         except ValueError as ve:
@@ -391,7 +394,7 @@ class DLSWindow(QMainWindow):
 
     def update_delay_bar(self, value):
         value = max(0, min(value, self.delay_bar.maximum()))
-        self.delay_bar.setValue(round(value/1000))
+        self.delay_bar.setValue(int(value))
         self.delay_bar.setFormat(f"{int(value)}/8672")
         pass
 

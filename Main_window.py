@@ -54,6 +54,7 @@ if __name__ == "__main__":
     worker.update_delay_bar_signal.connect(main_app.shot_delay_app.update_current_delay)
     worker.update_delay_bar_signal.connect(main_app.dls_window.update_delay_bar)
     worker.update_ref_signal.connect(main_app.shot_delay_app.update_t0)
+    main_app.dls_window.delay_bar_update.connect(main_app.shot_delay_app.update_current_delay)
 
     """This connection handles error messages from all applications/functions."""
     worker.error_occurred.connect(main_app.shot_delay_app.show_error_message)

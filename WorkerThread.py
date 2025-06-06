@@ -138,7 +138,6 @@ class MeasurementWorker(QThread):
 
     @Slot(str)
     def run(self):
-        self.setup_socket("Connect")
         print(f"This is {self._orientation}")
         if self._orientation in ("Regular", "Backwards", "Random"):
             try:
@@ -182,6 +181,7 @@ class MeasurementWorker(QThread):
             self.teller = 0
             self.content = content
             self.scans = 1
+            self.nos = scans
             self.averaged_probe_measurement = []
             self.measurement_average = []
             self.setup_socket(f"MeasurementLoop {content} {scans}")
@@ -374,19 +374,32 @@ class MeasurementWorker(QThread):
             filename = f"Measurement_scan_{self.scans}.csv"
             with open(filename, mode='w', newline='') as file:
                 writer = csv.writer(file)
-                writer.writerow(['Delay'] + [f'Pixel_{i}' for i in range(self.averaged_probe_measurement.shape[1])])  # Header
+                # Write the header
+                writer.writerow(['Delay'] + [f'Pixel_{i}' for i in range(1, len(self.averaged_probe_measurement[0]) - 1)])  # Adjust header
+                # Write the rows, excluding the repeated delay time
                 for row in self.averaged_probe_measurement:
-                    writer.writerow(row)
+                    writer.writerow(row)  # Row already includes the delay time
             print(f"Saved measurement data to {filename}")
-            self.measurement_average.append(np.array(self.averaged_probe_measurement))
+            self.measurement_average.append(np.array([row[1:] for row in self.averaged_probe_measurement]))  # Exclude delay time for averaging
 
-        if self.nos == self.scans:
-            all_scans = np.array(self.measurement_average)
-            avg_all_scans = np.mean(all_scans, axis=0)
-            filename = "Average_Probe_Entire_Measurement.csv"
-            with open(filename, mode='w', newline='') as file:
-                writer = csv.writer(file)
-                writer.writerow(['Delay'] + [f'Pixel_{i}' for i in range(avg_all_scans.shape[1])])  # Header
-                for row in self.measurement_average:
-                    writer.writerow(row)
+            if self.nos == self.scans:
+            # Convert the list of scans into a NumPy array
+                all_scans = np.array(self.measurement_average)  # Shape: (scans, delays, pixels)
+
+                # Calculate the average for each delay across all scans
+                avg_all_scans = np.round(np.mean(all_scans, axis=0), 4)  # Shape: (delays, pixels)
+
+                # Save the averaged data to a CSV file
+                filename = "Average_Probe_Entire_Measurement.csv"
+                with open(filename, mode='w', newline='') as file:
+                    writer = csv.writer(file)
+                    # Write the header
+                    writer.writerow(['Delay'] + [f'Pixel_{i}' for i in range(1, avg_all_scans.shape[1])])
+                    # Write the averaged data for each delay
+                    for i, row in enumerate(avg_all_scans):
+                        writer.writerow([self.content[i]] + row.tolist())  # Use self.content[i] for the delay
+                print(f"Saved averaged measurement data to {filename}")
+
+            self.scans += 1
+            self.teller = 0 
         return blocks

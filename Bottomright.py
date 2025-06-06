@@ -237,10 +237,11 @@ class Ui_Bottom_right(QObject):
             print(self.content[0])
 
     def update_finish_time_content(self, value):
-        if hasattr(self, "content") and self.content:
-            # Update the last item to ('ps', value)
-            self.content[-1] = value
-            print(self.content[-1])
+        if self.tabWidget.currentIndex() == 1:
+            if hasattr(self, "content") and self.content:
+                # Update the last item to ('ps', value)
+                self.content[-1] = value
+                print(self.content[-1])
 
     def on_tab_change(self):
         if self.tabWidget.currentIndex() == 0:

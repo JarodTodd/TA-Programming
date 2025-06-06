@@ -1,3 +1,2 @@
-Attempting to connect to the server...
-Connected to the server.
-Position: 3600.0100309394707, Reference: 3600.0105112717683
+Moved to relative position: 8672.0080996834149 ps
+Moved to positive position.
