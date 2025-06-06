@@ -68,6 +68,10 @@ class ShotDelayApp(QWidget):
         self.dAwindow.abs_pos_line.setText(f"{value}")
         self.DLSWindow.delay_bar.setValue(value)
 
+    def update_current_step(self, step, scans):
+        self.bottomright.current_step.setText(str(step))
+        self.bottomright.current_scan.setText(str(scans))
+
     def update_t0(self, t_0):
         """Update the t_0 value."""
         self.t_0 = round(t_0,2)
@@ -390,7 +394,7 @@ class DLSWindow(QMainWindow):
         except Exception as e:
             self.show_error_message(str(e))
 
-
+    
 
     def update_delay_bar(self, value):
         value = max(0, min(value, self.delay_bar.maximum()))

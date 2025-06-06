@@ -41,6 +41,7 @@ class Ui_Bottom_right(QObject):
         self.steps_box = QSpinBox()
         self.steps_box.setMaximum(999999)
         self.steps_box.setValue(100)
+        self.steps_box.valueChanged.connect(self.change_steps)
 
 
         grid.addWidget(QLabel("Start from, ps:"), 0, 0)
@@ -106,13 +107,15 @@ class Ui_Bottom_right(QObject):
         self.start_button.clicked.connect(self.on_start_button_clicked)
         left_panel.addWidget(self.start_button)
 
+        self.total_steps.setText(f"100")
+        self.current_step.setText(f"0")
         self.start_from_box.valueChanged.connect(self.validate_inputs)
         self.finish_time_box.valueChanged.connect(self.validate_inputs)
         self.nos_box.valueChanged.connect(self.validate_inputs)
         self.integration_time_box.valueChanged.connect(self.validate_inputs)
         self.stepping_order_box.currentIndexChanged.connect(self.validate_inputs)
 
-        self.nos_box.valueChanged.connect(lambda: self.total_steps.setText(f"{self.nos_box.value()*len(self.content)}"))
+        self.nos_box.valueChanged.connect(self.change_steps)
         self.start_from_box.valueChanged.connect(lambda: self.update_start_from_content(self.start_from_box.value()))
         self.start_from_box.valueChanged.connect(lambda: self.exponential_start.setValue(self.start_from_box.value()))
         self.exponential_start.valueChanged.connect(lambda: self.start_from_box.setValue(self.exponential_start.value()))
@@ -162,6 +165,7 @@ class Ui_Bottom_right(QObject):
             print("NONONO")
 
 
+
     def on_start_button_clicked(self):
         if self.tabWidget.currentIndex() == 0:
             try:
@@ -200,6 +204,14 @@ class Ui_Bottom_right(QObject):
 
         self.parsed_content_signal.emit(self.content)
 
+    def change_steps(self):
+        if self.tabWidget.currentIndex() == 0:
+            self.total_steps.setText(f"{self.steps_box.value() * self.nos_box.value()}")
+        elif self.tabWidget.currentIndex() == 1:
+            if hasattr(self, "content") and self.content:
+                self.total_steps.setText(f"{len(self.content) * self.nos_box.value()}")
+            else:
+                self.total_steps.setText("0")
 
     def showFileDialog(self):
         self.content = []
@@ -249,9 +261,11 @@ class Ui_Bottom_right(QObject):
             self.finish_time_box.setEnabled(False)
             self.start_from_box.setValue(self.exponential_start.value())
             self.finish_time_box.setValue(self.exponential_finish.value())
+            self.total_steps.setText(f"{self.steps_box.value() * self.nos_box.value()}")
         elif self.tabWidget.currentIndex() == 1:
             self.start_from_box.setEnabled(True)
             self.finish_time_box.setEnabled(True)
+            self.total_steps.setText(f"{len(self.content) * self.nos_box.value() if hasattr(self, 'content') else 0}")
             if hasattr(self, "content") and self.content:
                 self.start_from_box.setValue(self.content[0])
                 self.finish_time_box.setValue(self.content[-1])

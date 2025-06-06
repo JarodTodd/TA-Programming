@@ -59,6 +59,7 @@ class MeasurementWorker(QThread):
     update_probe = Signal(list, list)
     update_dA = Signal(list, list)
     start_process_signal = Signal(str)
+    current_step_signal = Signal(int, int)
 
     plot_row_update = Signal(float, np.ndarray, np.ndarray)
 
@@ -366,6 +367,7 @@ class MeasurementWorker(QThread):
 
         self.measurement_data_updated.emit(delaytime, dA_inputs_avg, dA_inputs_med)
         self.teller += 1
+        self.current_step_signal.emit(self.teller, self.scans)
 
         """When a scan is completed, save the data to a CSV file in the format:
         Delay, Probe_Avg (per pixel)"""
@@ -399,7 +401,8 @@ class MeasurementWorker(QThread):
                     for i, row in enumerate(avg_all_scans):
                         writer.writerow([self.content[i]] + row.tolist())  # Use self.content[i] for the delay
                 print(f"Saved averaged measurement data to {filename}")
+ 
 
             self.scans += 1
-            self.teller = 0 
+            
         return blocks
