@@ -347,10 +347,10 @@ class DLSWindow(QMainWindow):
             with open(filename, 'w', newline='') as csvfile:
                 writer = csv.writer(csvfile)
                 # Write header
-                writer.writerow(["Index", "Average", "Median"])
+                writer.writerow(["Index", "Average"])
                 # Write data rows
-                for i, (avg, med) in enumerate(zip(self.probe_inputs_avg, self.probe_inputs_med)):
-                    writer.writerow([i, avg, med])
+                for i, (avg) in enumerate(zip(self.probe_inputs_avg)):
+                    writer.writerow([i, avg])
 
             print(f"Probe data saved successfully to {filename}.")
 

@@ -38,9 +38,6 @@ class ProbeThread(QThread):
             self.dA_update.emit(dA_average)
             self.probe_rejected.emit(self.data_processor.rejected_probe)
             self.dA_rejected.emit(self.data_processor.rejected_dA)
-            
-            print(self.data_processor.outlier_rejection_dA, self.data_processor.deviation_threshold_dA)
-            print(self.data_processor.range_start_dA, self.data_processor.range_end_dA)
     
     def stop(self):
         self.running = False
@@ -59,6 +56,7 @@ class MeasurementWorker(QThread):
     current_step_signal = Signal(int, int)
 
     plot_row_update = Signal(float, np.ndarray)
+    reset_heatmap =  Signal()
 
     def __init__(self, content, orientation, shots, scans, host='localhost', port=9999):
         super().__init__()
@@ -397,5 +395,6 @@ class MeasurementWorker(QThread):
  
 
             self.scans += 1
+            self.reset_heatmap.emit() 
             
         return blocks
