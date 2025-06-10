@@ -18,7 +18,6 @@ class TAPlotWidget(QObject):
         self.pixel_indices = np.asarray(pixel_indices, dtype=int)
 
         self.delta_A_matrix_avg = np.zeros((self.delay_times.size, self.pixel_indices.size))
-        self.delta_A_matrix_med = np.zeros((self.delay_times.size, self.pixel_indices.size))
         self.mode          = "avg"
         self.active_matrix = self.delta_A_matrix_avg
 
@@ -88,20 +87,9 @@ class TAPlotWidget(QObject):
         # first draw
         self.refresh_heatmap()
 
-
-    # External helper functions
-    def set_mode(self, mode: str):
-        if mode not in ("avg", "med"):
-            raise ValueError("mode must be 'avg' or 'med'")
-        self.mode = mode
-        self.active_matrix = (self.delta_A_matrix_avg if mode == "avg" else self.delta_A_matrix_med)
-        self.refresh_heatmap()
-
-    def update_row(self, delay_time, row_avg, row_med):
+    def update_row(self, delay_time, row_avg):
         row_idx = (np.abs(self.delay_times - float(delay_time))).argmin()
-        self.delta_A_matrix_avg[row_idx, :] = row_avg
-        self.delta_A_matrix_med[row_idx, :] = row_med
-        self.active_matrix[row_idx, :] = (row_avg if self.mode == "avg" else row_med)
+        self.active_matrix[row_idx, :] = row_avg
         self.refresh_heatmap_update()
         self.update_secondary()
 
@@ -111,8 +99,7 @@ class TAPlotWidget(QObject):
 
         nz = (self.delay_times.size, self.pixel_indices.size)
         self.delta_A_matrix_avg = np.zeros(nz)
-        self.delta_A_matrix_med = np.zeros_like(self.delta_A_matrix_avg)
-        self.active_matrix = (self.delta_A_matrix_avg if self.mode == "avg" else self.delta_A_matrix_med)
+        self.active_matrix = self.delta_A_matrix_avg
 
         self.canvas_heatmap.setYRange(self.delay_times.min(), self.delay_times.max())
         self.mesh.setRect(QRectF(self.pixel_indices.min(), self.delay_times.min(), self.pixel_indices.size, self.delay_times.max() - self.delay_times.min()))

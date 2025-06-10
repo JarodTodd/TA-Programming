@@ -15,9 +15,9 @@ ironpython_executable = r"C:\Users\PC026453\Documents\TA-Programming\IronPython 
 script_path = r"C:\Users\PC026453\Documents\TA-Programming\IronPythonDLS.py"
 
 class ProbeThread(QThread):
-    probe_update = Signal(np.ndarray, np.ndarray)
+    probe_update = Signal(np.ndarray)
     probe_rejected = Signal(float)
-    dA_update = Signal(np.ndarray, np.ndarray)
+    dA_update = Signal(np.ndarray)
     dA_rejected = Signal(float)
     
 
@@ -32,13 +32,10 @@ class ProbeThread(QThread):
             block_buffer = camera(self.shots, 0)
             block_2d_array = np.array(block_buffer).reshape(self.shots, 1088)
 
-            probe_avg, probe_med, dA_average, dA_median = self.data_processor.delta_a_block(block_2d_array)
+            probe_avg, dA_average = self.data_processor.delta_a_block(block_2d_array)
 
-            # if probe_avg == None or probe_med == None:
-            #     continue
-
-            self.probe_update.emit(probe_avg, probe_med)
-            self.dA_update.emit(dA_average, dA_median)
+            self.probe_update.emit(probe_avg)
+            self.dA_update.emit(dA_average)
             self.probe_rejected.emit(self.data_processor.rejected_probe)
             self.dA_rejected.emit(self.data_processor.rejected_dA)
             
@@ -52,16 +49,16 @@ class ProbeThread(QThread):
             
 
 class MeasurementWorker(QThread):
-    measurement_data_updated = Signal(float, float, float)
+    measurement_data_updated = Signal(float, float)
     update_delay_bar_signal = Signal(float)
     update_ref_signal = Signal(float)
     error_occurred = Signal(str)
-    update_probe = Signal(list, list)
-    update_dA = Signal(list, list)
+    update_probe = Signal(list)
+    update_dA = Signal(list)
     start_process_signal = Signal(str)
     current_step_signal = Signal(int, int)
 
-    plot_row_update = Signal(float, np.ndarray, np.ndarray)
+    plot_row_update = Signal(float, np.ndarray)
 
     def __init__(self, content, orientation, shots, scans, host='localhost', port=9999):
         super().__init__()
@@ -333,7 +330,6 @@ class MeasurementWorker(QThread):
     def process_content(self, delay_relative, number_of_shots):
         blocks = []
         dA_inputs_avg = 0
-        dA_inputs_med = 0
         pos = delay_relative
         pos -= self.last_item
         if delay_relative == self.content[0]:
@@ -347,25 +343,22 @@ class MeasurementWorker(QThread):
         block_2d_array = np.array(block_buffer).reshape(number_of_shots, 1088)
         blocks.append(block_2d_array)
 
-        probe_avg, probe_med, dA_avg, dA_med = self.data_processor.delta_a_block(block_2d_array)
+        probe_avg, dA_avg = self.data_processor.delta_a_block(block_2d_array)
         self.averaged_probe_measurement.append((delay_relative, *probe_avg))
         delaytime = delay_relative                                     
         # last‑shot ΔA row
         row_data_avg = dA_avg
-        row_data_med = dA_med
-        self.plot_row_update.emit(delaytime, row_data_avg, row_data_med) 
-        self.update_dA.emit(row_data_avg, row_data_med) 
+        self.plot_row_update.emit(delaytime, row_data_avg) 
+        self.update_dA.emit(row_data_avg) 
 
-        self.update_probe.emit(probe_avg, probe_med)  # Emit probe data incrementally
-        print("Probe data emitted:", probe_avg, probe_med)  # Debugging
+        self.update_probe.emit(probe_avg)  # Emit probe data incrementally
+        print("Probe data emitted:", probe_avg)  # Debugging
         dA_average = np.mean(dA_avg, axis=0)
-        dA_median = np.median(dA_med, axis=0)
         
         self.last_item = delaytime # Convert to picoseconds for display
         dA_inputs_avg = np.mean(dA_average)
-        dA_inputs_med = np.mean(dA_median)
 
-        self.measurement_data_updated.emit(delaytime, dA_inputs_avg, dA_inputs_med)
+        self.measurement_data_updated.emit(delaytime, dA_inputs_avg)
         self.teller += 1
         self.current_step_signal.emit(self.teller, self.scans)
 

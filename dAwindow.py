@@ -60,9 +60,8 @@ class dA_Window(QWidget):
         self.left_layout.addWidget(self.dA_plot)
         self.dA_curve = self.dA_plot.plot([], pen='r')
 
-        # Combo box for selecting Average or Median
+        # Combo box for selecting Average
         self.dA_inputs_avg = []
-        self.dA_inputs_med = []
 
         # Outlier rejection layout
         outlier_group = QGroupBox()
@@ -234,12 +233,11 @@ class dA_Window(QWidget):
 
 
     def redraw_dA_plot(self):
-        self.update_dA_graph(self.dA_inputs_avg, self.dA_inputs_med)
+        self.update_dA_graph(self.dA_inputs_avg)
 
     @Slot(object, object)
-    def update_dA_graph(self, avg_list, med_list):
+    def update_dA_graph(self, avg_list):
         self.dA_inputs_avg = avg_list
-        self.dA_inputs_med = med_list
         
         self.dA_curve.setData(self.dA_inputs_avg)     
 

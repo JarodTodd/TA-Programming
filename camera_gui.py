@@ -41,7 +41,6 @@ class ShotDelayApp(QWidget):
 
         self.delaytimes = []
         self.dA_inputs_avg = []
-        self.dA_inputs_med = []
 
         # Adding interaction elements to GUI
         bottom_right_layout = QVBoxLayout()
@@ -95,11 +94,10 @@ class ShotDelayApp(QWidget):
 
 
     @Slot(float, float, float)
-    def update_graph(self, delaytimes, dA_inputs_avg, dA_inputs_med):
+    def update_graph(self, delaytimes, dA_inputs_avg):
         """Update the graph with new delaytimes and dA_inputs."""
         self.delaytimes.append(delaytimes)
         self.dA_inputs_avg.append(dA_inputs_avg)
-        self.dA_inputs_med.append(dA_inputs_med)
 
 
 class DLSWindow(QMainWindow):
@@ -158,7 +156,6 @@ class DLSWindow(QMainWindow):
    
 
         self.probe_inputs_avg = []
-        self.probe_inputs_med = []
 
 
         # Outlier rejection layout
@@ -415,14 +412,13 @@ class DLSWindow(QMainWindow):
 
     
     @Slot(object, object)                          
-    def update_probe_data(self, avg_row, med_row):
+    def update_probe_data(self, avg_row):
         self.probe_inputs_avg = avg_row
-        self.probe_inputs_med = med_row
         self.probe_curve.setData(self.probe_inputs_avg)       
 
     @Slot(object, object)
-    def update_probe_avg_graph(self, avg_row, med_row):
-        self.window().dA_window.update_dA_graph(avg_row, med_row)
+    def update_probe_avg_graph(self, avg_row):
+        self.window().dA_window.update_dA_graph(avg_row)
 
 
     def save_probe_data(self):
