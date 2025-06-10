@@ -21,7 +21,7 @@ class MainApp(QMainWindow):
         self.setCentralWidget(self.tabs)
         self.dA_window = dA_Window()
         self.dls_window = DLSWindow(self.dA_window)
-        self.shot_delay_app = HeatpmapWindow(self.dls_window, self.dA_window)
+        self.shot_delay_app = HeatmapWindow(self.dls_window, self.dA_window)
 
         # Add tabs    
         self.tabs.addTab(self.shot_delay_app, "Main Window")
