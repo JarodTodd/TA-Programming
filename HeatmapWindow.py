@@ -8,7 +8,7 @@ from dAwindow import *
 import numpy as np                      
 from cursor_plot import TAPlotWidget
 
-class ShotDelayApp(QWidget):
+class HeatpmapWindow(QWidget):
 
     def __init__(self, dls_window, dA_Window):
         super().__init__()

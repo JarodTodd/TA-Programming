@@ -2,7 +2,7 @@ from PySide6.QtWidgets import *
 from PySide6.QtCore import *
 from PySide6.QtGui import *
 from WorkerThread import *
-from camera_gui import *
+from HeatmapWindow import *
 from DLSWindow import *
 from dAwindow import *
 import time
@@ -21,7 +21,7 @@ class MainApp(QMainWindow):
         self.setCentralWidget(self.tabs)
         self.dA_window = dA_Window()
         self.dls_window = DLSWindow(self.dA_window)
-        self.shot_delay_app = ShotDelayApp(self.dls_window, self.dA_window)
+        self.shot_delay_app = HeatpmapWindow(self.dls_window, self.dA_window)
 
         # Add tabs    
         self.tabs.addTab(self.shot_delay_app, "Main Window")
