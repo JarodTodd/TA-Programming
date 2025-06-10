@@ -3,7 +3,7 @@ from PySide6.QtCore import *
 from PySide6.QtGui import *
 import sys
 import numpy as np
-from main import *
+from Plot_Calculations import *
 from camera import *
 import random
 import socket
