@@ -40,7 +40,7 @@ if __name__ == "__main__":
     """These connections update the heatmap, and the two corresponding graphs."""
     worker.plot_row_update.connect(main_app.shot_delay_app.ta_widgets.update_row, Qt.QueuedConnection)
     worker.measurement_data_updated.connect(main_app.shot_delay_app.update_graph, Qt.QueuedConnection)
-    main_app.shot_delay_app.bottomright.parsed_content_signal.connect(main_app.shot_delay_app.ta_widgets.update_delay_stages, Qt.QueuedConnection)
+    main_app.shot_delay_app.interface.parsed_content_signal.connect(main_app.shot_delay_app.ta_widgets.update_delay_stages, Qt.QueuedConnection)
 
     """These connections are responsible for the probe spectrum in the DLSWindow and keep it updated."""
     worker.started.connect(main_app.dls_window.stop_probe_thread, Qt.QueuedConnection)
@@ -99,7 +99,7 @@ if __name__ == "__main__":
 
     """These connections handle button presses and measurement starts."""
     main_app.dls_window.run_command_signal.connect(handle_button_press)
-    main_app.shot_delay_app.bottomright.trigger_worker_run.connect(handle_button_press)
+    main_app.shot_delay_app.interface.trigger_worker_run.connect(handle_button_press)
     main_app.dA_window.run_command_signal.connect(handle_button_press)
 
 
