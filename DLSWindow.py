@@ -3,7 +3,7 @@ from PySide6.QtCore import *
 from PySide6.QtGui import *
 import pyqtgraph as pg
 from WorkerThread import *
-from Bottomright import *
+from  Heatmap_Interface  import *
 from dAwindow import *
 
 class DLSWindow(QMainWindow):
