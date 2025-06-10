@@ -227,5 +227,9 @@ class TAPlotWidget(QObject):
         self.mesh.setImage(self.active_matrix, autoLevels=False, autoRange=False)
 
         self.cbar.setLevels((vmin, vmax))
+
+    def reset_heatmap(self):
+        self.active_matrix = np.zeros_like(self.active_matrix)
+        self.refresh_heatmap_update()
     
     

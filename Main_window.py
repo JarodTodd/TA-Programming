@@ -39,6 +39,7 @@ if __name__ == "__main__":
 
     """These connections update the heatmap, and the two corresponding graphs."""
     worker.plot_row_update.connect(main_app.shot_delay_app.ta_widgets.update_row, Qt.QueuedConnection)
+    worker.reset_heatmap.connect(main_app.shot_delay_app.ta_widgets.reset_heatmap, Qt.QueuedConnection)
     worker.measurement_data_updated.connect(main_app.shot_delay_app.update_graph, Qt.QueuedConnection)
     main_app.shot_delay_app.bottomright.parsed_content_signal.connect(main_app.shot_delay_app.ta_widgets.update_delay_stages, Qt.QueuedConnection)
 
