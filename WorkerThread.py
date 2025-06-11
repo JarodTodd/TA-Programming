@@ -346,8 +346,8 @@ class MeasurementWorker(QThread):
         delaytime = delay_relative                                     
         # last‑shot ΔA row
         row_data_avg = dA_avg
-        self.plot_row_update.emit(delaytime, row_data_avg)
-        self.update_dA.emit(row_data_avg)
+        self.plot_row_update.emit(delaytime, row_data_avg, self.scans) 
+        self.update_dA.emit(row_data_avg) 
 
         self.update_probe.emit(probe_avg)  # Emit probe data incrementally
         print("Probe data emitted:", probe_avg)  # Debugging
