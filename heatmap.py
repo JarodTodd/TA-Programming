@@ -86,6 +86,10 @@ class TAPlotWidget(QObject):
         self.canvas_plot2._checkbox1.stateChanged.connect(self.update_secondary)
         self.canvas_plot2._checkbox2.stateChanged.connect(self.update_secondary)
 
+        # enable average scan graph by default
+        self.canvas_plot1._checkbox2.setChecked(True)
+        self.canvas_plot2._checkbox2.setChecked(True)
+
         # Connections for interaction with the plots
         self.canvas_heatmap.scene().sigMouseClicked.connect(self.on_mouse_clicked)
         # dragging any of the 4 InfiniteLines keeps views in sync
@@ -308,7 +312,7 @@ class HoverPlotWidget(pg.PlotWidget):
 
         cb1.move(x0, y0)
         cb2.move(x0, y0 + cb_height + self._spacing)
-        
+
         cb1.show()
         cb2.show()
 
