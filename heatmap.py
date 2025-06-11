@@ -1,12 +1,15 @@
 import numpy as np
+from dAwindow import *
 import pyqtgraph as pg
 from PySide6.QtCore import *
-from dAwindow import *
 from PySide6.QtWidgets import QCheckBox
 pg.setConfigOptions(useOpenGL=True, imageAxisOrder='row-major')
 
 
 class TAPlotWidget(QObject):
+    """
+    This class creates and updates the heatmap and its secondary plots in the Main Window. 
+    """
 
     def __init__(self, delay_times, pixel_indices, parent=None):
         super().__init__(parent)
@@ -87,7 +90,9 @@ class TAPlotWidget(QObject):
         self.canvas_plot2._checkbox2.stateChanged.connect(self.update_secondary)
 
         # enable average scan graph by default
+        self.canvas_plot1._checkbox1.setChecked(True)
         self.canvas_plot1._checkbox2.setChecked(True)
+        self.canvas_plot2._checkbox1.setChecked(True)
         self.canvas_plot2._checkbox2.setChecked(True)
 
         # Connections for interaction with the plots
