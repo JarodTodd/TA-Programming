@@ -59,7 +59,7 @@ class HeatmapWindow(QWidget):
         value = round(value, 2)
         self.interface.current_delay.setText(f"{value}")
         self.dAwindow.verticalSlider.setValue(value*1000)
-        self.dAwindow.abs_pos_line.setText(f"{value}")
+        self.dAwindow.abs_pos_line.setText(f"{round(value, 2)}")
         self.DLSWindow.delay_bar.setValue(value)
 
     def update_current_step(self, step, scans):
