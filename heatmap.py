@@ -2,6 +2,7 @@ import numpy as np
 import pyqtgraph as pg
 from PySide6.QtCore import *
 from dAwindow import *
+from PySide6.QtWidgets import QCheckBox
 pg.setConfigOptions(useOpenGL=True, imageAxisOrder='row-major')
 
 
@@ -61,13 +62,13 @@ class TAPlotWidget(QObject):
 
 
         # Secondary plots
-        self.canvas_plot1 = pg.PlotWidget(parent)
+        self.canvas_plot1 = HoverPlotWidget(parent)
         self.canvas_plot1.setLabels(left="ΔA", bottom="Delay / ps")
         self.plot1 = self.canvas_plot1.plot([], [])
         self.vline_pl1 = pg.InfiniteLine(angle=90, movable=True, pen=self.cursor_secondary)
         self.canvas_plot1.addItem(self.vline_pl1)
 
-        self.canvas_plot2 = pg.PlotWidget(parent)
+        self.canvas_plot2 = HoverPlotWidget(parent)
         self.canvas_plot2.setLabels(left="ΔA", bottom="Pixel index")
         self.plot2 = self.canvas_plot2.plot([], [])
         self.vline_pl2 = pg.InfiniteLine(angle=90, movable=True, pen=self.cursor_secondary)
@@ -233,3 +234,63 @@ class TAPlotWidget(QObject):
         self.refresh_heatmap_update()
     
     
+class HoverPlotWidget(pg.PlotWidget):
+    """
+    A PlotWidget that displays two checkboxes when the mouse hovers over
+    the top-right corner of the plot.
+    """
+
+    def __init__(self, *args, margin=10, spacing = 4, **kwargs):
+        # create the checkboxes before super().__init__
+        self._checkbox1 = QCheckBox("Current Scan")
+        self._checkbox1.hide()
+        self._checkbox2 = QCheckBox("Average of all scans")
+        self._checkbox2.hide()
+
+        # control spacing
+        self._margin = margin   # spacing from plot
+        self._spacing = spacing # spacing between boxes
+
+        super().__init__(*args, **kwargs)
+        # parent it and enable mouse tracking
+        self._checkbox1.setParent(self)
+        self._checkbox2.setParent(self)
+        self.setMouseTracking(True)
+
+    def mouseMoveEvent(self, event):
+        """
+        Shows checkboxes when mouse hovers over the top-right corner of the plot.
+        The hover sensitive area is defined based on the size of the checkboxes,
+        and they are positioned with specified margins and spacing.
+        """
+        # Get current mouse position
+        cursor_position = event.pos()
+
+         # Get the current width of the widget
+        widget_width = self.width()
+
+        # Divine checkboxes
+        cb1 = self._checkbox1
+        cb2 = self._checkbox2
+
+        # Determine the maximum width and height needed for checkbox layout
+        cb_width = max(cb1.sizeHint().width(), cb2.sizeHint().width())
+        cb_height = max(cb1.sizeHint().height(), cb2.sizeHint().height())
+
+        # define the hover-sensitive rect in the top-right
+        x0 = widget_width - cb_width - self._margin
+        y0 = self._margin
+        hover_rect = QRect(x0, y0, cb_width + self._margin, cb_height + self._margin)
+
+        # If mouse is inside the hover area, show both checkboxes
+        if hover_rect.contains(cursor_position):
+                cb1.move(x0, y0)
+                cb2.move(x0, y0 + cb_height + self._spacing)
+                cb1.show()
+                cb2.show()
+        else:
+                # Else, hide them
+                cb1.hide()
+                cb2.hide()
+
+        super().mouseMoveEvent(event)
