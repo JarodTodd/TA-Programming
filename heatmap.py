@@ -18,6 +18,7 @@ class TAPlotWidget(QObject):
         self.delay_times   = np.asarray(delay_times,  dtype=float)
         self.pixel_indices = np.asarray(pixel_indices, dtype=int)
 
+        self.delta_A_matrix_current = np.zeros((self.delay_times.size, self.pixel_indices.size))
         self.delta_A_matrix_avg = np.zeros((self.delay_times.size, self.pixel_indices.size))
         self.mode          = "avg"
         self.active_matrix = self.delta_A_matrix_avg
@@ -64,16 +65,23 @@ class TAPlotWidget(QObject):
         # Secondary plots
         self.canvas_plot1 = HoverPlotWidget(parent)
         self.canvas_plot1.setLabels(left="ΔA", bottom="Delay / ps")
-        self.plot1 = self.canvas_plot1.plot([], [])
+        self.plot1_avg = self.canvas_plot1.plot([], [], pen=pg.mkPen('r', width=1), name="Avg")
+        self.plot1_cur = self.canvas_plot1.plot([], [], pen=pg.mkPen('g', width=1), name="Current")
         self.vline_pl1 = pg.InfiniteLine(angle=90, movable=True, pen=self.cursor_secondary)
         self.canvas_plot1.addItem(self.vline_pl1)
 
         self.canvas_plot2 = HoverPlotWidget(parent)
         self.canvas_plot2.setLabels(left="ΔA", bottom="Pixel index")
-        self.plot2 = self.canvas_plot2.plot([], [])
+        self.plot2_avg = self.canvas_plot2.plot([], [], pen=pg.mkPen('r', width=2), name="Avg")
+        self.plot2_cur = self.canvas_plot2.plot([], [], pen=pg.mkPen('g', width=1), name="Current")
         self.vline_pl2 = pg.InfiniteLine(angle=90, movable=True, pen=self.cursor_secondary)
         self.canvas_plot2.addItem(self.vline_pl2)
-        
+
+        # connect checkbox toggles to plot updates
+        self.canvas_plot1._checkbox1.stateChanged.connect(self.update_secondary)
+        self.canvas_plot1._checkbox2.stateChanged.connect(self.update_secondary)
+        self.canvas_plot2._checkbox1.stateChanged.connect(self.update_secondary)
+        self.canvas_plot2._checkbox2.stateChanged.connect(self.update_secondary)
 
         # Connections for interaction with the plots
         self.canvas_heatmap.scene().sigMouseClicked.connect(self.on_mouse_clicked)
@@ -88,9 +96,12 @@ class TAPlotWidget(QObject):
         # first draw
         self.refresh_heatmap()
 
-    def update_row(self, delay_time, row_avg):
+    def update_row(self, delay_time, row, scan):
         row_idx = (np.abs(self.delay_times - float(delay_time))).argmin()
-        self.active_matrix[row_idx, :] = row_avg
+
+        self.delta_A_matrix_current[row_idx, :] = row
+        self.delta_A_matrix_avg[row_idx, :] = (self.delta_A_matrix_avg[row_idx, :] * (scan - 1) + row) / scan
+
         self.refresh_heatmap_update()
         self.update_secondary()
 
@@ -99,7 +110,7 @@ class TAPlotWidget(QObject):
         self.delay_to_index = {float(d): i for i, d in enumerate(self.delay_times)}
 
         nz = (self.delay_times.size, self.pixel_indices.size)
-        self.delta_A_matrix_avg = np.zeros(nz)
+        self.delta_A_matrix_current = np.zeros(nz)
         self.active_matrix = self.delta_A_matrix_avg
 
         self.canvas_heatmap.setYRange(self.delay_times.min(), self.delay_times.max())
@@ -179,13 +190,25 @@ class TAPlotWidget(QObject):
         self.sync_from_hline = True 
         self.sync_from_pixel = True
 
-        self.plot1.setData(self.delay_times, self.active_matrix[:, pixel_idx])
+        self.plot1_avg.setData(self.delay_times, self.delta_A_matrix_avg[:, pixel_idx])
+        self.plot1_cur.setData(self.delay_times, self.delta_A_matrix_current[:, pixel_idx])
         self.canvas_plot1.setTitle(f"pixel: {pixel_idx}")
         self.vline_pl1.setValue(self.delay_times[delay_idx])
 
-        self.plot2.setData(self.pixel_indices, self.active_matrix[delay_idx, :])
+        self.plot2_avg.setData(self.pixel_indices, self.delta_A_matrix_avg[delay_idx, :])
+        self.plot2_cur.setData(self.pixel_indices, self.delta_A_matrix_current[delay_idx, :])
         self.canvas_plot2.setTitle(f"delay: {self.delay_times[delay_idx]:g} ps")
         self.vline_pl2.setValue(pixel_idx)
+
+        show_cur_1 = self.canvas_plot1._checkbox1.isChecked()
+        show_avg_1 = self.canvas_plot1._checkbox2.isChecked()
+        self.plot1_cur.setVisible(show_cur_1)
+        self.plot1_avg.setVisible(show_avg_1)
+
+        show_cur_2 = self.canvas_plot2._checkbox1.isChecked()
+        show_avg_2 = self.canvas_plot2._checkbox2.isChecked()
+        self.plot2_cur.setVisible(show_cur_2)
+        self.plot2_avg.setVisible(show_avg_2)
 
         # Re-enable syncing
         self.sync_from_hline = False 
@@ -230,7 +253,7 @@ class TAPlotWidget(QObject):
         self.cbar.setLevels((vmin, vmax))
 
     def reset_heatmap(self):
-        self.active_matrix = np.zeros_like(self.active_matrix)
+        sself.delta_A_matrix_current = np.zeros_like(self.delta_A_matrix_current)
         self.refresh_heatmap_update()
     
     
