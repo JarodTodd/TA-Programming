@@ -266,9 +266,10 @@ class TAPlotWidget(QObject):
 
         self.cbar.setLevels((vmin, vmax))
 
-    def reset_heatmap(self):
+    def reset_currentMatrix(self):
         self.delta_A_matrix_current = np.zeros_like(self.delta_A_matrix_current)
         self.refresh_heatmap_update()
+        self.update_secondary
     
     
 class HoverPlotWidget(pg.PlotWidget):
