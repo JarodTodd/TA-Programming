@@ -291,10 +291,7 @@ class HoverPlotWidget(pg.PlotWidget):
         The hover sensitive area is defined based on the size of the checkboxes,
         and they are positioned with specified margins and spacing.
         """
-        # Get current mouse position
-        cursor_position = event.pos()
-
-         # Get the current width of the widget
+        # Get the current width of the widget
         widget_width = self.width()
 
         # Divine checkboxes
@@ -305,20 +302,22 @@ class HoverPlotWidget(pg.PlotWidget):
         cb_width = max(cb1.sizeHint().width(), cb2.sizeHint().width())
         cb_height = max(cb1.sizeHint().height(), cb2.sizeHint().height())
 
-        # define the hover-sensitive rect in the top-right
+        # compute checkbox positions
         x0 = widget_width - cb_width - self._margin
         y0 = self._margin
-        hover_rect = QRect(x0, y0, cb_width + self._margin, cb_height + self._margin)
 
-        # If mouse is inside the hover area, show both checkboxes
-        if hover_rect.contains(cursor_position):
-                cb1.move(x0, y0)
-                cb2.move(x0, y0 + cb_height + self._spacing)
-                cb1.show()
-                cb2.show()
-        else:
-                # Else, hide them
-                cb1.hide()
-                cb2.hide()
+        cb1.move(x0, y0)
+        cb2.move(x0, y0 + cb_height + self._spacing)
+        
+        cb1.show()
+        cb2.show()
 
         super().mouseMoveEvent(event)
+
+    def leaveEvent(self, event):
+        """
+        This function hides the checkboxes when the mouse leaves a plot
+        """
+        self._checkbox1.hide()
+        self._checkbox2.hide()
+        super().leaveEvent(event)
