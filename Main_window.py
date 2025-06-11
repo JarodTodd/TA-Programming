@@ -21,7 +21,7 @@ class MainApp(QMainWindow):
         self.setCentralWidget(self.tabs)
         self.dA_window = dA_Window()
         self.dls_window = DLSWindow(self.dA_window)
-        self.shot_delay_app = HeatpmapWindow(self.dls_window, self.dA_window)
+        self.shot_delay_app = HeatmapWindow(self.dls_window, self.dA_window)
 
         # Add tabs    
         self.tabs.addTab(self.shot_delay_app, "Main Window")
@@ -41,7 +41,7 @@ if __name__ == "__main__":
     worker.plot_row_update.connect(main_app.shot_delay_app.ta_widgets.update_row, Qt.QueuedConnection)
     worker.reset_heatmap.connect(main_app.shot_delay_app.ta_widgets.reset_heatmap, Qt.QueuedConnection)
     worker.measurement_data_updated.connect(main_app.shot_delay_app.update_graph, Qt.QueuedConnection)
-    main_app.shot_delay_app.bottomright.parsed_content_signal.connect(main_app.shot_delay_app.ta_widgets.update_delay_stages, Qt.QueuedConnection)
+    main_app.shot_delay_app.interface.parsed_content_signal.connect(main_app.shot_delay_app.ta_widgets.update_delay_stages, Qt.QueuedConnection)
 
     """These connections are responsible for the probe spectrum in the DLSWindow and keep it updated."""
     worker.started.connect(main_app.dls_window.stop_probe_thread, Qt.QueuedConnection)
@@ -75,9 +75,11 @@ if __name__ == "__main__":
         worker.process.setProgram(ironpython_executable)
         if isinstance(argument, list):  # Handle list arguments
             worker.start()
+            main_app.shot_delay_app.interface.stop_button.setEnabled(True)
         elif isinstance(argument, str):  # Handle string arguments
             worker.process.setArguments([script_path, argument])
             worker.process.start()
+            main_app.shot_delay_app.interface.stop_button.setEnabled(True)
 
             if worker.process and worker.process.state() == QProcess.Running:
                 try:
@@ -88,6 +90,7 @@ if __name__ == "__main__":
             worker.process.readyReadStandardOutput.connect(worker.handle_process_output)
             worker.process.readyReadStandardError.connect(worker.handle_process_error)
             worker.process.finished.connect(lambda: print("Process finished.", time.time()))
+            main_app.shot_delay_app.interface.stop_button.setEnabled(False)
 
     worker.start_process_signal.connect(start_process)
 
@@ -100,7 +103,7 @@ if __name__ == "__main__":
 
     """These connections handle button presses and measurement starts."""
     main_app.dls_window.run_command_signal.connect(handle_button_press)
-    main_app.shot_delay_app.bottomright.trigger_worker_run.connect(handle_button_press)
+    main_app.shot_delay_app.interface.trigger_worker_run.connect(handle_button_press)
     main_app.dA_window.run_command_signal.connect(handle_button_press)
 
 
@@ -126,6 +129,8 @@ if __name__ == "__main__":
         print("Application exit cleanup complete.")
         app.aboutToQuit.disconnect(stop_worker)
         app.quit()
+
+    main_app.shot_delay_app.interface.stop_measurement_signal.connect(stop_worker)
 
     worker.start()
     app.aboutToQuit.connect(stop_worker)

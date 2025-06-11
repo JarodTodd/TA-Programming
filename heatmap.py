@@ -29,7 +29,8 @@ class TAPlotWidget(QObject):
         self.delay_axis.setPen(None) 
         self.canvas_heatmap.setAxisItems({'left': self.delay_axis})
         self.canvas_heatmap.setLabels(left="Delay / ps", bottom="Pixel index")
-        self.canvas_heatmap.getViewBox().setMouseEnabled(x=True, y=True)  
+        self.canvas_heatmap.getViewBox().setMouseEnabled(x=True, y=True)
+        self.canvas_heatmap.setLimits(xMin=0, xMax=1024, yMin=-9000, yMax=9000)  
 
         # create heatmap ImageItem
         self.mesh = pg.ImageItem(self.active_matrix, axisOrder='row-major')
@@ -63,12 +64,14 @@ class TAPlotWidget(QObject):
         # Secondary plots
         self.canvas_plot1 = pg.PlotWidget(parent)
         self.canvas_plot1.setLabels(left="ΔA", bottom="Delay / ps")
+        self.canvas_plot1.setLimits(xMin=-8700, xMax=8700, yMin = -1, yMax=1)
         self.plot1 = self.canvas_plot1.plot([], [])
         self.vline_pl1 = pg.InfiniteLine(angle=90, movable=True, pen=self.cursor_secondary)
         self.canvas_plot1.addItem(self.vline_pl1)
 
         self.canvas_plot2 = pg.PlotWidget(parent)
         self.canvas_plot2.setLabels(left="ΔA", bottom="Pixel index")
+        self.canvas_plot2.setLimits(xMin=0, xMax=1024, yMin=-1, yMax=1)
         self.plot2 = self.canvas_plot2.plot([], [])
         self.vline_pl2 = pg.InfiniteLine(angle=90, movable=True, pen=self.cursor_secondary)
         self.canvas_plot2.addItem(self.vline_pl2)
@@ -102,6 +105,8 @@ class TAPlotWidget(QObject):
         self.active_matrix = self.delta_A_matrix_avg
 
         self.canvas_heatmap.setYRange(self.delay_times.min(), self.delay_times.max())
+        self.canvas_heatmap.setLimits(xMin = 0, xMax = 1024, yMin = self.delay_times.min(), yMax = self.delay_times.max())
+        self.canvas_plot1.setLimits(xMin = self.delay_times.min(), xMax = self.delay_times.max(), yMin= -1, yMax = 1)
         self.mesh.setRect(QRectF(self.pixel_indices.min(), self.delay_times.min(), self.pixel_indices.size, self.delay_times.max() - self.delay_times.min()))
         self.refresh_heatmap()
         self.update_delay_axis_labels()

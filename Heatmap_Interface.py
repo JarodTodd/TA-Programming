@@ -8,6 +8,7 @@ from exponential_steps import *
 class Ui_Bottom_right(QObject):
     trigger_worker_run = Signal(list, str, int, int)
     parsed_content_signal = Signal(list)
+    stop_measurement_signal = Signal()
 
     def __init__(self):
         super().__init__()
@@ -107,8 +108,15 @@ class Ui_Bottom_right(QObject):
         self.start_button.clicked.connect(self.on_start_button_clicked)
         left_panel.addWidget(self.start_button)
 
+        self.stop_button = QPushButton()
+        self.stop_button.setText("Stop")
+        self.stop_button.setEnabled(False)
+        self.stop_button.clicked.connect(lambda: self.stop_measurement_signal.emit())
+        left_panel.addWidget(self.stop_button)
+
         self.total_steps.setText(f"100")
         self.current_step.setText(f"0")
+        self.current_scan.setText(f"0")
         self.start_from_box.valueChanged.connect(self.validate_inputs)
         self.finish_time_box.valueChanged.connect(self.validate_inputs)
         self.nos_box.valueChanged.connect(self.validate_inputs)
@@ -204,6 +212,9 @@ class Ui_Bottom_right(QObject):
 
         self.parsed_content_signal.emit(self.content)
 
+
+
+
     def change_steps(self):
         if self.tabWidget.currentIndex() == 0:
             self.total_steps.setText(f"{self.steps_box.value() * self.nos_box.value()}")
@@ -216,7 +227,7 @@ class Ui_Bottom_right(QObject):
     def showFileDialog(self):
         self.content = []
         fileName, _ = QFileDialog.getOpenFileName(
-            self.tab2, "Select a .txt File", "", "Text Files (*.txt);;All Files (*)"
+            self.tab2, "Select a .txt File", "", "CSV Files (*.csv);;Text Files (*.txt);;All Files (*)"
         )
         if fileName:
             self.file_label.setText(os.path.basename(fileName))
@@ -226,7 +237,7 @@ class Ui_Bottom_right(QObject):
                 self.text_display.setText(content)
                 # Changing self.content to a list that is accepted by measurement functions
                 lines = [item.strip() for item in content.split(",") if item.strip()]
-                if lines[0] == "ps":
+                if lines[0] == "ps" or lines[0] == "Delay":
                     lines = lines[1:]
                 self.content = [float(item) for item in lines]
 
