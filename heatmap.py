@@ -1,12 +1,15 @@
 import numpy as np
+from dAwindow import *
 import pyqtgraph as pg
 from PySide6.QtCore import *
-from dAwindow import *
 from PySide6.QtWidgets import QCheckBox
 pg.setConfigOptions(useOpenGL=True, imageAxisOrder='row-major')
 
 
 class TAPlotWidget(QObject):
+    """
+    This class creates and updates the heatmap and its secondary plots in the Main Window. 
+    """
 
     def __init__(self, delay_times, pixel_indices, parent=None):
         super().__init__(parent)
@@ -68,7 +71,7 @@ class TAPlotWidget(QObject):
         self.canvas_plot1.setLabels(left="ΔA", bottom="Delay / ps")
         self.canvas_plot1.setLimits(xMin=-8700, xMax=8700, yMin = -1, yMax=1)
         self.plot1_avg = self.canvas_plot1.plot([], [], pen=pg.mkPen('r', width=1), name="Avg")
-        self.plot1_cur = self.canvas_plot1.plot([], [], pen=pg.mkPen('g', width=1), name="Current")
+        self.plot1_cur = self.canvas_plot1.plot([], [], pen=pg.mkPen(width=1), name="Current")
         self.vline_pl1 = pg.InfiniteLine(angle=90, movable=True, pen=self.cursor_secondary)
         self.canvas_plot1.addItem(self.vline_pl1)
 
@@ -76,7 +79,7 @@ class TAPlotWidget(QObject):
         self.canvas_plot2.setLabels(left="ΔA", bottom="Pixel index")
         self.canvas_plot2.setLimits(xMin=0, xMax=1024, yMin=-1, yMax=1)
         self.plot2_avg = self.canvas_plot2.plot([], [], pen=pg.mkPen('r', width=2), name="Avg")
-        self.plot2_cur = self.canvas_plot2.plot([], [], pen=pg.mkPen('g', width=1), name="Current")
+        self.plot2_cur = self.canvas_plot2.plot([], [], pen=pg.mkPen(width=1), name="Current")
         self.vline_pl2 = pg.InfiniteLine(angle=90, movable=True, pen=self.cursor_secondary)
         self.canvas_plot2.addItem(self.vline_pl2)
 
@@ -85,6 +88,12 @@ class TAPlotWidget(QObject):
         self.canvas_plot1._checkbox2.stateChanged.connect(self.update_secondary)
         self.canvas_plot2._checkbox1.stateChanged.connect(self.update_secondary)
         self.canvas_plot2._checkbox2.stateChanged.connect(self.update_secondary)
+
+        # enable average scan graph by default
+        self.canvas_plot1._checkbox1.setChecked(True)
+        self.canvas_plot1._checkbox2.setChecked(True)
+        self.canvas_plot2._checkbox1.setChecked(True)
+        self.canvas_plot2._checkbox2.setChecked(True)
 
         # Connections for interaction with the plots
         self.canvas_heatmap.scene().sigMouseClicked.connect(self.on_mouse_clicked)
@@ -292,10 +301,7 @@ class HoverPlotWidget(pg.PlotWidget):
         The hover sensitive area is defined based on the size of the checkboxes,
         and they are positioned with specified margins and spacing.
         """
-        # Get current mouse position
-        cursor_position = event.pos()
-
-         # Get the current width of the widget
+        # Get the current width of the widget
         widget_width = self.width()
 
         # Divine checkboxes
@@ -306,20 +312,22 @@ class HoverPlotWidget(pg.PlotWidget):
         cb_width = max(cb1.sizeHint().width(), cb2.sizeHint().width())
         cb_height = max(cb1.sizeHint().height(), cb2.sizeHint().height())
 
-        # define the hover-sensitive rect in the top-right
+        # compute checkbox positions
         x0 = widget_width - cb_width - self._margin
         y0 = self._margin
-        hover_rect = QRect(x0, y0, cb_width + self._margin, cb_height + self._margin)
 
-        # If mouse is inside the hover area, show both checkboxes
-        if hover_rect.contains(cursor_position):
-                cb1.move(x0, y0)
-                cb2.move(x0, y0 + cb_height + self._spacing)
-                cb1.show()
-                cb2.show()
-        else:
-                # Else, hide them
-                cb1.hide()
-                cb2.hide()
+        cb1.move(x0, y0)
+        cb2.move(x0, y0 + cb_height + self._spacing)
+
+        cb1.show()
+        cb2.show()
 
         super().mouseMoveEvent(event)
+
+    def leaveEvent(self, event):
+        """
+        This function hides the checkboxes when the mouse leaves a plot
+        """
+        self._checkbox1.hide()
+        self._checkbox2.hide()
+        super().leaveEvent(event)
