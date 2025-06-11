@@ -395,6 +395,7 @@ class MeasurementWorker(QThread):
  
 
             self.scans += 1
-            self.reset_currentMatrix.emit() 
+            if self.scans != self.nos:
+                self.reset_currentMatrix.emit() 
             
         return blocks
