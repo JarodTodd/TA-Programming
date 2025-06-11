@@ -6,7 +6,7 @@ from WorkerThread import *
 from Heatmap_Interface import *
 from dAwindow import *
 import numpy as np                      
-from heatmap import *
+from heatmap import TAPlotWidget
 
 class HeatmapWindow(QWidget):
 
