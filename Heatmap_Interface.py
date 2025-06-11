@@ -118,6 +118,7 @@ class Ui_Bottom_right(QObject):
         self.total_steps.setText(f"100")
         self.current_step.setText(f"0")
         self.current_scan.setText(f"0")
+        self.time_remaining.setText("--")
         self.start_from_box.valueChanged.connect(self.validate_inputs)
         self.finish_time_box.valueChanged.connect(self.validate_inputs)
         self.nos_box.valueChanged.connect(self.validate_inputs)
@@ -211,14 +212,14 @@ class Ui_Bottom_right(QObject):
             )
         print(f"Self.content = {self.content}")
         self.parsed_content_signal.emit(self.content)
-        self.time_remaining_timer(int(self.total_steps.text())+5)
+        self.time_remaining_timer(int((int(self.total_steps.text())*9/25) + 7))
 
 
     def time_remaining_timer(self, t):
         self.remaining_time = t
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_timer)
-        self.timer.start(1000)  # Trigger every 1000 milliseconds (1 second)
+        self.timer.start(1000)
 
     def update_timer(self):
         if self.remaining_time > 0:
@@ -228,6 +229,7 @@ class Ui_Bottom_right(QObject):
             self.remaining_time -= 1
         else:
             self.timer.stop()
+            self.time_remaining.setText("00:00")
 
 
     def change_steps(self):

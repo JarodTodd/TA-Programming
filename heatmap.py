@@ -114,6 +114,7 @@ class TAPlotWidget(QObject):
 
         nz = (self.delay_times.size, self.pixel_indices.size)
         self.delta_A_matrix_current = np.zeros(nz)
+        self.delta_A_matrix_avg = np.zeros(nz)
         self.active_matrix = self.delta_A_matrix_avg
 
         self.canvas_heatmap.setYRange(self.delay_times.min(), self.delay_times.max())
