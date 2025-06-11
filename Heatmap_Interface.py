@@ -3,7 +3,8 @@ from PySide6.QtCore import *
 from PySide6.QtGui import *
 from PySide6.QtWidgets import *
 from exponential_steps import *
-
+import csv
+import time
 
 class Ui_Bottom_right(QObject):
     trigger_worker_run = Signal(list, str, int, int)
@@ -209,10 +210,24 @@ class Ui_Bottom_right(QObject):
                 self.nos_box.value()
             )
         print(f"Self.content = {self.content}")
-
         self.parsed_content_signal.emit(self.content)
+        self.time_remaining_timer(int(self.total_steps.text())+5)
 
 
+    def time_remaining_timer(self, t):
+        self.remaining_time = t
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.update_timer)
+        self.timer.start(1000)  # Trigger every 1000 milliseconds (1 second)
+
+    def update_timer(self):
+        if self.remaining_time > 0:
+            mins, secs = divmod(self.remaining_time, 60)
+            timer = '{:02d}:{:02d}'.format(mins, secs)
+            self.time_remaining.setText(str(timer))
+            self.remaining_time -= 1
+        else:
+            self.timer.stop()
 
 
     def change_steps(self):
@@ -227,29 +242,60 @@ class Ui_Bottom_right(QObject):
     def showFileDialog(self):
         self.content = []
         fileName, _ = QFileDialog.getOpenFileName(
-            self.tab2, "Select a .txt File", "", "CSV Files (*.csv);;Text Files (*.txt);;All Files (*)"
+            self.tab2, "Select a .txt or .csv File", "", "CSV Files (*.csv);;Text Files (*.txt);;All Files (*)"
         )
         if fileName:
             self.file_label.setText(os.path.basename(fileName))
             try:
-                with open(fileName, "r") as file:
-                    content = file.read()
-                self.text_display.setText(content)
-                # Changing self.content to a list that is accepted by measurement functions
-                lines = [item.strip() for item in content.split(",") if item.strip()]
-                if lines[0] == "ps" or lines[0] == "Delay":
-                    lines = lines[1:]
-                self.content = [float(item) for item in lines]
+                metadata = f"File Name: {os.path.basename(fileName)}\n"
+                metadata += f"File Path: {fileName}\n"
+
+                # Check if the file is a CSV
+                if fileName.endswith(".csv"):
+                    with open(fileName, "r") as file:
+                        reader = csv.DictReader(file)
+                        # Find the index of 'Pixel_1' and only keep columns up to and including it
+                        if "Pixel_1" in reader.fieldnames:
+                            pixel_idx = reader.fieldnames.index("Pixel_1")
+                            columns = reader.fieldnames[:pixel_idx + 1]
+                            columns = [col if col != "Pixel_1" else "Pixels" for col in columns]
+                        else:
+                            columns = reader.fieldnames
+                        metadata += f"Columns: {', '.join(columns)}\n"
+                        rows = list(reader)
+                        metadata += f"Number of Rows: {len(rows)}\n"
+
+                        if "Delay" in reader.fieldnames:
+                            self.content = [float(row["Delay"]) for row in rows if row["Delay"].strip()]
+                        else:
+                            raise ValueError("The CSV file does not contain a 'Delay' column.")
+                else:  # Assume it's a text file
+                    with open(fileName, "r") as file:
+                        content = file.read()
+                    metadata += f"File Content Preview:\n{content[:200]}...\n"  # Show first 200 characters
+                    self.text_display.setText(content)
+
+                    # Changing self.content to a list that is accepted by measurement functions
+                    lines = [item.strip() for item in content.split(",") if item.strip()]
+                    if lines[0] == "ps":
+                        lines = lines[1:]
+                        self.content = [float(item) for item in lines]
+                    elif lines[0] == "Delay":
+                        lines = lines[1:]
+                        self.content = [float(item) for item in lines]
+
+                # Display metadata in the text_display widget
+                self.text_display.setText(metadata)
 
                 # Changing GUI elements to display correct values after uploading file
-                self.total_steps.setText(f"{(len(self.content))*self.nos_box.value()}")
+                self.total_steps.setText(f"{(len(self.content)) * self.nos_box.value()}")
                 self.current_step.setText(f"{0}")
                 self.current_scan.setText(f"{1}")
-                
 
-                self.start_from_box.setValue(self.content[0])
-                self.finish_time_box.setValue(self.content[-1])         
-                               
+                if self.content:
+                    self.start_from_box.setValue(self.content[0])
+                    self.finish_time_box.setValue(self.content[-1])
+
             except Exception as e:
                 self.show_error_message(f"Failed to load file: {e}")
 
