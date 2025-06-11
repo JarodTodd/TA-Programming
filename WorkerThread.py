@@ -55,8 +55,8 @@ class MeasurementWorker(QThread):
     start_process_signal = Signal(str)
     current_step_signal = Signal(int, int)
 
-    plot_row_update = Signal(float, np.ndarray)
-    reset_currentMatrix =  Signal()
+    plot_row_update = Signal(float, np.ndarray, int)
+    reset_heatmap =  Signal()
 
     def __init__(self, content, orientation, shots, scans, host='localhost', port=9999):
         super().__init__()
