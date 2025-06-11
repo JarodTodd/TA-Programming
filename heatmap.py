@@ -108,6 +108,14 @@ class TAPlotWidget(QObject):
         # first draw
         self.refresh_heatmap()
 
+    def set_mode(self, mode: str):
+        if mode not in ("current scan", "average off all scans"):
+            raise ValueError("mode must be 'current sc' or 'average off all scans'")
+        self.mode = mode
+        self.active_matrix = (self.delta_A_matrix_current if mode == "current scan" else self.delta_A_matrix_avg)
+        self.refresh_heatmap()
+
+
     def update_row(self, delay_time, row, scan):
         row_idx = (np.abs(self.delay_times - float(delay_time))).argmin()
 
