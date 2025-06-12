@@ -390,7 +390,7 @@ class MeasurementWorker(QThread):
             writer = csv.writer(file)
             
             # Write metadata and measurement headers in the same row
-            writer.writerow(['Sample', 'Solvent', 'Pump', 'Path Length', 'Delay'] + [f'Pixel_{i}' for i in range(1, len(self.averaged_probe_measurement[0]) - 1)])
+            writer.writerow(['Sample', 'Solvent', 'Pump', 'Path Length', 'Delay (ps)'] + [f'Pixel_{i}' for i in range(1, len(self.averaged_probe_measurement[0]) - 1)])
             
             # Write metadata and the first row of measurement data in the next row
             writer.writerow([sample, solvent, pump, pathlength, self.averaged_probe_measurement[0][0]] + list(self.averaged_probe_measurement[0][1:]))
@@ -416,7 +416,7 @@ class MeasurementWorker(QThread):
             writer = csv.writer(file)
 
             # Write metadata and measurement headers in the same row
-            writer.writerow(['Sample', 'Solvent', 'Pump', 'Path Length', 'Delay'] + [f'Pixel_{i}' for i in range(1, avg_all_scans.shape[1])])
+            writer.writerow(['Sample', 'Solvent', 'Pump', 'Path Length', 'Delay (ps)'] + [f'Pixel_{i}' for i in range(1, avg_all_scans.shape[1])])
 
             # Write metadata and the first row of measurement data in the next row
             writer.writerow([sample, solvent, pump, pathlength, self.content[0]] + avg_all_scans[0].tolist())

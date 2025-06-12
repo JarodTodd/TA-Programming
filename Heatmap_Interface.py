@@ -227,12 +227,27 @@ class Ui_Bottom_right(QObject):
     def emit_metadata_signal(self):
         directory = self.startpopup.dir_path.text()
         filename = self.startpopup.filename.text().removesuffix(".csv")
+
         sample = self.startpopup.line_edits["Sample"].text()
+        if sample == "":
+            sample = "Unknown"
+
         solvent = self.startpopup.line_edits["Solvent"].text()
-        excitation_wavelength = float(self.startpopup.line_edits["Excitation wavelength: nm"].text())
-        path_length = float(self.startpopup.line_edits["Path Length: ps"].text())
+        if solvent == "":
+            solvent = "Unknown"
+
+        if self.startpopup.line_edits["Excitation wavelength: nm"].text() == "":
+            excitation_wavelength = None
+        else:
+            excitation_wavelength = float(self.startpopup.line_edits["Excitation wavelength: nm"].text())
+
+        if self.startpopup.line_edits["Path Length: ps"].text() == "":
+            path_length = None
+        else:
+            path_length = float(self.startpopup.line_edits["Path Length: ps"].text())
 
         # Emit the signal with the collected values
+        print(directory, filename, sample, solvent, excitation_wavelength, path_length)
         self.metadata_signal.emit(directory, filename, sample, solvent, excitation_wavelength, path_length)
 
     def time_remaining_timer(self, t):
@@ -287,8 +302,8 @@ class Ui_Bottom_right(QObject):
                         rows = list(reader)
                         metadata += f"Number of Rows: {len(rows)}\n"
 
-                        if "Delay" in reader.fieldnames:
-                            self.content = [float(row["Delay"]) for row in rows if row["Delay"].strip()]
+                        if "Delay (ps)" in reader.fieldnames:
+                            self.content = [float(row["Delay (ps)"]) for row in rows if row["Delay (ps)"].strip()]
                         else:
                             raise ValueError("The CSV file does not contain a 'Delay' column.")
                 else:  # Assume it's a text file
@@ -302,7 +317,7 @@ class Ui_Bottom_right(QObject):
                     if lines[0] == "ps":
                         lines = lines[1:]
                         self.content = [float(item) for item in lines]
-                    elif lines[0] == "Delay":
+                    elif lines[0] == "Delay (ps)":
                         lines = lines[1:]
                         self.content = [float(item) for item in lines]
 

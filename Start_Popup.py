@@ -7,7 +7,7 @@ class StartPopup(QDialog):
 
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Directory Picker and Inputs")
+        self.setWindowTitle("Add Details")
         self.init_ui()
 
     def init_ui(self):
@@ -50,6 +50,7 @@ class StartPopup(QDialog):
         self.dir_path = QLineEdit()
         self.dir_path.setReadOnly(True)
         self.dir_path.setStyleSheet("background-color: lightgray;")
+        self.dir_path.textChanged.connect(self.enable_start)
         dir_layout.addWidget(self.dir_path)
         layout.addLayout(dir_layout)
 
@@ -64,31 +65,24 @@ class StartPopup(QDialog):
             self.dir_path.setText(directory)
 
     def enable_start(self, text):
-        # Remove trailing .csv if present to allow editing
-        if text.endswith(".csv"):
-            base = text[:-4]
-        else:
-            base = text
+        sender = self.sender()
+        if sender == self.filename:
+            # Remove trailing .csv if present to allow editing
+            base = text[:-4] if text.endswith(".csv") else text
+            expected_text = base + ".csv"
 
-        # Ensure we only update if necessary
-        expected_text = base + ".csv"
-        if text != expected_text:
-            cursor_pos = self.filename.cursorPosition()
-            # Limit cursor to before the extension
-            if cursor_pos > len(base):
-                cursor_pos = len(base)
+            # Update the filename only if necessary
+            if text != expected_text:
+                cursor_pos = min(self.filename.cursorPosition(), len(base))  # Limit cursor position
+                self.filename.blockSignals(True)
+                self.filename.setText(expected_text)
+                self.filename.setCursorPosition(cursor_pos)
+                self.filename.blockSignals(False)
 
-            self.filename.blockSignals(True)
-            self.filename.setText(expected_text)
-            self.filename.setCursorPosition(cursor_pos)
-            self.filename.blockSignals(False)
-            text = expected_text  # Update for button logic
-
-        # Enable the button only if there's something before ".csv"
-        if text != ".csv":
-            self.real_start_button.setEnabled(True)
-        else:
-            self.real_start_button.setEnabled(False)
+        # Enable the button only if both filename and directory are valid
+        filename_valid = self.filename.text().strip() not in ("", ".csv")
+        directory_valid = self.dir_path.text().strip() != ""
+        self.real_start_button.setEnabled(filename_valid and directory_valid)
 
 
 if __name__ == "__main__":
