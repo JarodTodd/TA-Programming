@@ -23,7 +23,7 @@ class TAPlotWidget(QObject):
 
         self.delta_A_matrix_current = np.zeros((self.delay_times.size, self.pixel_indices.size))
         self.delta_A_matrix_avg = np.zeros((self.delay_times.size, self.pixel_indices.size))
-        self.mode          = "avg"
+        self.mode          = "average off all scans"
         self.active_matrix = self.delta_A_matrix_avg
 
 
@@ -110,7 +110,7 @@ class TAPlotWidget(QObject):
 
     def set_mode(self, mode: str):
         if mode not in ("current scan", "average off all scans"):
-            raise ValueError("mode must be 'current sc' or 'average off all scans'")
+            raise ValueError("mode must be 'current scan' or 'average off all scans'")
         self.mode = mode
         self.active_matrix = (self.delta_A_matrix_current if mode == "current scan" else self.delta_A_matrix_avg)
         self.refresh_heatmap()
@@ -277,7 +277,13 @@ class TAPlotWidget(QObject):
 
     def reset_currentMatrix(self):
         self.delta_A_matrix_current = np.zeros_like(self.delta_A_matrix_current)
-        self.refresh_heatmap_update()
+
+        if self.mode == "current scan":
+            self.active_matrix = self.delta_A_matrix_current
+        else: 
+            self.active_matrix = self.delta_A_matrix_avg
+
+        self.refresh_heatmap()
         self.update_secondary
     
     

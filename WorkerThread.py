@@ -375,9 +375,9 @@ class MeasurementWorker(QThread):
             if self.nos == self.scans and self.nos > 1:
                 self.save_avg_file(self.directory, self.filename, self.sample, self.solvent, self.pump, self.pathlength)
  
-            self.scans += 1
             if self.scans != self.nos:
                 self.reset_currentMatrix.emit() 
+                
             self.scans += 1
             
         return blocks
