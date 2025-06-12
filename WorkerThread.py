@@ -394,8 +394,8 @@ class MeasurementWorker(QThread):
                 print(f"Saved averaged measurement data to {filename}")
  
 
-            self.scans += 1
             if self.scans != self.nos:
                 self.reset_currentMatrix.emit() 
+            self.scans += 1
             
         return blocks
