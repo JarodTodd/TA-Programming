@@ -34,9 +34,6 @@ class HeatmapWindow(QWidget):
         self.ta_widgets.canvas_plot1.setBackground('w')
         self.ta_widgets.canvas_plot2.setBackground('w')
 
-        self.delaytimes = []
-        self.dA_inputs_avg = []
-
         # Adding interaction elements to GUI
         bottom_right_layout = QVBoxLayout()
         # bottom_right_layout.addLayout(self.form_layout)
@@ -46,8 +43,19 @@ class HeatmapWindow(QWidget):
         self.interface.setupUi(self.interface_widget)
         bottom_right_layout.addWidget(self.interface_widget)
 
+        self.heatmap_combo = QComboBox()
+        self.heatmap_combo.addItems(["current scan", "average off all scans"])
+        self.heatmap_combo.currentIndexChanged.connect(self.on_combo_changed)
+
+        self.heatmapbox = QWidget()
+        heatmap_layout = QVBoxLayout()                      
+        self.heatmapbox.setLayout(heatmap_layout)  
+       
+        heatmap_layout.addWidget(self.heatmap_combo)
+        heatmap_layout.addWidget(self.ta_widgets.canvas_heatmap)
+
         # Putting GUI elements in correct spaces
-        self.grid_layout.addWidget(self.ta_widgets.canvas_heatmap, 0, 0)
+        self.grid_layout.addWidget(self.heatmapbox, 0, 0)
         self.grid_layout.addWidget(self.ta_widgets.canvas_plot1, 0, 1)
         self.grid_layout.addWidget(self.ta_widgets.canvas_plot2, 1, 0)
         self.grid_layout.addWidget(self.interface_widget, 1, 1)
@@ -96,5 +104,9 @@ class HeatmapWindow(QWidget):
         """Update the graph with new delaytimes and dA_inputs."""
         self.delaytimes.append(delaytimes)
         self.dA_inputs_avg.append(dA_inputs_avg)
+    def on_combo_changed(self):
+        selected = self.heatmap_combo.currentText()
+        self.ta_widgets.set_mode(selected)
+
 
 

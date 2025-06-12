@@ -78,7 +78,7 @@ class TAPlotWidget(QObject):
         self.canvas_plot2 = HoverPlotWidget(parent)
         self.canvas_plot2.setLabels(left="ΔA", bottom="Pixel index")
         self.canvas_plot2.setLimits(xMin=0, xMax=1024, yMin=-1, yMax=1)
-        self.plot2_avg = self.canvas_plot2.plot([], [], pen=pg.mkPen('r', width=2), name="Avg")
+        self.plot2_avg = self.canvas_plot2.plot([], [], pen=pg.mkPen('r', width=1), name="Avg")
         self.plot2_cur = self.canvas_plot2.plot([], [], pen=pg.mkPen(width=1), name="Current")
         self.vline_pl2 = pg.InfiniteLine(angle=90, movable=True, pen=self.cursor_secondary)
         self.canvas_plot2.addItem(self.vline_pl2)
@@ -107,6 +107,14 @@ class TAPlotWidget(QObject):
 
         # first draw
         self.refresh_heatmap()
+
+    def set_mode(self, mode: str):
+        if mode not in ("current scan", "average off all scans"):
+            raise ValueError("mode must be 'current sc' or 'average off all scans'")
+        self.mode = mode
+        self.active_matrix = (self.delta_A_matrix_current if mode == "current scan" else self.delta_A_matrix_avg)
+        self.refresh_heatmap()
+
 
     def update_row(self, delay_time, row, scan):
         row_idx = (np.abs(self.delay_times - float(delay_time))).argmin()
