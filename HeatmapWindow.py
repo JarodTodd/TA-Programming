@@ -44,7 +44,7 @@ class HeatmapWindow(QWidget):
         bottom_right_layout.addWidget(self.interface_widget)
 
         self.heatmap_combo = QComboBox()
-        self.heatmap_combo.addItems(["average off all scans", "current scan"])
+        self.heatmap_combo.addItems(["Average off all scans", "Current scan"])
         self.heatmap_combo.currentIndexChanged.connect(self.on_combo_changed)
 
         self.heatmapbox = QWidget()
