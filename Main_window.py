@@ -94,6 +94,7 @@ if __name__ == "__main__":
     worker.start_process_signal.connect(start_process)
 
     def handle_button_press(content, orientation, shots, scans):
+        print("Signal received")
         if len(content) == 1:
             content = content[0]
         worker.update_command(content, orientation, shots, scans)

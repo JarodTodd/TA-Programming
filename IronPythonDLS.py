@@ -206,6 +206,9 @@ if __name__ == "__main__":
             elif command.startswith("MoveRelative"):
                 value = float(command.split()[1])
                 MoveRelative(value)
+            elif command.startswith("MoveAbsolute"):
+                value = float(command.split()[1])
+                MoveAbsolute(value)
             elif command.startswith("MeasurementLoop"):
                 # Parse command: expected format "MeasurementLoop [delays] scans"
                 args = command[len("MeasurementLoop"):].strip()

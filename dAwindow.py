@@ -40,6 +40,7 @@ class dA_Window(QWidget):
         self.dA_plot.setContentsMargins(0, 0, 0, 0)
         self.dA_plot.scene().sigMouseClicked.connect(lambda event: self.on_click(event, self.dA_plot))
         self.dA_plot.setLimits(xMin=0, xMax=1024, yMin=-1, yMax=1)
+        self.dA_plot.setRange(xRange=(0, 1024), yRange=(-1, 1))
 
         # vertical, draggable guide-lines 
         self.range_line_left  = pg.InfiniteLine(pos=0, angle=90, movable=True, pen=pg.mkPen(color='#C0D5DC', width=1))
@@ -115,7 +116,7 @@ class dA_Window(QWidget):
         self.verticalSlider.setTickPosition(QSlider.TicksLeft)
         self.verticalSlider.setInvertedAppearance(True)
         self.verticalSlider.sliderReleased.connect(self.emit_slider_signal)
-        self.verticalSlider.valueChanged.connect(self.update_abs_rel)
+        self.verticalSlider.valueChanged.connect(lambda: self.update_abs_rel(self.verticalSlider.value(), self.verticalSlider))
         right_layout.addWidget(self.verticalSlider)
 
         # Grid layout for controls
@@ -128,27 +129,36 @@ class dA_Window(QWidget):
         self.move_target_box = QDoubleSpinBox()
         self.move_target_box.setRange(-8672.66, 8672.66)
         vbox.addWidget(self.move_target_box)
+        self.move_target_button = QPushButton("Move to position")
+        self.move_target_button.clicked.connect(lambda: self.run_command_signal.emit(f"MoveAbsolute {self.move_target_box.value()}", "ButtonPress", 0, 0))
+        self.move_target_button.clicked.connect(lambda: self.update_abs_rel(self.move_target_box.value(), self.move_target_button))
+        vbox.addWidget(self.move_target_button)
         self.label_2 = QLabel("Current absolute position, ps")
         self.label_2.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignBottom)
         vbox.addWidget(self.label_2)
         self.abs_pos_line = QLineEdit()
         self.abs_pos_line.setEnabled(False)
         vbox.addWidget(self.abs_pos_line)
-        self.label_3 = QLabel("Time Zero, ps")
-        self.label_3.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignBottom)
-        vbox.addWidget(self.label_3)
-        self.t0_spinbox = QDoubleSpinBox()
-        self.t0_spinbox.setRange(0, 8672.66)
-        vbox.addWidget(self.t0_spinbox)
-        self.set_current_button = QPushButton("Set current")
-        self.set_current_button.clicked.connect(self.set_current)
-        vbox.addWidget(self.set_current_button)
         self.label_4 = QLabel("Current relative position, ps")
         self.label_4.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignBottom)
         vbox.addWidget(self.label_4)
         self.rel_pos_line = QLineEdit()
         self.rel_pos_line.setEnabled(False)
         vbox.addWidget(self.rel_pos_line)
+        self.label_3 = QLabel("Time Zero, ps")
+        self.label_3.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignBottom)
+        vbox.addWidget(self.label_3)
+        self.t0_spinbox = QDoubleSpinBox()
+        self.t0_spinbox.setRange(0, 8672.66)
+        vbox.addWidget(self.t0_spinbox)
+        self.set_current_button = QPushButton("Set as t0")
+        self.set_current_button.clicked.connect(self.set_current)
+        vbox.addWidget(self.set_current_button)
+        self.t0_button = QPushButton("Move to t0")
+        self.t0_button.clicked.connect(lambda: self.run_command_signal.emit(f"MoveAbsolute {self.t_0}", "ButtonPress", 0, 0))
+        self.t0_button.clicked.connect(lambda: self.update_abs_rel(self.t0_spinbox.value(), self.t0_button))
+        vbox.addWidget(self.t0_button)
+
 
     def toggle_outlier_rejection(self, selected: bool) -> None:
         self.deviation_label.setVisible(selected)
@@ -221,14 +231,33 @@ class dA_Window(QWidget):
     def emit_slider_signal(self):
         # Add a dummy variable to the function so it doesn't emit signals everytime the slider is updated 
         # because now it updates when a measurement is being done and emits doubled movement signals causing errors
-        value = self.verticalSlider.value()
-        self.run_command_signal.emit(f"MoveRelative {value/1000:.3f}", "ButtonPress", 0, 0)
+        value = float(self.abs_pos_line.text())
+        self.run_command_signal.emit(f"MoveAbsolute {value:.3f}", "ButtonPress", 0, 0)
+        print(value)
 
-    def update_abs_rel(self, value):
-        value = value/1000
-        self.move_target_box.setValue(round(value + self.t_0, 2))
-        self.abs_pos_line.setText(str(round(value + self.t_0, 2)))
-        self.rel_pos_line.setText(str(round(value, 2)))
+    def update_abs_rel(self, value, sender):
+        if sender is self.verticalSlider:
+            value = value/1000
+            self.move_target_box.setValue(round(value + self.t_0, 2))
+            self.abs_pos_line.setText(str(round(value + self.t_0, 2)))
+            self.rel_pos_line.setText(str(round(value, 2)))
+
+        if sender is self.move_target_button:
+            print(value)
+            print(value-self.t_0)
+            self.abs_pos_line.setText(str(value))
+            self.rel_pos_line.setText(str(value - self.t_0))
+            if (value - self.t_0)*1000 < -250000:
+                self.verticalSlider.setRange((value - self.t_0)*1000 - 250000, 8672666 - self.t_0)
+                self.verticalSlider.setValue((value - self.t_0)*1000)
+
+        if sender is self.t0_button:
+            self.move_target_box.setValue(value)
+            self.abs_pos_line.setText(str(value))
+            self.rel_pos_line.setText("0")
+            self.verticalSlider.setValue(0)
+            self.verticalSlider.setRange(-250000, 8672666-self.t_0*1000)
+
 
 
 

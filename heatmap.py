@@ -29,9 +29,7 @@ class TAPlotWidget(QObject):
         # create matrixes that hold data for the current scan and average over all scans
         self.delta_A_matrix_current = np.zeros((self.delay_times.size, self.pixel_indices.size))
         self.delta_A_matrix_avg = np.zeros((self.delay_times.size, self.pixel_indices.size))
-
-        # initially display the heatmap for Average off all scans
-        self.mode          = "Average off all scans"
+        self.mode          = "Average of all scans"
         self.active_matrix = self.delta_A_matrix_avg
 
         # cursor layout for the heatmap and secondary plots
@@ -128,9 +126,8 @@ class TAPlotWidget(QObject):
         """
         Sets the correct selection from the combobox above the heatmap
         """
-
-        if mode not in ("Current scan", "Average off all scans"):
-            raise ValueError("mode must be 'current scan' or 'average off all scans'")
+        if mode not in ("Current scan", "Average of all scans"):
+            raise ValueError("mode must be 'current scan' or 'average of all scans'")
         self.mode = mode
         self.active_matrix = (self.delta_A_matrix_current if mode == "Current scan" else self.delta_A_matrix_avg)
         self.refresh_heatmap()
