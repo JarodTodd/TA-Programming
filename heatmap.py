@@ -362,24 +362,34 @@ class TAPlotWidget(QObject):
         if self.sync_from_hline:
             return
 
-        # get the new y position from the delay plot crosshair
-        y = self.vline_pl1.value()
+        try:
 
-        # compute tick positions centered within delay intervals
-        n = len(self.delay_times)
-        dy = (self.delay_times.max() - self.delay_times.min()) / n
-        tick_positions = np.linspace(self.delay_times.min(), self.delay_times.max(), n, endpoint=False) + dy / 2
+            # get the new y position from the delay plot crosshair
+            y = self.vline_pl1.value()
 
-        # find the tick position closest to the crosshair value
-        tick_idx = np.abs(tick_positions - y).argmin()
-        matched_delay_value = self.delay_times[tick_idx]
-        matched_tick_pos = tick_positions[tick_idx]
+            # compute tick positions centered within delay intervals
+            n = len(self.delay_times)
+            dy = (self.delay_times.max() - self.delay_times.min()) / n
+            tick_positions = np.linspace(self.delay_times.min(), self.delay_times.max(), n, endpoint=False) + dy / 2
 
-        # update the heatmap horizontal line to match the delay plot
-        self.hline_heatmap.setValue(matched_tick_pos)
+            # find the tick position closest to the crosshair value
+            tick_idx = np.abs(tick_positions - y).argmin()
+            matched_delay_value = self.delay_times[tick_idx]
+            matched_tick_pos = tick_positions[tick_idx]
 
-        # snaps the delay plot crosshair to the exact matched delay value
-        self.vline_pl1.setValue(matched_delay_value)
+            # update the heatmap horizontal line to match the delay plot
+            self.hline_heatmap.setValue(matched_tick_pos)
+
+            # snaps the delay plot crosshair to the exact matched delay value
+            self.vline_pl1.blockSignals(True)
+            self.vline_pl1.setValue(matched_delay_value)
+            self.vline_pl1.blockSignals(False)
+
+            # update secondary plots with correct values
+            self.update_secondary()
+
+        finally:
+            self.sync_from_hline = False
 
 
     def on_pixel_line_moved(self):
@@ -395,6 +405,9 @@ class TAPlotWidget(QObject):
 
         # update the vertical line on the heatmap to match the pixel plot
         self.vline_heatmap.setValue(self.vline_pl2.value())
+
+        # update secondary plots with correct values
+        self.update_secondary() 
 
 
 # ========= HoverPlotWidget Class =========
