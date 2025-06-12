@@ -96,6 +96,14 @@ class HeatmapWindow(QWidget):
         msgbox.setStandardButtons(QMessageBox.Ok)
         msgbox.exec()
 
+
+
+
+    @Slot(float, float, float)
+    def update_graph(self, delaytimes, dA_inputs_avg):
+        """Update the graph with new delaytimes and dA_inputs."""
+        self.delaytimes.append(delaytimes)
+        self.dA_inputs_avg.append(dA_inputs_avg)
     def on_combo_changed(self):
         selected = self.heatmap_combo.currentText()
         self.ta_widgets.set_mode(selected)

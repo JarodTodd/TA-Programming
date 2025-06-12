@@ -3,6 +3,7 @@ from PySide6.QtCore import *
 from PySide6.QtGui import *
 from PySide6.QtWidgets import *
 from exponential_steps import *
+from Start_Popup import *
 import csv
 import time
 
@@ -10,9 +11,11 @@ class Ui_Bottom_right(QObject):
     trigger_worker_run = Signal(list, str, int, int)
     parsed_content_signal = Signal(list)
     stop_measurement_signal = Signal()
+    metadata_signal = Signal(str, str, str, str, float, float)
 
     def __init__(self):
         super().__init__()
+        self.startpopup = StartPopup()
         self.content = []
 
     def setupUi(self, Bottom_right):
@@ -106,7 +109,10 @@ class Ui_Bottom_right(QObject):
         self.start_button = QPushButton()
         self.start_button.setText("Start Measurement")
         self.start_button.setEnabled(False)
-        self.start_button.clicked.connect(self.on_start_button_clicked)
+        self.start_button.clicked.connect(self.open_popup)
+        self.startpopup.real_start_button.clicked.connect(self.on_start_button_clicked)
+
+
         left_panel.addWidget(self.start_button)
 
         self.stop_button = QPushButton()
@@ -174,6 +180,8 @@ class Ui_Bottom_right(QObject):
         except ValueError:
             print("NONONO")
 
+    def open_popup(self):
+        self.startpopup.exec()
 
 
     def on_start_button_clicked(self):
@@ -213,7 +221,19 @@ class Ui_Bottom_right(QObject):
         print(f"Self.content = {self.content}")
         self.parsed_content_signal.emit(self.content)
         self.time_remaining_timer(int((int(self.total_steps.text())*9/25) + 7))
+        self.emit_metadata_signal()
+        self.startpopup.close()
 
+    def emit_metadata_signal(self):
+        directory = self.startpopup.dir_path.text()
+        filename = self.startpopup.filename.text().removesuffix(".csv")
+        sample = self.startpopup.line_edits["Sample"].text()
+        solvent = self.startpopup.line_edits["Solvent"].text()
+        excitation_wavelength = float(self.startpopup.line_edits["Excitation wavelength: nm"].text())
+        path_length = float(self.startpopup.line_edits["Path Length: ps"].text())
+
+        # Emit the signal with the collected values
+        self.metadata_signal.emit(directory, filename, sample, solvent, excitation_wavelength, path_length)
 
     def time_remaining_timer(self, t):
         self.remaining_time = t

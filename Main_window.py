@@ -104,6 +104,7 @@ if __name__ == "__main__":
     main_app.dls_window.run_command_signal.connect(handle_button_press)
     main_app.shot_delay_app.interface.trigger_worker_run.connect(handle_button_press)
     main_app.dA_window.run_command_signal.connect(handle_button_press)
+    main_app.shot_delay_app.interface.metadata_signal.connect(worker.update_metadata)
 
 
 
