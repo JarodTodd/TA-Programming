@@ -89,6 +89,8 @@ class HeatmapWindow(QWidget):
         msgbox.exec()
 
 
+
+
     @Slot(float, float, float)
     def update_graph(self, delaytimes, dA_inputs_avg):
         """Update the graph with new delaytimes and dA_inputs."""

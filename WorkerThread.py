@@ -1,15 +1,14 @@
 from PySide6.QtWidgets import *
 from PySide6.QtCore import *
 from PySide6.QtGui import *
-import sys
 import numpy as np
 from Plot_Calculations import *
 from camera import *
-import random
 import socket
 import json
 import time
 import csv
+import os
 
 ironpython_executable = r"C:\Users\PC026453\Documents\TA-Programming\IronPython 3.4\ipy.exe"
 script_path = r"C:\Users\PC026453\Documents\TA-Programming\IronPythonDLS.py"
@@ -56,7 +55,7 @@ class MeasurementWorker(QThread):
     current_step_signal = Signal(int, int)
 
     plot_row_update = Signal(float, np.ndarray, int)
-    reset_heatmap =  Signal()
+    reset_currentMatrix =  Signal()
 
     def __init__(self, content, orientation, shots, scans, host='localhost', port=9999):
         super().__init__()
@@ -131,6 +130,14 @@ class MeasurementWorker(QThread):
         self._content = content
         self._shots = shots
         self._scans = scans
+
+    def update_metadata(self, directory, filename, sample, solvent, pump, pathlength):
+        self.directory = directory
+        self.filename = filename
+        self.sample = sample
+        self.solvent = solvent
+        self.pump = pump
+        self.pathlength = pathlength
 
     @Slot(str)
     def run(self):
@@ -363,39 +370,58 @@ class MeasurementWorker(QThread):
         """When a scan is completed, save the data to a CSV file in the format:
         Delay, Probe_Avg (per pixel)"""
         if delay_relative == self.content[-1]:
-            print(f"Scan {self.scans} completed.")
-            filename = f"Measurement_scan_{self.scans}.csv"
-            with open(filename, mode='w', newline='') as file:
-                writer = csv.writer(file)
-                # Write the header
-                writer.writerow(['Delay'] + [f'Pixel_{i}' for i in range(1, len(self.averaged_probe_measurement[0]) - 1)])  # Adjust header
-                # Write the rows, excluding the repeated delay time
-                for row in self.averaged_probe_measurement:
-                    writer.writerow(row)  # Row already includes the delay time
-            print(f"Saved measurement data to {filename}")
-            self.measurement_average.append(np.array([row[1:] for row in self.averaged_probe_measurement]))  # Exclude delay time for averaging
+            self.save_scan_file(self.directory, self.filename, self.sample, self.solvent, self.pump, self.pathlength)
 
-            if self.nos == self.scans:
-            # Convert the list of scans into a NumPy array
-                all_scans = np.array(self.measurement_average)  # Shape: (scans, delays, pixels)
-
-                # Calculate the average for each delay across all scans
-                avg_all_scans = np.round(np.mean(all_scans, axis=0), 4)  # Shape: (delays, pixels)
-
-                # Save the averaged data to a CSV file
-                filename = "Average_Probe_Entire_Measurement.csv"
-                with open(filename, mode='w', newline='') as file:
-                    writer = csv.writer(file)
-                    # Write the header
-                    writer.writerow(['Delay'] + [f'Pixel_{i}' for i in range(1, avg_all_scans.shape[1])])
-                    # Write the averaged data for each delay
-                    for i, row in enumerate(avg_all_scans):
-                        writer.writerow([self.content[i]] + row.tolist())  # Use self.content[i] for the delay
-                print(f"Saved averaged measurement data to {filename}")
+            if self.nos == self.scans and self.nos > 1:
+                self.save_avg_file(self.directory, self.filename, self.sample, self.solvent, self.pump, self.pathlength)
  
-
             self.scans += 1
             if self.scans != self.nos:
                 self.reset_currentMatrix.emit() 
             
         return blocks
+    
+
+    def save_scan_file(self, directory, name, sample, solvent, pump, pathlength):
+        filename = f"{name}_Scan_{self.scans}.csv"
+        filepath = os.path.join(directory, filename)  # Combine directory and filename
+        with open(filepath, mode='w', newline='') as file:
+            writer = csv.writer(file)
+            
+            # Write metadata and measurement headers in the same row
+            writer.writerow(['Sample', 'Solvent', 'Pump', 'Path Length', 'Delay'] + [f'Pixel_{i}' for i in range(1, len(self.averaged_probe_measurement[0]) - 1)])
+            
+            # Write metadata and the first row of measurement data in the next row
+            writer.writerow([sample, solvent, pump, pathlength, self.averaged_probe_measurement[0][0]] + list(self.averaged_probe_measurement[0][1:]))
+            
+            # Write the remaining rows of measurement data (excluding the first row already written)
+            for row in self.averaged_probe_measurement[1:]:
+                writer.writerow([None, None, None, None, row[0]] + list(row[1:]))  # Convert tuple to list for concatenation
+        
+        print(f"Saved measurement data to {filepath}")
+        self.measurement_average.append(np.array([list(row[1:]) for row in self.averaged_probe_measurement]))  # Exclude delay time for averaging
+
+    def save_avg_file(self, directory, name, sample, solvent, pump, pathlength):
+        # Convert the list of scans into a NumPy array
+        all_scans = np.array(self.measurement_average)  # Shape: (scans, delays, pixels)
+
+        # Calculate the average for each delay across all scans
+        avg_all_scans = np.round(np.mean(all_scans, axis=0), 4)  # Shape: (delays, pixels)
+
+        # Save the averaged data to a CSV file
+        filename = f"{name}_Average_Probe_Entire_Measurement.csv"
+        filepath = os.path.join(directory, filename)  # Combine directory and filename
+        with open(filepath, mode='w', newline='') as file:
+            writer = csv.writer(file)
+
+            # Write metadata and measurement headers in the same row
+            writer.writerow(['Sample', 'Solvent', 'Pump', 'Path Length', 'Delay'] + [f'Pixel_{i}' for i in range(1, avg_all_scans.shape[1])])
+
+            # Write metadata and the first row of measurement data in the next row
+            writer.writerow([sample, solvent, pump, pathlength, self.content[0]] + avg_all_scans[0].tolist())
+
+            # Write the averaged data for each delay (excluding the first row already written)
+            for i, row in enumerate(avg_all_scans[1:], start=1):
+                writer.writerow([None, None, None, None, self.content[i]] + row.tolist())  # Metadata columns left empty for subsequent rows
+
+        print(f"Saved averaged measurement data to {filepath}")
