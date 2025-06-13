@@ -1,1 +1,1 @@
-Moved to absolute position: 252.85245388864999 mm
+Failed to open instrument on COM6. Error code: -100

@@ -53,7 +53,7 @@ class MeasurementWorker(QThread):
     update_dA = Signal(list)
     start_process_signal = Signal(str)
     current_step_signal = Signal(int, int)
-
+    stop_button = Signal()
     plot_row_update = Signal(float, np.ndarray, int)
     reset_currentMatrix =  Signal()
 
@@ -263,6 +263,46 @@ class MeasurementWorker(QThread):
     def stop(self):
         print("Stopping the worker thread...")
         self._is_running = False
+
+        # Notify the client to stop, if connection exists
+        try:
+            if hasattr(self, "conn") and self.conn:
+                stop_message = {"command": "stop"}
+                self.conn.sendall((json.dumps(stop_message) + "\n").encode())
+                print("Sent stop command to client.")
+        except Exception as e:
+            print(f"Error sending stop command to client: {e}")
+
+        # Save current scan data if available
+        if hasattr(self, "averaged_probe_measurement") and self.averaged_probe_measurement:
+            try:
+                self.save_scan_file(
+                    getattr(self, "directory", ""),
+                    getattr(self, "filename", ""),
+                    getattr(self, "sample", ""),
+                    getattr(self, "solvent", ""),
+                    getattr(self, "pump", ""),
+                    getattr(self, "pathlength", "")
+                )
+                print("Partial scan data saved before stopping.")
+            except Exception as e:
+                print(f"Error saving partial scan data: {e}")
+
+        # Save average of all scans if more than one scan
+        if hasattr(self, "measurement_average") and getattr(self, "scans", 1) > 1 and self.measurement_average:
+            try:
+                self.save_avg_file(
+                    getattr(self, "directory", ""),
+                    getattr(self, "filename", ""),
+                    getattr(self, "sample", ""),
+                    getattr(self, "solvent", ""),
+                    getattr(self, "pump", ""),
+                    getattr(self, "pathlength", "")
+                )
+                print("Partial average scan data saved before stopping.")
+            except Exception as e:
+                print(f"Error saving partial average scan data: {e}")
+
         if self.process and self.process.state() == QProcess.Running:
             print("Terminating process...")
             self.process.terminate()
@@ -424,5 +464,5 @@ class MeasurementWorker(QThread):
             # Write the averaged data for each delay (excluding the first row already written)
             for i, row in enumerate(avg_all_scans[1:], start=1):
                 writer.writerow([None, None, None, None, self.content[i]] + row.tolist())  # Metadata columns left empty for subsequent rows
-
+        self.stop_button.emit()
         print(f"Saved averaged measurement data to {filepath}")

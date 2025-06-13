@@ -20,8 +20,9 @@ class Ui_Bottom_right(QObject):
 
     def setupUi(self, Bottom_right):
         Bottom_right.setWindowTitle("Bottom_right")
-        main_layout = QHBoxLayout(Bottom_right)
-
+        full_layout = QVBoxLayout(Bottom_right)
+        main_layout = QHBoxLayout()
+        full_layout.addLayout(main_layout)
         # Left panel layout
         left_panel = QVBoxLayout()
         main_layout.addLayout(left_panel)
@@ -139,6 +140,17 @@ class Ui_Bottom_right(QObject):
         self.exponential_finish.valueChanged.connect(lambda: self.finish_time_box.setValue(self.exponential_finish.value()))
         self.tabWidget.currentChanged.connect(lambda: self.on_tab_change())
 
+        hbox = QHBoxLayout()
+        self.progressbar = QProgressBar()
+        self.progressbar.setMinimum(0)
+        self.progressbar.setMaximum(8672666)
+        self.progressbar.setTextVisible(False)
+        self.progresslabel = QLabel(f"/8672.66")
+        hbox.addWidget(self.progressbar)
+        hbox.addWidget(self.progresslabel)
+
+        full_layout.addLayout(hbox)
+
     def _add_label_input(self, layout, label_text, widget, row):
         label = QLabel(label_text)
         layout.addWidget(label, row, 0)
@@ -222,6 +234,7 @@ class Ui_Bottom_right(QObject):
         self.parsed_content_signal.emit(self.content)
         self.time_remaining_timer(int((int(self.total_steps.text())*9/25) + 7))
         self.emit_metadata_signal()
+        self.stop_button.setEnabled(True)
         self.startpopup.close()
 
     def emit_metadata_signal(self):
@@ -266,6 +279,12 @@ class Ui_Bottom_right(QObject):
             self.timer.stop()
             self.time_remaining.setText("00:00")
 
+    def update_progress_bar(self, value):
+        value = max(0, min(value, self.progressbar.maximum()))
+        value = value*1000
+        self.progressbar.setValue(int(value))
+        self.progresslabel.setText(f"{round(value/1000, 2)}/8672.66")
+        pass
 
     def change_steps(self):
         if self.tabWidget.currentIndex() == 0:
@@ -305,7 +324,7 @@ class Ui_Bottom_right(QObject):
                         if "Delay (ps)" in reader.fieldnames:
                             self.content = [float(row["Delay (ps)"]) for row in rows if row["Delay (ps)"].strip()]
                         else:
-                            raise ValueError("The CSV file does not contain a 'Delay' column.")
+                            raise ValueError("The CSV file does not contain a 'Delay (ps)' column.")
                 else:  # Assume it's a text file
                     with open(fileName, "r") as file:
                         content = file.read()
@@ -372,6 +391,10 @@ class Ui_Bottom_right(QObject):
         msgbox.setIcon(QMessageBox.Critical)
         msgbox.setStandardButtons(QMessageBox.Ok)
         msgbox.exec()
+
+    def disable_stop_button(self):
+        self.stop_button.setEnabled(False)
+
 
 
 if __name__ == "__main__":

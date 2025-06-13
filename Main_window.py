@@ -54,13 +54,16 @@ if __name__ == "__main__":
     """These connections update sliders and progress bars to display the correct delay time."""
     worker.update_delay_bar_signal.connect(main_app.shot_delay_app.update_current_delay)
     worker.update_delay_bar_signal.connect(main_app.dls_window.update_delay_bar)
+    worker.update_delay_bar_signal.connect(main_app.shot_delay_app.interface.update_progress_bar)
     worker.update_ref_signal.connect(main_app.shot_delay_app.update_t0)
     main_app.dls_window.delay_bar_update.connect(main_app.shot_delay_app.update_current_delay)
     worker.current_step_signal.connect(main_app.shot_delay_app.update_current_step)
+    main_app.dA_window.pos_change_signal.connect(main_app.shot_delay_app.update_current_delay)
 
     """This connection handles error messages from all applications/functions."""
     worker.error_occurred.connect(main_app.shot_delay_app.show_error_message)
 
+    worker.stop_button.connect(main_app.shot_delay_app.interface.disable_stop_button)
 
     def start_process(argument):
         if worker.process is None:
@@ -74,11 +77,11 @@ if __name__ == "__main__":
         worker.process.setProgram(ironpython_executable)
         if isinstance(argument, list):  # Handle list arguments
             worker.start()
-            main_app.shot_delay_app.interface.stop_button.setEnabled(True)
+
         elif isinstance(argument, str):  # Handle string arguments
             worker.process.setArguments([script_path, argument])
             worker.process.start()
-            main_app.shot_delay_app.interface.stop_button.setEnabled(True)
+
 
             if worker.process and worker.process.state() == QProcess.Running:
                 try:
@@ -89,7 +92,6 @@ if __name__ == "__main__":
             worker.process.readyReadStandardOutput.connect(worker.handle_process_output)
             worker.process.readyReadStandardError.connect(worker.handle_process_error)
             worker.process.finished.connect(lambda: print("Process finished.", time.time()))
-            main_app.shot_delay_app.interface.stop_button.setEnabled(False)
 
     worker.start_process_signal.connect(start_process)
 
