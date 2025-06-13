@@ -266,10 +266,13 @@ class dA_Window(QWidget):
         self.update_dA_graph(self.dA_inputs_avg)
 
     @Slot(object, object)
-    def update_dA_graph(self, avg_list):
-        self.dA_inputs_avg = avg_list
-        
-        self.dA_curve.setData(self.dA_inputs_avg)     
+    def update_dA_graph(self, avg_row):
+            if avg_row is None:
+                return
+            if not hasattr(avg_row, '__len__'):
+                return
+            self.dA_inputs_avg = avg_row
+            self.dA_curve.setData(self.dA_inputs_avg)   
 
     def on_click(self, event, plot_widget):
         pos = event.scenePos()

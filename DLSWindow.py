@@ -318,11 +318,21 @@ class DLSWindow(QMainWindow):
     
     @Slot(object, object)                          
     def update_probe_data(self, avg_row):
+        # Ensure avg_row is a list or array
+        if avg_row is None:
+            return
+        if not hasattr(avg_row, '__len__'):
+            return
         self.probe_inputs_avg = avg_row
-        self.probe_curve.setData(self.probe_inputs_avg)       
+        self.probe_curve.setData(self.probe_inputs_avg)
 
     @Slot(object, object)
     def update_probe_avg_graph(self, avg_row):
+        # Ensure avg_row is a list or array
+        if avg_row is None:
+            return
+        if not hasattr(avg_row, '__len__'):
+            return
         self.window().dA_window.update_dA_graph(avg_row)
 
 
