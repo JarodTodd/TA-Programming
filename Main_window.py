@@ -7,7 +7,7 @@ from DLSWindow import *
 from dAwindow import *
 import time
 ironpython_executable = r"C:\Users\PC032230\Documents\GitHub\TA-Programming\IronPython 3.4.2\net462\ipy.exe"
-script_path = r"C:\Users\PC032230\Documents\GitHub\TA-ProgrammingIronPythonDLS.py"
+script_path = r"C:\Users\PC032230\Documents\GitHub\TA-Programming\IronPythonDLS.py"
 
 
 class MainApp(QMainWindow):

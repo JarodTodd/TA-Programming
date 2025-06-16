@@ -1,1 +1,5 @@
-Failed to open instrument on COM6. Error code: -100
+Attempting to connect to the server...
+Connected to the server.
+Position: 1843.4968901052207, Reference: 3600.0105112717683
+Current position: -inf ps
+-inf

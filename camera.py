@@ -4,7 +4,6 @@
 # ctypes is used for communication with the DLL 
 from ctypes import *
 # matplotlib is used for the data plot
-import matplotlib.pyplot as plt
 import csv
 
 def	camera(number_of_shots, delay_number):

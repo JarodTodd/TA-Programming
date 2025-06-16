@@ -251,3 +251,4 @@ import atexit
 @atexit.register
 def cleanup():
     log_file.close()
+

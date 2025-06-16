@@ -1,0 +1,97 @@
+﻿2023-09-15 C:\Users\PC032230\Desktop\Origin\Thesis\data1.opju
+2023-09-15 C:\Users\PC032230\Desktop\Origin\Thesis\data1.opju
+2023-09-19 C:\Users\PC032230\Desktop\Origin\Thesis\MoS2 w CupC\heat map MoS2 w CuPc.opju
+2023-09-19 C:\Users\PC032230\Desktop\Thesis\MoS2 w CupC\heat map MoS2 w CuPc.opju
+2023-09-19 C:\Users\PC032230\Desktop\Thesis\MoS2 w CupC\heat map MoS2 w CuPc.opju
+2023-10-04 C:\Users\PC032230\Desktop\Thesis\Raman data\Fitting_404_384.opju
+2023-10-06 C:\Users\PC032230\Desktop\Origin\Thesis\MoS2 w CupC\Area 1 MoS2 w CuPC w au.opju
+2023-10-10 C:\Users\PC032230\Desktop\Thesis\Raman data\Fitting_404_384.opju
+2023-10-10 C:\Users\PC032230\Desktop\Thesis\Raman data\22-09-2023\Sample 2\maps area 1\data area 3.opju
+2023-10-10 C:\Users\PC032230\Desktop\Thesis\Raman data\MoS2 w CupC\10-10-2023\Area 1\area 1 maps.opju
+2023-10-10 C:\Users\PC032230\Desktop\Thesis\Raman data\MoS2 w CupC\10-10-2023\Area 2\area 2 maps.opju
+2023-10-10 C:\Users\PC032230\Desktop\Thesis\Raman data\MoS2 w CupC\22-09-2023\Sample 2\maps area 1\data area 3.opju
+2023-10-13 C:\Users\PC032230\Desktop\Thesis\Raman data\MoS2 w CupC\10-10-2023\Area 1\area 1 maps.opju
+2023-11-07 C:\Users\PC032230\Desktop\Thesis\Raman data\MoS2 w CupC\10-10-2023\Area 1\area 1 maps.opju
+2023-11-09 C:\Users\PC032230\Desktop\Thesis\Raman data\MoS2 w CupC\10-10-2023\Area 1\area 1 maps updated.opju
+2023-11-09 C:\Users\PC032230\Desktop\Thesis\Raman data\MoS2 w CupC\10-10-2023\Area 2\area 2 maps updated.opju
+2023-11-09 C:\Users\PC032230\Desktop\Thesis\Raman data\MoS2 w CupC\10-10-2023\Area 3\area 3 maps updated.opju
+2023-11-10 C:\Users\PC032230\Desktop\temp 3 (MoS2 without CuPC)\ratio map.opju
+2023-11-13 C:\Users\PC032230\Desktop\Thesis\Raman data\MoS2 w CupC\10-10-2023\Area 1\area 1 maps updated.opju
+2023-11-14 C:\Users\PC032230\Desktop\Thesis\Raman data\MoS2 w CupC\10-10-2023\Area 1\area 1 temperature map.opju
+2023-11-14 C:\Users\PC032230\Desktop\Thesis\Raman data\MoS2 w CupC\10-10-2023\Area 1\area 1 temperature map.opju
+2023-11-20 C:\Users\PC032230\Desktop\17-11-2023\maps.opju
+2023-11-21 C:\Users\PC032230\Desktop\Thesis\Raman data\MoS2 w CupC\10-10-2023\Area 1\area 1 temperature map.opju
+2023-11-21 C:\Users\PC032230\Desktop\17-11-2023\maps2.opju
+2023-11-22 C:\Users\PC032230\Desktop\17-11-2023\maps2.opju
+2023-12-06 C:\Users\PC032230\Desktop\17-11-2023\maps.opju
+2023-12-06 C:\Users\PC032230\Desktop\17-11-2023\maps2.opju
+2023-12-06 C:\Users\PC032230\Desktop\05-12-2023\maps.opju
+2023-12-14 C:\Users\PC032230\Desktop\06-12-2023\maps.opju
+2023-12-18 C:\Users\PC032230\Desktop\temp 3 (MoS2 without CuPC)\ratio map.opju
+2023-12-18 C:\Users\PC032230\Desktop\15-07-2023\HOPG\map 2.1.opju
+2023-12-18 C:\Users\PC032230\Desktop\06-12-2023\maps.opju
+2023-12-19 C:\Users\PC032230\Desktop\14-12-2023\maps.opju
+2023-12-19 C:\Users\PC032230\Desktop\14-12-2023\maps.opju
+2023-12-19 C:\Users\PC032230\Desktop\10-10-2023\Area 1\area 1 temperature map.opju
+2023-12-19 C:\Users\PC032230\Desktop\10-10-2023\Area 1\area 1 maps updated.opju
+2023-12-19 C:\Users\PC032230\Desktop\06-12-2023\maps.opju
+2024-06-04 C:\Users\PC032230\Desktop\14-12-2023\maps.opju
+2024-06-04 C:\Users\PC032230\Desktop\05-12-2023\maps.opju
+2024-06-04 C:\Users\PC032230\Desktop\temp 3 (MoS2 without CuPC)\ratio map.opju
+2024-06-04 C:\Users\PC032230\Desktop\14-12-2023\maps.opju
+2024-06-07 C:\Users\PC032230\Desktop\14-12-2023\maps.opju
+2024-06-07 C:\Users\PC032230\Desktop\06-12-2023\maps.opju
+2024-06-07 C:\Users\PC032230\Desktop\05-12-2023\maps.opju
+2024-06-07 C:\Users\PC032230\Desktop\14-12-2023\maps.opju
+2024-06-07 C:\Users\PC032230\Desktop\temp 3 (MoS2 without CuPC)\ratio map.opju
+2024-06-07 C:\Users\PC032230\Desktop\05-12-2023\maps.opju
+2024-06-10 C:\Users\PC032230\Desktop\14-12-2023\maps.opju
+2024-06-10 C:\Users\PC032230\Desktop\14-12-2023\maps.opju
+2024-06-10 C:\Users\PC032230\Desktop\05-12-2023\maps.opju
+2024-06-10 C:\Users\PC032230\Desktop\05-12-2023\maps.opju
+2024-06-11 C:\Users\PC032230\Desktop\14-12-2023\maps.opju
+2024-06-17 C:\Users\PC032230\Desktop\14-12-2023\maps.opju
+2024-06-18 C:\Users\PC032230\Desktop\14-12-2023\maps.opju
+2024-06-18 C:\Users\PC032230\Desktop\14-12-2023\maps.opju
+2024-06-18 C:\Users\PC032230\Desktop\14-12-2023\maps.opju
+2024-06-18 C:\Users\PC032230\Desktop\14-12-2023\maps.opju
+2024-06-18 C:\Users\PC032230\Desktop\14-12-2023\maps.opju
+2024-06-20 C:\Users\PC032230\Desktop\06-12-2023\maps.opju
+2024-06-20 C:\Users\PC032230\Desktop\05-12-2023\maps.opju
+2024-06-20 C:\Users\PC032230\Desktop\14-12-2023\maps.opju
+2024-06-20 C:\Users\PC032230\Desktop\14-12-2023\maps.opju
+2024-06-20 C:\Users\PC032230\Desktop\14-12-2023\maps.opju
+2024-06-20 C:\Users\PC032230\Desktop\14-12-2023\maps.opju
+2024-06-20 C:\Users\PC032230\Desktop\14-12-2023\maps.opju
+2024-06-21 C:\Users\PC032230\Desktop\14-12-2023\maps.opju
+2024-06-24 C:\Users\PC032230\Desktop\14-12-2023\maps.opju
+2024-06-25 C:\Users\PC032230\Desktop\14-12-2023\maps.opju
+2024-06-26 C:\Users\PC032230\Desktop\06-12-2023\maps.opju
+2024-06-27 C:\Users\PC032230\Desktop\14-12-2023\maps.opju
+2024-06-27 C:\Users\PC032230\Desktop\05-12-2023\maps.opju
+2024-06-27 C:\Users\PC032230\Desktop\14-12-2023\maps.opju
+2024-06-27 C:\Users\PC032230\Desktop\14-12-2023\maps.opju
+2024-06-27 C:\Users\PC032230\Desktop\14-12-2023\maps.opju
+2024-06-27 C:\Users\PC032230\Desktop\06-12-2023\maps.opju
+2024-06-28 C:\Users\PC032230\Desktop\05-12-2023\maps.opju
+2024-07-17 C:\Users\PC032230\Desktop\06-12-2023\maps.opju
+2024-07-17 C:\Users\PC032230\Desktop\10-10-2023\Area 1\area 1 maps final.opju
+2024-07-18 C:\Users\PC032230\Desktop\10-10-2023\Area 2\area 2 maps final.opju
+2024-07-18 C:\Users\PC032230\Desktop\10-10-2023\Area 3\area 3 maps final.opju
+2024-07-18 C:\Users\PC032230\Desktop\28-07-2023\maps final.opju
+2024-07-19 C:\Users\PC032230\Desktop\29-09-2023\maps final.opju
+2024-07-19 C:\Users\PC032230\Desktop\28-07-2023\maps final.opju
+2024-07-19 C:\Users\PC032230\Desktop\28-07-2023\maps final.opju
+2024-07-19 C:\Users\PC032230\Desktop\28-07-2023\maps final.opju
+2024-07-23 C:\Users\PC032230\Desktop\14-12-2023\maps.opju
+2024-07-24 C:\Users\PC032230\Desktop\28-07-2023\maps final.opju
+2024-07-24 C:\Users\PC032230\Desktop\29-09-2023\maps final.opju
+2024-07-24 C:\Users\PC032230\Desktop\06-12-2023\maps.opju
+2024-07-24 C:\Users\PC032230\Desktop\05-12-2023\maps.opju
+2024-07-24 C:\Users\PC032230\Desktop\05-12-2023\maps.opju
+2024-07-30 C:\Users\PC032230\Desktop\10-10-2023\Area 1\area 1 maps final.opju
+2024-07-30 C:\Users\PC032230\Desktop\10-10-2023\Area 2\area 2 maps final.opju
+2024-07-30 C:\Users\PC032230\Desktop\10-10-2023\Area 3\area 3 maps final.opju
+2024-07-30 C:\Users\PC032230\Desktop\28-07-2023\maps final.opju
+2024-07-30 C:\Users\PC032230\Desktop\29-09-2023\maps final.opju
+2024-07-30 C:\Users\PC032230\Desktop\10-10-2023\Area 1\area 1 maps final.opju
