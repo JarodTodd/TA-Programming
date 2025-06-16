@@ -3,7 +3,7 @@ from PySide6.QtCore import *
 from PySide6.QtGui import *
 import pyqtgraph as pg
 from WorkerThread import *
-from Heatmap_Interface import *
+from HeatmapInterface import *
 from dAwindow import *
 import numpy as np                      
 from heatmap import TAPlotWidget
@@ -15,7 +15,7 @@ class HeatmapWindow(QWidget):
         self.setWindowTitle("Camera Interface")
         self.DLSWindow = dls_window
         self.worker = MeasurementWorker("", "StartUp", 0, 0, 'localhost', 9999)
-        self.interface = Ui_Bottom_right()
+        self.interface = Heatmap_Interface()
         self.dAwindow = dA_Window
         self.pos = 0
         self.setup_ui()
@@ -40,7 +40,7 @@ class HeatmapWindow(QWidget):
         # bottom_right_layout.addLayout(self.form_layout)
         # bottom_right_layout.addWidget(self.status_label)
         self.interface_widget = QWidget()
-        self.interface = Ui_Bottom_right()
+        self.interface = Heatmap_Interface()
         self.interface.setupUi(self.interface_widget)
         bottom_right_layout.addWidget(self.interface_widget)
 

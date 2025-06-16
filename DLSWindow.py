@@ -108,6 +108,7 @@ class DLSWindow(QMainWindow):
         hbox = QHBoxLayout()
 
         initialize_button = QPushButton("Initialize")
+        initialize_button.setTooltip("To get the delay stage into the ready state; you might have to press this button twice, 10 seconds apart. Check Controller for light.")
         initialize_button.clicked.connect(lambda: self.run_command_signal.emit("Initialize", "ButtonPress", 0, 0))
         hbox.addWidget(initialize_button)
 

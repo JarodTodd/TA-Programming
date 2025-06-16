@@ -5,22 +5,28 @@ from PySide6.QtWidgets import *
 from exponential_steps import *
 from Start_Popup import *
 import csv
-import time
 
-class Ui_Bottom_right(QObject):
+class Heatmap_Interface(QObject):
+
+    """These two signals start or stop measurements from this window."""
     trigger_worker_run = Signal(list, str, int, int)
-    parsed_content_signal = Signal(list)
     stop_measurement_signal = Signal()
+
+    """This signal transmits the metadata filled in in the pop-up window at measurement start."""
     metadata_signal = Signal(str, str, str, str, float, float)
+
+    """This signal emits the list of delay times after formatting them properly."""
+    parsed_content_signal = Signal(list)
+
 
     def __init__(self):
         super().__init__()
         self.startpopup = StartPopup()
         self.content = []
 
-    def setupUi(self, Bottom_right):
-        Bottom_right.setWindowTitle("Bottom_right")
-        full_layout = QVBoxLayout(Bottom_right)
+    def setupUi(self, Interface):
+        Interface.setWindowTitle("Interface")
+        full_layout = QVBoxLayout(Interface)
         main_layout = QHBoxLayout()
         full_layout.addLayout(main_layout)
         # Left panel layout
@@ -79,7 +85,7 @@ class Ui_Bottom_right(QObject):
         self.start_from_box = QDoubleSpinBox()
         self.finish_time_box = QDoubleSpinBox()
         self.integration_time_box = QSpinBox()
-        self.nos_box = QSpinBox()
+        self.scans_box = QSpinBox()
         self.stepping_order_box = QComboBox()
         self.total_steps = QLineEdit()
 
@@ -88,7 +94,7 @@ class Ui_Bottom_right(QObject):
         self._add_label_input(grid1, "Start from, ps", self.start_from_box, 0)
         self._add_label_input(grid1, "Finish time, ps", self.finish_time_box, 1)
         self._add_label_input(grid1, "Number of shots, #", self.integration_time_box, 2)
-        self._add_label_input(grid1, "Number of scans", self.nos_box, 3)
+        self._add_label_input(grid1, "Number of scans", self.scans_box, 3)
         self._add_label_input(grid1, "Stepping order", self.stepping_order_box, 4)
         self._add_label_input(grid1, "Total # of steps", self.total_steps, 5)
         left_panel.addLayout(grid1)
@@ -128,11 +134,11 @@ class Ui_Bottom_right(QObject):
         self.time_remaining.setText("--")
         self.start_from_box.valueChanged.connect(self.validate_inputs)
         self.finish_time_box.valueChanged.connect(self.validate_inputs)
-        self.nos_box.valueChanged.connect(self.validate_inputs)
+        self.scans_box.valueChanged.connect(self.validate_inputs)
         self.integration_time_box.valueChanged.connect(self.validate_inputs)
         self.stepping_order_box.currentIndexChanged.connect(self.validate_inputs)
 
-        self.nos_box.valueChanged.connect(self.change_steps)
+        self.scans_box.valueChanged.connect(self.change_steps)
         self.start_from_box.valueChanged.connect(lambda: self.update_start_from_content(self.start_from_box.value()))
         self.start_from_box.valueChanged.connect(lambda: self.exponential_start.setValue(self.start_from_box.value()))
         self.exponential_start.valueChanged.connect(lambda: self.start_from_box.setValue(self.exponential_start.value()))
@@ -165,7 +171,7 @@ class Ui_Bottom_right(QObject):
             widget.setMinimum(1)
             widget.setMaximum(999999)
             widget.setSingleStep(1)
-            self.nos_box.setValue(1)
+            self.scans_box.setValue(1)
             self.integration_time_box.setValue(1000)
             widget.setMaximum(9999999)
         elif isinstance(widget, QLineEdit):
@@ -181,7 +187,7 @@ class Ui_Bottom_right(QObject):
         try:
             if (
                 int(self.integration_time_box.value()) > 0
-                and int(self.nos_box.value()) > 0
+                and int(self.scans_box.value()) > 0
                 and float(self.start_from_box.value()) != 0 
                 or float(self.finish_time_box.value()) != 0
             ):
@@ -214,7 +220,7 @@ class Ui_Bottom_right(QObject):
                         self.content,
                         self.stepping_order_box.currentText(),
                         self.integration_time_box.value(),
-                        self.nos_box.value()
+                        self.scans_box.value()
                     )
                 else:
                     self.show_error_message("Start and end time must be different and steps > 1.")
@@ -228,7 +234,7 @@ class Ui_Bottom_right(QObject):
                 self.content,
                 self.stepping_order_box.currentText(),
                 self.integration_time_box.value(),
-                self.nos_box.value()
+                self.scans_box.value()
             )
         print(f"Self.content = {self.content}")
         self.parsed_content_signal.emit(self.content)
@@ -287,11 +293,12 @@ class Ui_Bottom_right(QObject):
         pass
 
     def change_steps(self):
+        # Ensure that the correct amount of total steps is shown
         if self.tabWidget.currentIndex() == 0:
-            self.total_steps.setText(f"{self.steps_box.value() * self.nos_box.value()}")
+            self.total_steps.setText(f"{self.steps_box.value() * self.scans_box.value()}")
         elif self.tabWidget.currentIndex() == 1:
             if hasattr(self, "content") and self.content:
-                self.total_steps.setText(f"{len(self.content) * self.nos_box.value()}")
+                self.total_steps.setText(f"{len(self.content) * self.scans_box.value()}")
             else:
                 self.total_steps.setText("0")
 
@@ -344,7 +351,7 @@ class Ui_Bottom_right(QObject):
                 self.text_display.setText(metadata)
 
                 # Changing GUI elements to display correct values after uploading file
-                self.total_steps.setText(f"{(len(self.content)) * self.nos_box.value()}")
+                self.total_steps.setText(f"{(len(self.content)) * self.scans_box.value()}")
                 self.current_step.setText(f"{0}")
                 self.current_scan.setText(f"{1}")
 
@@ -374,11 +381,11 @@ class Ui_Bottom_right(QObject):
             self.finish_time_box.setEnabled(False)
             self.start_from_box.setValue(self.exponential_start.value())
             self.finish_time_box.setValue(self.exponential_finish.value())
-            self.total_steps.setText(f"{self.steps_box.value() * self.nos_box.value()}")
+            self.total_steps.setText(f"{self.steps_box.value() * self.scans_box.value()}")
         elif self.tabWidget.currentIndex() == 1:
             self.start_from_box.setEnabled(True)
             self.finish_time_box.setEnabled(True)
-            self.total_steps.setText(f"{len(self.content) * self.nos_box.value() if hasattr(self, 'content') else 0}")
+            self.total_steps.setText(f"{len(self.content) * self.scans_box.value() if hasattr(self, 'content') else 0}")
             if hasattr(self, "content") and self.content:
                 self.start_from_box.setValue(self.content[0])
                 self.finish_time_box.setValue(self.content[-1])
@@ -402,7 +409,7 @@ if __name__ == "__main__":
 
     app = QApplication(sys.argv)
     Bottom_right = QWidget()
-    ui = Ui_Bottom_right()
+    ui = Heatmap_Interface()
     ui.setupUi(Bottom_right)
     Bottom_right.show()
     sys.exit(app.exec())
