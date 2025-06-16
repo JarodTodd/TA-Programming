@@ -14,6 +14,16 @@ ironpython_executable = r"C:\Users\PC026453\Documents\TA-Programming\IronPython 
 script_path = r"C:\Users\PC026453\Documents\TA-Programming\IronPythonDLS.py"
 
 class ProbeThread(QThread):
+    """
+    QThread subclass that captures raw camera data, processes it,
+    and emits signals with averaged probe and dA data as numpy arrays.
+    """
+    
+    # Signals emitted by the thread to the DLS or dA Window:
+    # - probe_update: emits averaged probe intensity array
+    # - probe_rejected: emits percent of rejected probe measurements
+    # - dA_update: emits averaged delta-A array
+    # - dA_rejected: emits percent of rejected delta-A measurements
     probe_update = Signal(np.ndarray)
     probe_rejected = Signal(float)
     dA_update = Signal(np.ndarray)
@@ -21,24 +31,35 @@ class ProbeThread(QThread):
     
 
     def __init__(self, shots = 1000, parent: QObject | None = None):
+        """
+        Initialize the thread.
+        shots: number of shots per acquisition block. 
+        """
         super().__init__(parent)
         self.shots = shots
         self.running = True
         self.data_processor = ComputeData()
     
     def run(self):
+        """Main execution loop. Continuously capture shots and process data until stopped."""
         while self.running:
+            # capture raw data block from camera
             block_buffer = camera(self.shots, 0)
             block_2d_array = np.array(block_buffer).reshape(self.shots, 1088)
 
+            # process data: compute probe and dA averages
             probe_avg, dA_average = self.data_processor.delta_a_block(block_2d_array)
 
+            # Emit processed data and rejection stats to visualize them in the GUI
             self.probe_update.emit(probe_avg)
             self.dA_update.emit(dA_average)
             self.probe_rejected.emit(self.data_processor.rejected_probe)
             self.dA_rejected.emit(self.data_processor.rejected_dA)
     
     def stop(self):
+        """
+        Request the thread to stop. Safely exits the loop and waits for thread to finish.
+        """
         self.running = False
         self.quit()
         self.wait()
