@@ -9,6 +9,7 @@ class dA_Window(QWidget):
     run_command_signal = Signal(str, str, int, int)
     dA_switch_outlier_rejection = Signal(bool)
     dA_deviation_threshold_changed = Signal(float)
+    pos_change_signal = Signal(float)
 
     def __init__(self):
         super().__init__()
@@ -107,10 +108,7 @@ class dA_Window(QWidget):
 
 
         self.verticalSlider = QSlider(Qt.Vertical)
-        if self.t_0 == 0:
-            self.verticalSlider.setRange(0, 8672666)
-        else:
-            self.verticalSlider.setRange(-250000, 8672666 - self.t_0 * 1000)
+        self.verticalSlider.setRange(0, 8672666)
         self.verticalSlider.setSingleStep(2)
         self.verticalSlider.setTickInterval(250000)
         self.verticalSlider.setTickPosition(QSlider.TicksLeft)
@@ -233,6 +231,7 @@ class dA_Window(QWidget):
         # because now it updates when a measurement is being done and emits doubled movement signals causing errors
         value = float(self.abs_pos_line.text())
         self.run_command_signal.emit(f"MoveAbsolute {value:.3f}", "ButtonPress", 0, 0)
+        self.pos_change_signal.emit(value)
         print(value)
 
     def update_abs_rel(self, value, sender):
@@ -243,13 +242,14 @@ class dA_Window(QWidget):
             self.rel_pos_line.setText(str(round(value, 2)))
 
         if sender is self.move_target_button:
-            print(value)
-            print(value-self.t_0)
             self.abs_pos_line.setText(str(value))
-            self.rel_pos_line.setText(str(value - self.t_0))
+            self.rel_pos_line.setText(str(round(value - self.t_0, 2)))
+
             if (value - self.t_0)*1000 < -250000:
                 self.verticalSlider.setRange((value - self.t_0)*1000 - 250000, 8672666 - self.t_0)
                 self.verticalSlider.setValue((value - self.t_0)*1000)
+            
+            self.pos_change_signal.emit(value)
 
         if sender is self.t0_button:
             self.move_target_box.setValue(value)
@@ -257,6 +257,7 @@ class dA_Window(QWidget):
             self.rel_pos_line.setText("0")
             self.verticalSlider.setValue(0)
             self.verticalSlider.setRange(-250000, 8672666-self.t_0*1000)
+            self.pos_change_signal.emit(value)
 
 
 
@@ -265,10 +266,13 @@ class dA_Window(QWidget):
         self.update_dA_graph(self.dA_inputs_avg)
 
     @Slot(object, object)
-    def update_dA_graph(self, avg_list):
-        self.dA_inputs_avg = avg_list
-        
-        self.dA_curve.setData(self.dA_inputs_avg)     
+    def update_dA_graph(self, avg_row):
+            if avg_row is None:
+                return
+            if not hasattr(avg_row, '__len__'):
+                return
+            self.dA_inputs_avg = avg_row
+            self.dA_curve.setData(self.dA_inputs_avg)   
 
     def on_click(self, event, plot_widget):
         pos = event.scenePos()

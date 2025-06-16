@@ -3,7 +3,7 @@ from PySide6.QtCore import *
 from PySide6.QtGui import *
 import pyqtgraph as pg
 from WorkerThread import *
-from Heatmap_Interface import *
+from HeatmapInterface import *
 from dAwindow import *
 import numpy as np                      
 from heatmap import TAPlotWidget
@@ -15,7 +15,7 @@ class HeatmapWindow(QWidget):
         self.setWindowTitle("Camera Interface")
         self.DLSWindow = dls_window
         self.worker = MeasurementWorker("", "StartUp", 0, 0, 'localhost', 9999)
-        self.interface = Ui_Bottom_right()
+        self.interface = Heatmap_Interface()
         self.dAwindow = dA_Window
         self.pos = 0
         self.setup_ui()
@@ -40,7 +40,7 @@ class HeatmapWindow(QWidget):
         # bottom_right_layout.addLayout(self.form_layout)
         # bottom_right_layout.addWidget(self.status_label)
         self.interface_widget = QWidget()
-        self.interface = Ui_Bottom_right()
+        self.interface = Heatmap_Interface()
         self.interface.setupUi(self.interface_widget)
         bottom_right_layout.addWidget(self.interface_widget)
 
@@ -69,13 +69,19 @@ class HeatmapWindow(QWidget):
         self.interface.current_delay.setText(f"{value}")
         slider_value = int(value * 1000 - self.t_0 * 1000)
         self.dAwindow.verticalSlider.setValue(slider_value)
-        max_range = int(8672666 - value * 1000)
+        max_range = int(8672666 - self.t_0 * 1000)
         if slider_value > 0:
             self.dAwindow.verticalSlider.setRange(-250000, max_range)
-        else:
+        elif max_range - slider_value < 8672666:
             self.dAwindow.verticalSlider.setRange(slider_value - 250000, max_range)
+        else:
+            self.dAwindow.verticalSlider.setRange(0, max_range)
+
         self.dAwindow.abs_pos_line.setText(f"{value}")
+        self.dAwindow.rel_pos_line.setText(f"{round(value-self.t_0, 2)}")
+        self.dAwindow.move_target_box.setValue(value)
         self.DLSWindow.delay_bar.setValue(value)
+        self.interface.progressbar.setValue(value)
 
     def update_current_step(self, step, scans):
         self.interface.current_step.setText(str(step))
@@ -91,12 +97,17 @@ class HeatmapWindow(QWidget):
         if self.pos == self.t_0:
             self.dAwindow.verticalSlider.setValue(0)
             self.dAwindow.rel_pos_line.setText(f"{0}")
-        else:
+
+        if self.pos - self.t_0 < 0:
+            self.dAwindow.verticalSlider.setRange(slider_value-250000, int(8672666 - self.t_0 * 1000))
             self.dAwindow.verticalSlider.setValue(slider_value)
-            self.dAwindow.rel_pos_line.setText(f"{slider_value}")
-        self.dAwindow.verticalSlider.setRange(-250000, int(8672666 - self.t_0 * 1000))
-        self.dAwindow.abs_pos_line.setText(f"{self.t_0}")
-        self.dAwindow.rel_pos_line.setText(f"{0}")
+            self.dAwindow.rel_pos_line.setText(str(round(slider_value/1000, 2)))
+            self.dAwindow.abs_pos_line.setText(str(round(self.pos, 2)))
+            self.dAwindow.move_target_box.setValue(round(self.pos, 2))
+        else:
+            self.dAwindow.verticalSlider.setRange(-250000, int(8672666 - self.t_0 * 1000))
+            self.dAwindow.abs_pos_line.setText(f"{self.t_0}")
+            self.dAwindow.rel_pos_line.setText(f"{0}")
 
 
     def show_error_message(self, error_message):
