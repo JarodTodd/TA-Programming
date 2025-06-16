@@ -252,4 +252,3 @@ import atexit
 def cleanup():
     log_file.close()
 
-print(GetPosition())
