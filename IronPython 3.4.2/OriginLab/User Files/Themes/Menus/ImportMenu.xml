@@ -1,0 +1,410 @@
+<?xml version="1.0"?>
+<OriginStorage>
+	<popup wndType="W" text="I&amp;mport">
+		<item tag="impWiz" wndType="W">
+			<AllowWin>10</AllowWin>
+			<LT>impWiz</LT>
+			<menutext>Import &amp;Wizard...	Ctrl+3</menutext>
+			<Prompt>Open Import Wizard dialog</Prompt>
+			<menutext_g CdPg="1252">Importassistent...	Strg+3</menutext_g>
+			<menutext_j CdPg="932">インポートウィザード(&amp;W)...	Ctrl+3</menutext_j>
+			<menutext_c CdPg="936">导入向导(&amp;W)...	Ctrl+3</menutext_c>
+			<Prompt_g CdPg="1252">Importassistent öffnen</Prompt_g>
+			<Prompt_j CdPg="932">インポートウィザードダイアログを開きます。</Prompt_j>
+			<Prompt_c CdPg="936">打开导入向导对话框。</Prompt_c>
+			<LTEnable/>
+			<tlb/>
+		</item>
+		<item tag="impASC_M" wndType="W">
+			<AllowWin>6</AllowWin>
+			<LT>run.section(File,RunImportASCXF,1)</LT>
+			<menutext>&amp;Multiple ASCII...</menutext>
+			<Prompt>Import ASCII file</Prompt>
+			<menutext_g CdPg="1252">&amp;Mehrere ASCII...</menutext_g>
+			<menutext_j CdPg="932">ASCIIファイル(&amp;M)...</menutext_j>
+			<menutext_c CdPg="936">多个ASCII文件(&amp;M)...</menutext_c>
+			<Prompt_g CdPg="1252">ASCII-Datei importieren</Prompt_g>
+			<Prompt_j CdPg="932">ASCIIファイルをインポートします</Prompt_j>
+			<Prompt_c CdPg="936">导入ASCII文件</Prompt_c>
+			<LTEnable/>
+			<tlb/>
+		</item>
+		<sep/>
+		<item tag="impImage" wndType="W">
+			<AllowWin>7</AllowWin>
+			<LT>impImage -dm</LT>
+			<menutext>&amp;Image to Matrix...</menutext>
+			<Prompt>Import image file into a new Matrix window</Prompt>
+			<menutext_g CdPg="1252">Bild in Matrix...</menutext_g>
+			<menutext_j CdPg="932">イメージファイルを行列へインポート(&amp;I)...</menutext_j>
+			<menutext_c CdPg="936">图像到矩阵(&amp;I)...</menutext_c>
+			<Prompt_g CdPg="1252">Bilddatei in ein neues Matrixfenster importieren</Prompt_g>
+			<Prompt_j CdPg="932">新しい行列ウィンドウへイメージファイルをインポート</Prompt_j>
+			<Prompt_c CdPg="936">导入图像文件到一个新的矩阵窗口。</Prompt_c>
+			<LTEnable/>
+			<tlb/>
+		</item>
+		<sep/>
+		<item tag="impSPC" wndType="W">
+			<AllowWin>6</AllowWin>
+			<LT>impSPC -dm</LT>
+			<menutext>&amp;Thermo (SPC, CGM)...</menutext>
+			<Prompt>Import Thermo File</Prompt>
+			<menutext_g CdPg="1252">&amp;Thermo (SPC, CGM)...</menutext_g>
+			<menutext_j CdPg="932">Thermo(SPC,CGM)(&amp;T)...</menutext_j>
+			<menutext_c CdPg="936">&amp;Thermo (SPC, CGM)...</menutext_c>
+			<Prompt_g CdPg="1252">Thermo Dateien importieren</Prompt_g>
+			<Prompt_j CdPg="932">Thermoファイルをインポートする。</Prompt_j>
+			<Prompt_c CdPg="936">导入Thermo文件。</Prompt_c>
+			<LTEnable/>
+			<tlb/>
+		</item>
+		<item tag="imppClamp" wndType="W">
+			<AllowWin>2</AllowWin>
+			<LT>imppClamp -dm</LT>
+			<menutext>&amp;pCLAMP (ABF, DAT,AB?)...</menutext>
+			<Prompt>Import pCLAMP file up to version 10 (ABF 2.0)</Prompt>
+			<menutext_g CdPg="1252">&amp;pCLAMP (ABF, DAT)...</menutext_g>
+			<menutext_j CdPg="932">pCLAMP(ABF,DAT)(&amp;P)...</menutext_j>
+			<menutext_c CdPg="936">&amp;pCLAMP (ABF, DAT,AB?)...</menutext_c>
+			<Prompt_g CdPg="1252">pCLAMP-Datei bis Version 10 (ABF 2.0) importieren</Prompt_g>
+			<Prompt_j CdPg="932">バージョン10(ABF 2.0)までのpCLAMPファイルをインポートします</Prompt_j>
+			<Prompt_c CdPg="936">导入pCLAMP文件（最高软件版本10，文件版本ABF 2.0）</Prompt_c>
+			<LTEnable/>
+			<tlb/>
+		</item>
+		<item tag="impSPE" wndType="W">
+			<AllowWin>6</AllowWin>
+			<LT>impSPE -dm</LT>
+			<menutext>P&amp;rinceton Instruments (SPE)...</menutext>
+			<Prompt>Import Princeton Instruments SPE  file up to version 3.0</Prompt>
+			<menutext_g CdPg="1252">P&amp;rinceton Instruments (SPE)...</menutext_g>
+			<menutext_j CdPg="932">Princeton Instruments(SPE)(&amp;R)...</menutext_j>
+			<menutext_c CdPg="936">P&amp;rinceton Instruments (SPE)...</menutext_c>
+			<Prompt_g CdPg="1252">Princeton-Instruments-SPE-Datei bis Version 3.0 importieren</Prompt_g>
+			<Prompt_j CdPg="932">バージョン3.0までのPrinceton Instruments SPEファイルをインポートします</Prompt_j>
+			<Prompt_c CdPg="936">导入Princeton Instruments SPE文件（最高版本3.0版）</Prompt_c>
+			<LTEnable/>
+			<tlb/>
+		</item>
+		<item tag="impWav" wndType="W">
+			<AllowWin>2</AllowWin>
+			<LT>impWav -dm</LT>
+			<menutext>S&amp;ound (WAV)...</menutext>
+			<Prompt>Import waveform audio file</Prompt>
+			<menutext_g CdPg="1252">S&amp;ound (WAV)...</menutext_g>
+			<menutext_j CdPg="932">音声(WAV)(&amp;O)...</menutext_j>
+			<menutext_c CdPg="936">音频(WAV)(&amp;O)...</menutext_c>
+			<Prompt_g CdPg="1252">Wave-Audiodatei importieren</Prompt_g>
+			<Prompt_j CdPg="932">WAV形式の音声ファイルをインポートする</Prompt_j>
+			<Prompt_c CdPg="936">导入波形音频文件。</Prompt_c>
+			<LTEnable/>
+			<tlb/>
+		</item>
+		<sep/>
+		<item tag="impCDF" wndType="W">
+			<AllowWin>6</AllowWin>
+			<LT>impCDF -dm</LT>
+			<menutext>C&amp;DF (CDF)...</menutext>
+			<Prompt>Import CDF file up to version 3.0</Prompt>
+			<menutext_g CdPg="1252">CDF (CDF)...</menutext_g>
+			<menutext_j CdPg="932">CDF(&amp;C) (CDF)...</menutext_j>
+			<menutext_c CdPg="936">C&amp;DF (CDF)...</menutext_c>
+			<Prompt_g CdPg="1252">CDF-Datei bis Version 3.0 importieren</Prompt_g>
+			<Prompt_j CdPg="932">バージョン3.0までのCDFファイルをインポートします</Prompt_j>
+			<Prompt_c CdPg="936">导入CDF文件（最高版本3.0）</Prompt_c>
+			<LTEnable/>
+			<tlb/>
+		</item>
+		<sep/>
+		<item tag="impNIDIAdem" wndType="W">
+			<AllowWin>2</AllowWin>
+			<LT>impNIDIAdem -dm</LT>
+			<menutext>&amp;NI DIAdem (DAT)...</menutext>
+			<Prompt>Import National Instruments DIAdem 10.0 dat files</Prompt>
+			<menutext_g CdPg="1252">&amp;NI DIAdem (DAT)...</menutext_g>
+			<menutext_j CdPg="932">NI DIAdem(DAT)(&amp;N)...</menutext_j>
+			<menutext_c CdPg="936">&amp;NI DIAdem (DAT)...</menutext_c>
+			<Prompt_g CdPg="1252">National Instruments DIAdem 10.0 dat Dateien importieren</Prompt_g>
+			<Prompt_j CdPg="932">National Instruments DIAdem 10.0 datのファイルをインポートする。</Prompt_j>
+			<Prompt_c CdPg="936">导入National Instruments DIAdem 10.0 dat文件。</Prompt_c>
+			<LTEnable/>
+			<tlb/>
+		</item>
+		<item tag="impFamos" wndType="W">
+			<AllowWin>2</AllowWin>
+			<LT>impFamos -dm</LT>
+			<menutext>&amp;Famos (DAT, RAW)...</menutext>
+			<Prompt>Import Famos files</Prompt>
+			<menutext_g CdPg="1252">&amp;Famos (DAT, RAW)...</menutext_g>
+			<menutext_j CdPg="932">Famos(DAT,RAW)(&amp;F)...</menutext_j>
+			<menutext_c CdPg="936">&amp;Famos (DAT, RAW)...</menutext_c>
+			<Prompt_g CdPg="1252">Dateien aus Famos importieren</Prompt_g>
+			<Prompt_j CdPg="932">Famos のファイルをインポートする。</Prompt_j>
+			<Prompt_c CdPg="936">导入Famos文件。</Prompt_c>
+			<LTEnable/>
+			<tlb/>
+		</item>
+		<item tag="impMDF" wndType="W">
+			<AllowWin>2</AllowWin>
+			<LT>impMDF -dm</LT>
+			<menutext>ET&amp;AS INCA MDF (DAT, MDF)...</menutext>
+			<Prompt>Import ETAS INCA MDF (DAT, MDF) files up to version 3.0</Prompt>
+			<menutext_g CdPg="1252">ET&amp;AS INCA MDF (DAT, MDF)...</menutext_g>
+			<menutext_j CdPg="932">ETAS INCA MDF(DAT,MDF)(&amp;A)...</menutext_j>
+			<menutext_c CdPg="936">ET&amp;AS INCA MDF (DAT, MDF)...</menutext_c>
+			<Prompt_g CdPg="1252">ETAS-INCA-MDF-Dateien (DAT, MDF) bis Version 3.0 importieren</Prompt_g>
+			<Prompt_j CdPg="932">バージョン3.0までのETAS INCA MDF (DAT, MDF) ファイルをインポートします</Prompt_j>
+			<Prompt_c CdPg="936">导入ETAS INCA MDF（DAT，MDF）文件（最高版本为3.0）</Prompt_c>
+			<LTEnable/>
+			<tlb/>
+		</item>
+		<sep/>
+		<item tag="impIgorPro" wndType="W">
+			<AllowWin>6</AllowWin>
+			<LT>impIgorPro -dm</LT>
+			<menutext>I&amp;gorPro (PXP, IBW)...</menutext>
+			<Prompt>Import WaveMetrics IgorPro (pxp, ibw) files</Prompt>
+			<menutext_g CdPg="1252">I&amp;gorPro (PXP, IBW)...</menutext_g>
+			<menutext_j CdPg="932">IgorPro(PXP, IBW)(&amp;G)...</menutext_j>
+			<menutext_c CdPg="936">I&amp;gorPro (PXP, IBW)...</menutext_c>
+			<Prompt_g CdPg="1252">WaveMetrics IgorPro (pxp, ibw)-Dateien importieren</Prompt_g>
+			<Prompt_j CdPg="932">WaveMetrics IgorPro(pxp, ibw)ファイルをインポートする。</Prompt_j>
+			<Prompt_c CdPg="936">导入WaveMetrics IgorPro (pxp, ibw)文件。</Prompt_c>
+			<LTEnable/>
+			<tlb/>
+		</item>
+		<item tag="impJNB" wndType="W">
+			<AllowWin>2</AllowWin>
+			<LT>impJNB -dm</LT>
+			<menutext>Si&amp;gmaPlot (JNB)...</menutext>
+			<Prompt>Import SigmaPlot (JNB) file.</Prompt>
+			<menutext_g CdPg="1252">SigmaPlot (JNB)...</menutext_g>
+			<menutext_j CdPg="932">SigmaPlot(&amp;G) (JNB)...</menutext_j>
+			<menutext_c CdPg="936">Si&amp;gmaPlot (JNB)...</menutext_c>
+			<Prompt_g CdPg="1252">SigmaPlot(JNB)-Datei importieren.</Prompt_g>
+			<Prompt_j CdPg="932">SigmaPlot (JNB)ファイルをインポート。</Prompt_j>
+			<Prompt_c CdPg="936">导入SigmaPlot (JNB)文件。</Prompt_c>
+			<LTEnable/>
+			<tlb/>
+		</item>
+		<item tag="impPrism" wndType="W">
+			<AllowWin>2</AllowWin>
+			<LT>impPrism -dm</LT>
+			<menutext>&amp;Prism (PZFX, XML)...</menutext>
+			<Prompt>Import GraphPad Prism file</Prompt>
+			<menutext_g CdPg="1252">&amp;Prism (PZFX)...</menutext_g>
+			<menutext_j CdPg="932">Prism(PZFX)(&amp;P)...</menutext_j>
+			<menutext_c CdPg="936">&amp;Prism (PZFX, XML)...</menutext_c>
+			<Prompt_g CdPg="1252">GraphPad Prism-Datei importieren</Prompt_g>
+			<Prompt_j CdPg="932">GraphPad Prismファイルをインポートする</Prompt_j>
+			<Prompt_c CdPg="936">导入GraphPad Prism文件。</Prompt_c>
+			<LTEnable/>
+			<tlb/>
+		</item>
+		<item tag="impCSV" wndType="W">
+			<AllowWin>2</AllowWin>
+			<LT>impCSV -dm</LT>
+			<menutext>&amp;Comma Delimited (CSV)...</menutext>
+			<Prompt>Import CSV file</Prompt>
+			<menutext_g CdPg="1252">Komma getrennt (&amp;CSV)...</menutext_g>
+			<menutext_j CdPg="932">カンマ区切りファイル(CSV)(&amp;C)...</menutext_j>
+			<menutext_c CdPg="936">逗号分隔(CSV)(&amp;M)...</menutext_c>
+			<Prompt_g CdPg="1252">CSV-Datei importieren</Prompt_g>
+			<Prompt_j CdPg="932">CSVファイルをインポートします</Prompt_j>
+			<Prompt_c CdPg="936">导入CSV文件</Prompt_c>
+			<LTEnable/>
+			<tlb/>
+		</item>
+		<sep/>
+		<item tag="ShowCustomizeMenu" wndType="W">
+			<LT>customMenu 0</LT>
+			<menutext>Add/Remo&amp;ve File Types...</menutext>
+			<AllowWin>27</AllowWin>
+			<menutext_g CdPg="1252">Dateitypen hinzufügen/entfernen...</menutext_g>
+			<menutext_j CdPg="932">ファイルの種類の追加/削除...</menutext_j>
+			<menutext_c CdPg="936">添加/删减文件类型...</menutext_c>
+			<LTEnable/>
+			<tlb/>
+			<Prompt/>
+		</item>
+	</popup>
+	<popup wndType="G" text="I&amp;mport">
+		<item tag="impWiz" wndType="G">
+			<AllowWin>10</AllowWin>
+			<LT>impWiz</LT>
+			<menutext>Import &amp;Wizard...	Ctrl+3</menutext>
+			<Prompt>Open Import Wizard dialog</Prompt>
+			<menutext_g CdPg="1252">Importassistent...	Strg+3</menutext_g>
+			<menutext_j CdPg="932">インポートウィザード(&amp;W)...	Ctrl+3</menutext_j>
+			<menutext_c CdPg="936">导入向导(&amp;W)...	Ctrl+3</menutext_c>
+			<Prompt_g CdPg="1252">Importassistent öffnen</Prompt_g>
+			<Prompt_j CdPg="932">インポートウィザードダイアログを開きます。</Prompt_j>
+			<Prompt_c CdPg="936">打开导入向导对话框。</Prompt_c>
+			<LTEnable/>
+			<tlb/>
+		</item>
+		<sep/>
+		<item tag="impImage" wndType="G">
+			<AllowWin>3</AllowWin>
+			<LT>impImage -dm</LT>
+			<menutext>&amp;Image to Matrix...</menutext>
+			<Prompt>Import image file into a new Matrix window</Prompt>
+			<menutext_g CdPg="1252">Bild in Matrix...</menutext_g>
+			<menutext_j CdPg="932">イメージファイルを行列へインポート(&amp;I)...</menutext_j>
+			<menutext_c CdPg="936">图像到矩阵(&amp;I)...</menutext_c>
+			<Prompt_g CdPg="1252">Bilddatei in ein neues Matrixfenster importieren</Prompt_g>
+			<Prompt_j CdPg="932">新しい行列ウィンドウへイメージファイルをインポート</Prompt_j>
+			<Prompt_c CdPg="936">导入图像文件到一个新的矩阵窗口。</Prompt_c>
+			<LTEnable/>
+			<tlb/>
+		</item>
+		<item tag="insertImg2g" wndType="G">
+			<AllowWin>1</AllowWin>
+			<LT>insertImg2g</LT>
+			<menutext>Insert Ima&amp;ges From Files</menutext>
+			<Prompt>Insert graphic file(s) into Graph Window</Prompt>
+			<menutext_g CdPg="1252">Bilder aus Dateien einfügen</menutext_g>
+			<menutext_j CdPg="932">イメージをファイルから挿入</menutext_j>
+			<menutext_c CdPg="936">从文件中插入图像(&amp;G)</menutext_c>
+			<Prompt_g CdPg="1252">Grafikdatei(en) in Diagrammfenster einfügen</Prompt_g>
+			<Prompt_j CdPg="932">画像ファイルからイメージをグラフウィンドウに挿入します</Prompt_j>
+			<Prompt_c CdPg="936">插入图形文件到图形窗口</Prompt_c>
+			<LTEnable/>
+			<tlb/>
+		</item>
+	</popup>
+	<popup wndType="M" text="I&amp;mport">
+		<item tag="impASC_S" wndType="M">
+			<AllowWin>6</AllowWin>
+			<LT>run.section(File,RunImportASCXF,0)</LT>
+			<menutext>&amp;Single ASCII...</menutext>
+			<Prompt>Import ASCII file</Prompt>
+			<menutext_g CdPg="1252">Einzelne&amp;s ASCII...</menutext_g>
+			<menutext_j CdPg="932">単一ASCIIファイル(&amp;S)...</menutext_j>
+			<menutext_c CdPg="936">单个ASCII文件(&amp;S)...</menutext_c>
+			<Prompt_g CdPg="1252">ASCII-Datei importieren</Prompt_g>
+			<Prompt_j CdPg="932">ASCIIファイルをインポートします</Prompt_j>
+			<Prompt_c CdPg="936">导入ASCII文件</Prompt_c>
+			<LTEnable/>
+			<tlb/>
+		</item>
+		<item tag="impASC_M" wndType="M">
+			<AllowWin>6</AllowWin>
+			<LT>run.section(File,RunImportASCXF,1)</LT>
+			<menutext>&amp;Multiple ASCII...</menutext>
+			<Prompt>Import ASCII file</Prompt>
+			<menutext_g CdPg="1252">&amp;Mehrere ASCII...</menutext_g>
+			<menutext_j CdPg="932">複数ASCII(&amp;M)...</menutext_j>
+			<menutext_c CdPg="936">多个ASCII文件(&amp;M)...</menutext_c>
+			<Prompt_g CdPg="1252">ASCII-Datei importieren</Prompt_g>
+			<Prompt_j CdPg="932">ASCIIファイルをインポートします</Prompt_j>
+			<Prompt_c CdPg="936">导入ASCII文件</Prompt_c>
+			<LTEnable/>
+			<tlb/>
+		</item>
+		<sep/>
+		<item tag="impImage" wndType="M">
+			<AllowWin>7</AllowWin>
+			<LT>impImage -dm</LT>
+			<menutext>&amp;Image to Matrix...</menutext>
+			<Prompt>Import image file into a new Matrix window</Prompt>
+			<menutext_g CdPg="1252">Bild in Matrix...</menutext_g>
+			<menutext_j CdPg="932">イメージファイルを行列へインポート(&amp;I)...</menutext_j>
+			<menutext_c CdPg="936">图像到矩阵(&amp;I)...</menutext_c>
+			<Prompt_g CdPg="1252">Bilddatei in ein neues Matrixfenster importieren</Prompt_g>
+			<Prompt_j CdPg="932">新しい行列ウィンドウへイメージファイルをインポート</Prompt_j>
+			<Prompt_c CdPg="936">导入图像文件到一个新的矩阵窗口。</Prompt_c>
+			<LTEnable/>
+			<tlb/>
+		</item>
+		<sep/>
+		<item tag="impSPC" wndType="M">
+			<AllowWin>6</AllowWin>
+			<LT>impSPC -dm</LT>
+			<menutext>&amp;Thermo (SPC, CGM)...</menutext>
+			<Prompt>Import Thermo File</Prompt>
+			<menutext_g CdPg="1252">&amp;Thermo (SPC, CGM)...</menutext_g>
+			<menutext_j CdPg="932">Thermo(SPC,CGM)(&amp;T)...</menutext_j>
+			<menutext_c CdPg="936">&amp;Thermo (SPC, CGM)...</menutext_c>
+			<Prompt_g CdPg="1252">Thermo Dateien importieren</Prompt_g>
+			<Prompt_j CdPg="932">Thermoファイルをインポートする。</Prompt_j>
+			<Prompt_c CdPg="936">导入Thermo文件。</Prompt_c>
+			<LTEnable/>
+			<tlb/>
+		</item>
+		<item tag="impSPE" wndType="M">
+			<AllowWin>6</AllowWin>
+			<LT>impSPE -dm</LT>
+			<menutext>P&amp;rinceton Instruments (SPE)...</menutext>
+			<Prompt>Import Princeton Instruments SPE  file up to version 3.0</Prompt>
+			<menutext_g CdPg="1252">P&amp;rinceton Instruments (SPE)...</menutext_g>
+			<menutext_j CdPg="932">Princeton Instruments(SPE)(&amp;R)...</menutext_j>
+			<menutext_c CdPg="936">P&amp;rinceton Instruments (SPE)...</menutext_c>
+			<Prompt_g CdPg="1252">Princeton-Instruments-SPE-Datei bis Version 3.0 importieren</Prompt_g>
+			<Prompt_j CdPg="932">バージョン3.0までのPrinceton Instruments SPEファイルをインポートします</Prompt_j>
+			<Prompt_c CdPg="936">导入Princeton Instruments SPE文件（最高版本3.0版）</Prompt_c>
+			<LTEnable/>
+			<tlb/>
+		</item>
+		<sep/>
+		<item tag="impBin2d" wndType="M">
+			<AllowWin>6</AllowWin>
+			<LT>impBin2d -dm</LT>
+			<menutext>Binar&amp;y 2D Array...</menutext>
+			<Prompt>Import binary 2d array file</Prompt>
+			<menutext_g CdPg="1252">Binäres 2D-Array...</menutext_g>
+			<menutext_j CdPg="932">2D配列バイナリインポート(&amp;Y)...</menutext_j>
+			<menutext_c CdPg="936">二进制2D阵列(&amp;y)...</menutext_c>
+			<Prompt_g CdPg="1252">Binäre 2D-Array-Datei importieren</Prompt_g>
+			<Prompt_j CdPg="932">2D配列バイナリファイルをインポートする</Prompt_j>
+			<Prompt_c CdPg="936">导入二进制2D阵列。</Prompt_c>
+			<LTEnable/>
+			<tlb/>
+		</item>
+		<item tag="impCDF" wndType="M">
+			<AllowWin>6</AllowWin>
+			<LT>impCDF -dm</LT>
+			<menutext>C&amp;DF (CDF)...</menutext>
+			<Prompt>Import CDF file up to version 3.0</Prompt>
+			<menutext_g CdPg="1252">CDF (CDF)...</menutext_g>
+			<menutext_j CdPg="932">CDF(&amp;C) (CDF)...</menutext_j>
+			<menutext_c CdPg="936">C&amp;DF (CDF)...</menutext_c>
+			<Prompt_g CdPg="1252">CDF-Datei bis Version 3.0 importieren</Prompt_g>
+			<Prompt_j CdPg="932">バージョン3.0までのCDFファイルをインポートします</Prompt_j>
+			<Prompt_c CdPg="936">导入CDF文件（最高版本3.0）</Prompt_c>
+			<LTEnable/>
+			<tlb/>
+		</item>
+		<item tag="impEP" wndType="M">
+			<AllowWin>6</AllowWin>
+			<LT>impEP -dm</LT>
+			<menutext>Eart&amp;hProbe (EPA)...</menutext>
+			<Prompt>Import EarthProbe EPA file</Prompt>
+			<menutext_g CdPg="1252">Eart&amp;hProbe (EPA)...</menutext_g>
+			<menutext_j CdPg="932">EarthProbe(EPA)(&amp;H)...</menutext_j>
+			<menutext_c CdPg="936">Eart&amp;hProbe (EPA)...</menutext_c>
+			<Prompt_g CdPg="1252">EarthProbe-EPA-Datei importieren</Prompt_g>
+			<Prompt_j CdPg="932">EarthProbe EPAファイルをインポートします</Prompt_j>
+			<Prompt_c CdPg="936">导入EarthProbe EPA文件</Prompt_c>
+			<LTEnable/>
+			<tlb/>
+		</item>
+		<sep/>
+		<item tag="impIgorPro" wndType="M">
+			<AllowWin>6</AllowWin>
+			<LT>impIgorPro -dm</LT>
+			<menutext>I&amp;gorPro (PXP, IBW)...</menutext>
+			<Prompt>Import WaveMetrics IgorPro (pxp, ibw) files</Prompt>
+			<menutext_g CdPg="1252">I&amp;gorPro (PXP, IBW)...</menutext_g>
+			<menutext_j CdPg="932">IgorPro(PXP, IBW)(&amp;G)...</menutext_j>
+			<menutext_c CdPg="936">I&amp;gorPro (PXP, IBW)...</menutext_c>
+			<Prompt_g CdPg="1252">WaveMetrics IgorPro (pxp, ibw)-Dateien importieren</Prompt_g>
+			<Prompt_j CdPg="932">WaveMetrics IgorPro(pxp, ibw)ファイルをインポートする。</Prompt_j>
+			<Prompt_c CdPg="936">导入WaveMetrics IgorPro (pxp, ibw)文件。</Prompt_c>
+			<LTEnable/>
+			<tlb/>
+		</item>
+	</popup>
+	<popup wndType="I" text="I&amp;mport"/>
+</OriginStorage>
