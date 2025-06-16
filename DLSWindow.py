@@ -235,7 +235,7 @@ class DLSWindow(QMainWindow):
         self.dA_window.dA_deviation_threshold_changed.connect(self.probe_worker.data_processor.dA_deviation_change, Qt.QueuedConnection)
 
         self.probe_worker.probe_update.connect(self.update_probe_data, Qt.QueuedConnection)
-        self.probe_worker.dA_update.connect(self.update_probe_avg_graph, Qt.QueuedConnection)
+        self.probe_worker.dA_update.connect(self.update_da_graph, Qt.QueuedConnection)
         self.probe_worker.probe_rejected.connect(self.update_rejected_percentage, Qt.QueuedConnection)
         self.probe_worker.dA_rejected.connect(self.dA_window.update_rejected_percentage, Qt.QueuedConnection)
         self.probe_worker.start()
@@ -327,7 +327,7 @@ class DLSWindow(QMainWindow):
         self.probe_curve.setData(self.probe_inputs_avg)
 
     @Slot(object, object)
-    def update_probe_avg_graph(self, avg_row):
+    def update_da_graph(self, avg_row):
         # Ensure avg_row is a list or array
         if avg_row is None:
             return

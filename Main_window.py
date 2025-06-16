@@ -42,7 +42,7 @@ if __name__ == "__main__":
     worker.reset_currentMatrix.connect(main_app.shot_delay_app.ta_widgets.reset_currentMatrix, Qt.QueuedConnection)
     main_app.shot_delay_app.interface.parsed_content_signal.connect(main_app.shot_delay_app.ta_widgets.update_delay_stages, Qt.QueuedConnection)
 
-    """These connections are responsible for the probe spectrum in the DLSWindow and keep it updated."""
+    """These connections are responsible for starting,stopping and updatiing the probe spectrum in the DLSWindow when a measurement is started."""
     worker.started.connect(main_app.dls_window.stop_probe_thread, Qt.QueuedConnection)
     worker.update_probe.connect(main_app.dls_window.update_probe_data, Qt.QueuedConnection)
     worker.finished.connect(main_app.dls_window.start_probe_thread, Qt.QueuedConnection)
