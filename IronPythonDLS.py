@@ -70,20 +70,23 @@ def MeasurementLoop(delays, scans=1):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect(('localhost', 9999))
     last_item = 0
-    reference = myDLS.RF_Get()[1]
+    reference = myDLS.RF_Get()[1] * 10**9 * 8 / c
+    pos = myDLS.PA_Get()[1]  * 10**9 * 8 / c
+    difference = pos - reference
     while myDLS.TS()[3] not in ["46", "47", "48", "49"]:
         print("Sleeping for Reference")
         time.sleep(0.05)
-    myDLS.PA_Set(reference)
-    reference = myDLS.PA_Get()[1] * 10**9 * 8 / c
+
     print(delays)
-    print("Moved to Reference")  # Set position to reference before starting measurements
 
     # Multiply delays for the number of scans
     repeated_delays = delays * scans
 
     for delay in repeated_delays:
-        pos = delay - last_item
+        if last_item == 0:
+            pos = delay - difference
+        else:
+            pos = delay - last_item
         print(pos, delay, last_item)
         while myDLS.TS()[3] not in ["46", "47", "48", "49"]:
             print("Controller not ready, waiting...")  
@@ -111,6 +114,7 @@ def MeasurementLoop(delays, scans=1):
         else:
             print(f"Skipping point {delay} due to hardware state.")
     s.close()
+    s = None
 
 def DisableReady():
     state = myDLS.TS()[3]

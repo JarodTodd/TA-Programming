@@ -73,7 +73,6 @@ if __name__ == "__main__":
             print("Terminating existing process...")
             worker.process.terminate()
             worker.process.waitForFinished()
-        print(type(argument))
         worker.process.setProgram(ironpython_executable)
         if isinstance(argument, list):  # Handle list arguments
             worker.start()
@@ -96,7 +95,6 @@ if __name__ == "__main__":
     worker.start_process_signal.connect(start_process)
 
     def handle_button_press(content, orientation, shots, scans):
-        print("Signal received")
         if len(content) == 1:
             content = content[0]
         worker.update_command(content, orientation, shots, scans)
@@ -133,7 +131,7 @@ if __name__ == "__main__":
         app.aboutToQuit.disconnect(stop_worker)
         app.quit()
 
-    main_app.shot_delay_app.interface.stop_measurement_signal.connect(stop_worker)
+    main_app.shot_delay_app.interface.stop_measurement_signal.connect(lambda: worker.stop())
 
     worker.start()
     app.aboutToQuit.connect(stop_worker)

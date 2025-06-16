@@ -211,6 +211,8 @@ class Heatmap_Interface(QObject):
                 if start != finish and steps > 1:
                     if self.step_option_box.currentText() == "Exponential":
                         self.content = generate_timepoints(start, finish, steps)
+                        for i in range(len(self.content)):
+                            self.content[i] = float(self.content[i])
                     elif self.step_option_box.currentText() == "Linear":
                         if steps < 2:
                             self.show_error_message("Number of steps must be at least 2.")
@@ -266,7 +268,6 @@ class Heatmap_Interface(QObject):
             path_length = float(self.startpopup.line_edits["Path Length: ps"].text())
 
         # Emit the signal with the collected values
-        print(directory, filename, sample, solvent, excitation_wavelength, path_length)
         self.metadata_signal.emit(directory, filename, sample, solvent, excitation_wavelength, path_length)
 
     def time_remaining_timer(self, t):
