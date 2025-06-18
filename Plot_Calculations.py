@@ -170,8 +170,10 @@ class ComputeData():
         
         #Pair shots and compute delta A
         with np.errstate(divide='ignore', invalid='ignore'):
-            delta_A = -np.log(np.divide(pump_on_dA[:n_pairs], pump_off_dA[:n_pairs]))
-
+            ratio = np.divide(pump_on_dA[:n_pairs], pump_off_dA[:n_pairs])
+            ratio[ratio <= 0] = np.nan  # avoid -inf from log(0) or log of negative values
+            delta_A = -np.log(ratio)
+          
         #Average delta_A per shot
         self.delta_A_matrix_avg = np.mean(delta_A, axis=0)
         
