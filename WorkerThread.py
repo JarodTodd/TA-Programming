@@ -157,6 +157,7 @@ class MeasurementWorker(QThread):
     @Slot(str)
     def run(self):
         print(f"This is {self._orientation}")
+        self._is_running = True
         if self._orientation in ("Regular", "Backwards", "Random"):
             try:
                 self._run_measurement_loop(self._content, self._shots, self._scans)
@@ -205,6 +206,7 @@ class MeasurementWorker(QThread):
             self.setup_socket(f"MeasurementLoop {content} {scans}")
             while self._is_running:
                 while b"\n" not in self.buffer:
+                    print("KLFJEASIFHIHEA")
                     chunk = self.conn.recv(1024)
                     if not chunk:
                         print("Connection closed.")
@@ -229,6 +231,7 @@ class MeasurementWorker(QThread):
         finally:
             self.conn.close()
             self.server_socket.close()
+            print("HAMKDALEJF")
 
 
 
@@ -435,13 +438,13 @@ class MeasurementWorker(QThread):
         if self.nos > 1:
             filename = f"{name}_Scan_{self.scans}.csv"
         else:
-            filenam = f"{name}.csv"
+            filename = f"{name}.csv"
         filepath = os.path.join(directory, filename)  # Combine directory and filename
         with open(filepath, mode='w', newline='') as file:
             writer = csv.writer(file)
             
             # Write metadata and measurement headers in the same row
-            writer.writerow(['Sample', 'Solvent', 'Pump', 'Path Length', 'Excitation Power', 'Delay (ps)'] + [f'Pixel_{i}' for i in range(1, len(self.averaged_probe_measurement[0]) - 1)])
+            writer.writerow(['Sample', 'Solvent', 'Pump', 'Path Length', 'Excitation Power', 'Delay (ps)'] + [f'{i}' for i in range(1, len(self.averaged_probe_measurement[0]) - 1)])
             
             # Write metadata and the first row of measurement data in the next row
             writer.writerow([sample, solvent, pump, pathlength, self.averaged_probe_measurement[0][0]] + list(self.averaged_probe_measurement[0][1:]))
@@ -483,7 +486,7 @@ class MeasurementWorker(QThread):
             writer = csv.writer(file)
 
             # Write metadata and measurement headers in the same row
-            writer.writerow(['Sample', 'Solvent', 'Pump', 'Path Length', 'Delay (ps)'] + [f'Pixel_{i}' for i in range(1, num_pixels + 1)])
+            writer.writerow(['Sample', 'Solvent', 'Pump', 'Path Length', 'Delay (ps)'] + [f'{i}' for i in range(1, num_pixels + 1)])
 
             # Write metadata and the first row of measurement data in the next row
             delay = self.content[0] if len(self.content) > 0 else None
