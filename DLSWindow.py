@@ -272,10 +272,11 @@ class DLSWindow(QMainWindow):
         if self.probe_worker.data_processor.dark_noise_correction is None:
             dark_noise = self.probe_inputs_avg
             self.probe_worker.data_processor.dark_noise_correction = dark_noise
-            self.save_probe_button.setText("Remove dark noise correction")
+            self.dark_noise_button.setText("Remove dark noise correction")
         else:
-            dark_noise = None
-            self.save_probe_button.setText("Correct dark noise")
+            self.probe_worker.data_processor.dark_noise_correction = None
+            self.probe_inputs_avg
+            self.dark_noise_button.setText("Correct dark noise")
 
     """
     Helper functions: outlier rejection
