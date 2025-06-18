@@ -227,10 +227,9 @@ class MeasurementWorker(QThread):
         except Exception as e:
             self.error_occurred.emit(str(e))
         finally:
-            if self.counter == len(content):
-                self.conn.close()
-                self.server_socket.close()
-                print(":JAESF")
+            self.conn.close()
+            self.server_socket.close()
+
 
 
     def handle_process_output(self):

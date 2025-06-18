@@ -65,6 +65,7 @@ def MoveRelative(delay):
 def MeasurementLoop(delays, scans=1):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect(('localhost', 9999))
+    print("Connected")
     last_item = 0
     reference = myDLS.RF_Get()[1] * 10**9 * 8 / c
     pos = myDLS.PA_Get()[1]  * 10**9 * 8 / c
@@ -102,6 +103,10 @@ def MeasurementLoop(delays, scans=1):
 
                 if b"stop" in buffer:
                     print("Stopping measurementloop")
+                    response = json.loads(buffer.decode().strip())
+                    print(f"Python response for point {delay}: {response}")
+                    s.close()
+                    s = None
                     return
             response = json.loads(buffer.decode().strip())
             print(f"Python response for point {delay}: {response}")

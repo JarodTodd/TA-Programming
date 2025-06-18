@@ -275,7 +275,7 @@ class DLSWindow(QMainWindow):
             self.probe_worker.data_processor.dark_noise_correction = self.dark_noise
             self.dark_noise_button.setText("Remove dark noise correction")
         else:
-            self.dak_noise = None
+            self.dark_noise = None
             self.probe_worker.data_processor.dark_noise_correction = self.dark_noise
             self.dark_noise_button.setText("Correct dark noise")
 

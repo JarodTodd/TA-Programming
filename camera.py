@@ -99,14 +99,14 @@ def	camera(number_of_shots, delay_number):
 	settings.camera_settings[drvno].region_size[4] = 8
 	settings.camera_settings[drvno].use_software_polling = 0
 	settings.camera_settings[drvno].VFREQ = 7
-	settings.camera_settings[drvno].dac_output[0][0] = 47854
-	settings.camera_settings[drvno].dac_output[0][1] = 47926
-	settings.camera_settings[drvno].dac_output[0][2] = 47775
-	settings.camera_settings[drvno].dac_output[0][3] = 47704
-	settings.camera_settings[drvno].dac_output[0][4] = 47740
-	settings.camera_settings[drvno].dac_output[0][5] = 47910
-	settings.camera_settings[drvno].dac_output[0][6] = 48230
-	settings.camera_settings[drvno].dac_output[0][7] = 48090
+	settings.camera_settings[drvno].dac_output[0][0] = 55000
+	settings.camera_settings[drvno].dac_output[0][1] = 55000
+	settings.camera_settings[drvno].dac_output[0][2] = 55000
+	settings.camera_settings[drvno].dac_output[0][3] = 55000
+	settings.camera_settings[drvno].dac_output[0][4] = 55000
+	settings.camera_settings[drvno].dac_output[0][5] = 55000
+	settings.camera_settings[drvno].dac_output[0][6] = 55000
+	settings.camera_settings[drvno].dac_output[0][7] = 55000
 
 	# Load ESLSCDLL.dll
 	"""Maybe make this a global variable in Main_window.py?"""
