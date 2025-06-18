@@ -173,6 +173,7 @@ class MeasurementWorker(QThread):
             finally:
                 self.conn.close()
                 self.server_socket.close()
+                print("HAELKFJASILEJF")
 
         if self._orientation == "StartUp":
             try:
@@ -189,7 +190,7 @@ class MeasurementWorker(QThread):
     def _run_measurement_loop(self, content: list[dict], shots: int, scans) -> None:
         try:
             self.ref, self.position = self.start_gui()
-            if not self.validate_reference_and_position(self.ref, self.position, content):
+            if not self.validate_reference_and_position(self.ref, content):
                 return
             
             self.barvalue = self.ref
@@ -345,7 +346,7 @@ class MeasurementWorker(QThread):
             QCoreApplication.processEvents()  # Allow the event loop to process signals
         return self.position
 
-    def validate_reference_and_position(self, ref, position, content):
+    def validate_reference_and_position(self, ref, content):
         for value in content:
                 if not 0 <= ref + value <= 8672:
                     self.error_occurred.emit(f"Reference point is out of range. {value}")
