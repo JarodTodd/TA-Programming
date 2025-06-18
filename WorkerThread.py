@@ -230,6 +230,7 @@ class MeasurementWorker(QThread):
             if self.counter == len(content):
                 self.conn.close()
                 self.server_socket.close()
+                print(":JAESF")
 
 
     def handle_process_output(self):
