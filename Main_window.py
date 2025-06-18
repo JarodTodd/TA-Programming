@@ -7,56 +7,73 @@ from DLSWindow import *
 from dAwindow import *
 import time
 
-# Paths of the IronPython parts; command prompt file and our command file.
+# Paths to IronPython executable and script
 ironpython_executable = r"C:\Users\PC032230\Documents\GitHub\TA-Programming\IronPython 3.4.2\net462\ipy.exe"
 script_path = r"C:\Users\PC032230\Documents\GitHub\TA-Programming\IronPythonDLS.py"
 
-
 class MainApp(QMainWindow):
-    # Initialize all the necessary parts of the code
+    """
+    Main application window for TA Measurements.
+    This class initializes the main GUI window, sets up the tabbed interface,
+    and manages the integration of sub-windows for different application features:
+    - Main Window (HeatmapWindow)
+    - Probe Spectrum (DLSWindow)
+    - dA Spectrum (dA_Window)
+    It also starts a background thread to update the probe spectrum in real time.
+    Attributes:
+        tabs (QTabWidget): The main tab widget containing all sub-windows.
+        dA_window (dA_Window): The window for dA Spectrum analysis.
+        dls_window (DLSWindow): The window for Probe Spectrum analysis.
+        shot_delay_app (HeatmapWindow): The main window for heatmap visualization.
+
+    """
     def __init__(self):
         super().__init__()
         self.setWindowTitle("HamburgerPresserWorks (tm)")
         self.setGeometry(100, 100, 800, 600)
 
-        # Create a QTabWidget
+        # Set up main tab widget and sub-windows
         self.tabs = QTabWidget()
         self.setCentralWidget(self.tabs)
         self.dA_window = dA_Window()
         self.dls_window = DLSWindow(self.dA_window)
         self.shot_delay_app = HeatmapWindow(self.dls_window, self.dA_window)
 
-        # Add tabs    
+        # Add application tabs
         self.tabs.addTab(self.shot_delay_app, "Main Window")
         self.tabs.addTab(self.dls_window, "Probe Spectrum")
         self.tabs.addTab(self.dA_window, "dA Spectrum")
 
-        # Start the graph thread
+        # Start background thread for probe spectrum updates
         self.dls_window.start_probe_thread()
 
-# Execute the entire GUI from a central location.
 if __name__ == "__main__":
     app = QApplication([])
     main_app = MainApp()
     main_app.show()
-    # Initialize the worker thread
+
+    # Initialize worker thread for measurements and communication
     worker = MeasurementWorker("", "StartUp", 0, 0, 'localhost', 9999)
 
-    """These connections update the heatmap, and the two corresponding graphs."""
+    # --- Signal connections for updating UI and data ---
+
+    # Update heatmap and graphs when new data arrives
     worker.plot_row_update.connect(main_app.shot_delay_app.ta_widgets.update_row, Qt.QueuedConnection)
     worker.reset_currentMatrix.connect(main_app.shot_delay_app.ta_widgets.reset_currentMatrix, Qt.QueuedConnection)
-    main_app.shot_delay_app.interface.parsed_content_signal.connect(main_app.shot_delay_app.ta_widgets.update_delay_stages, Qt.QueuedConnection)
+    main_app.shot_delay_app.interface.parsed_content_signal.connect(
+        main_app.shot_delay_app.ta_widgets.update_delay_stages, Qt.QueuedConnection
+    )
 
-    """These connections are responsible for starting,stopping and updatiing the probe spectrum in the DLSWindow when a measurement is started."""
+    # Control probe spectrum thread and update probe data during measurements
     worker.started.connect(main_app.dls_window.stop_probe_thread, Qt.QueuedConnection)
     worker.update_probe.connect(main_app.dls_window.update_probe_data, Qt.QueuedConnection)
     worker.finished.connect(main_app.dls_window.start_probe_thread, Qt.QueuedConnection)
-    
-    """These connections are responsible for the dA spectrum in the dAWindow and keep it updated."""
+
+    # Keep dA spectrum updated in dAWindow
     main_app.dls_window.probe_worker.dA_update.connect(main_app.dA_window.update_dA_graph, Qt.QueuedConnection)
     worker.update_dA.connect(main_app.dA_window.update_dA_graph, Qt.QueuedConnection)
 
-    """These connections update sliders and progress bars to display the correct delay time."""
+    # Update delay sliders, progress bars, and reference time
     worker.update_delay_bar_signal.connect(main_app.shot_delay_app.update_current_delay)
     worker.update_delay_bar_signal.connect(main_app.dls_window.update_delay_bar)
     worker.update_delay_bar_signal.connect(main_app.shot_delay_app.interface.update_progress_bar)
@@ -65,65 +82,72 @@ if __name__ == "__main__":
     worker.current_step_signal.connect(main_app.shot_delay_app.update_current_step)
     main_app.dA_window.pos_change_signal.connect(main_app.shot_delay_app.update_current_delay)
 
-    """This connection handles error messages from all applications/functions."""
+    # Display error messages from any part of the application
     worker.error_occurred.connect(main_app.shot_delay_app.show_error_message)
 
-    """This connection makes sure the stop button is pressable at the right time."""
+    # Enable/disable stop button appropriately
     worker.stop_button.connect(main_app.shot_delay_app.interface.disable_stop_button)
 
+    # --- Process management for IronPython commands ---
+
     def start_process(argument):
-        # Start the process if it doesn't yet exist. This makes sure that there is only one process at a time
+        """
+        Start or restart the IronPython process with the given argument.
+        Ensures only one process runs at a time.
+        """
         if worker.process is None:
             worker.process = QProcess()
 
-        # Have the newest command be the one that is executed
+        # Terminate any running process before starting a new one
         if worker.process.state() == QProcess.Running:
             print("Terminating existing process...")
             worker.process.terminate()
             worker.process.waitForFinished()
 
-        # Make sure the commands are being ran in IronPython
         worker.process.setProgram(ironpython_executable)
 
-        if isinstance(argument, list):  # Handle list arguments
+        if isinstance(argument, list):
+            # If argument is a list, start the worker thread (used for batch operations)
             worker.start()
-
-        elif isinstance(argument, str):  # Handle string arguments
+        elif isinstance(argument, str):
+            # If argument is a string, run the IronPython script with the argument
             worker.process.setArguments([script_path, argument])
             worker.process.start()
 
-
+            # Disconnect previous finished signal if necessary
             if worker.process and worker.process.state() == QProcess.Running:
                 try:
                     worker.process.finished.disconnect()
                 except RuntimeError:
                     print("Signal 'finished' was already disconnected or not connected.")
-                
-            """These connections are for outputs; mostly used for debugging if you have errors."""
+
+            # Connect process output/error for debugging
             worker.process.readyReadStandardOutput.connect(worker.handle_process_output)
             worker.process.readyReadStandardError.connect(worker.handle_process_error)
             worker.process.finished.connect(lambda: print("Process finished.", time.time()))
 
     worker.start_process_signal.connect(start_process)
 
-    # Function to handle button presses instead of delaytime lists.
     def handle_button_press(content, orientation, shots, scans):
+        """
+        Handle measurement button presses, update worker command, and start process.
+        """
         if len(content) == 1:
             content = content[0]
         worker.update_command(content, orientation, shots, scans)
         start_process(content)
 
-
-    """These connections handle button presses and measurement starts."""
+    # Connect measurement start signals from all relevant UI components
     main_app.dls_window.run_command_signal.connect(handle_button_press)
     main_app.shot_delay_app.interface.trigger_worker_run.connect(handle_button_press)
     main_app.dA_window.run_command_signal.connect(handle_button_press)
     main_app.shot_delay_app.interface.metadata_signal.connect(worker.update_metadata)
 
-
-    """This function stops the worker thread when the GUI is closed."""
     def stop_worker():
-        # Make sure that all signals are disconnected
+        """
+        Cleanly stop the worker thread and any running processes when the GUI closes.
+        """
+        # Disconnect process signals and terminate process if running
         if worker.process:
             try:
                 worker.process.readyReadStandardOutput.disconnect()
@@ -132,16 +156,15 @@ if __name__ == "__main__":
             except RuntimeError:
                 print("Signals already disconnected.")
 
-            # Make sure that the worker process isn't stopped prematurely
             if worker.process.state() == QProcess.Running:
                 worker.process.terminate()
                 worker.process.waitForFinished()
 
         worker.stop()
-        # Stop the probe thread
-        main_app.dls_window.stop_probe_thread() 
+        # Stop probe spectrum thread
+        main_app.dls_window.stop_probe_thread()
 
-        # Process GUI events to keep updated and subsequently close the application
+        # Process remaining GUI events and quit application
         QCoreApplication.processEvents()
         app.aboutToQuit.disconnect(stop_worker)
         app.quit()
@@ -152,8 +175,8 @@ if __name__ == "__main__":
     # Start the worker thread
     worker.start()
 
-    # When the GUI is closed execute stop_worker
+    # Ensure worker and threads are stopped when application exits
     app.aboutToQuit.connect(stop_worker)
 
-    # Start the application
+    # Run the application event loop
     app.exec()
