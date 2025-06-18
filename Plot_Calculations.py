@@ -137,15 +137,16 @@ class ComputeData():
         """
         block = np.asarray(block)
 
-        if self.dark_noise_correction is not None:
-            block = block - self.dark_noise_correction
-
         #Boolean masks for seperating states
         probe = block[block[:, 2] < 49152,  start_pixel:end_pixel]
 
         pump_off_dA = block[block[:, 2] < 49152,  start_pixel:end_pixel]
         pump_on_dA = block[block[:, 2] >= 49152, start_pixel:end_pixel]
 
+        if self.dark_noise_correction is not None:
+            probe = probe - self.dark_noise_correction
+            pump_off_dA = pump_off_dA - self.dark_noise_correction
+            pump_on_dA = pump_on_dA - self.dark_noise_correction
 
         # Probe spectra
         if self.outlier_rejection_probe == True:
