@@ -92,7 +92,6 @@ def MeasurementLoop(delays, scans=1):
         last_item = delay
         if ps_position is not None:
             # Send data to CPython for calculation
-            print("FLHEAFHLSKEAJF")
             data = delay
             message = json.dumps(data) + "\n"
             s.sendall(message.encode())
@@ -101,7 +100,6 @@ def MeasurementLoop(delays, scans=1):
             buffer = b""
             while b"\n" not in buffer:
                 buffer += s.recv(1024)
-                print("jFEIHAFASFEHEAFA")
                 if b"stop" in buffer:
                     print("Stopping measurementloop")
                     response = json.loads(buffer.decode().strip())
@@ -249,9 +247,5 @@ if __name__ == "__main__":
 
 # Close the instrument
 myDLS.CloseInstrument()
-import atexit
 
-@atexit.register
-def cleanup():
-    log_file.close()
 
