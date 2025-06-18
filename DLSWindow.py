@@ -123,6 +123,10 @@ class DLSWindow(QMainWindow):
         self.save_probe_button.clicked.connect(lambda: self.save_probe_data())
         left_layout.addWidget(self.save_probe_button)
 
+        # Button to correct for dark noise
+        self.dark_noise_button = QPushButton("Correct dark noise")
+        self.dark_noise_button.clicked.connect(lambda: self.correct_dark_noise())
+        left_layout.addWidget(self.dark_noise_button)
 
         # ==== RIGHT COLUMN : Delay‑line control
         right_layout = QVBoxLayout()
@@ -264,6 +268,14 @@ class DLSWindow(QMainWindow):
         except Exception as e:
             self.show_error_message(f"Failed to save probe data: {e}")
 
+    def correct_dark_noise(self):
+        if self.probe_worker.data_processor.dark_noise_correction is None:
+            dark_noise = self.probe_inputs_avg
+            self.probe_worker.data_processor.dark_noise_correction = dark_noise
+            self.save_probe_button.setText("Remove dark noise correction")
+        else:
+            dark_noise = None
+            self.save_probe_button.setText("Correct dark noise")
 
     """
     Helper functions: outlier rejection

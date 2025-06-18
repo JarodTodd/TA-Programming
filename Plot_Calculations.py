@@ -27,6 +27,8 @@ class ComputeData():
         self.rejected_dA = 0                   # percentage of rejected shots
         self.rejected_probe = 0
 
+        self.dark_noise_correction = None
+
     def OutlierRejection_probe(self, block, range_start: int | None = None, range_end:   int | None = None):
         """
         Rejects outliers for the real-time probe specrtra in the DLSWindow. 
@@ -134,6 +136,9 @@ class ComputeData():
         Function for computing probe spectra and dA spectra
         """
         block = np.asarray(block)
+
+        if self.dark_noise_correction is not None:
+            block = block - self.dark_noise_correction
 
         #Boolean masks for seperating states
         probe = block[block[:, 2] < 49152,  start_pixel:end_pixel]
