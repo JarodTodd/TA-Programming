@@ -102,7 +102,6 @@ def MeasurementLoop(delays, scans=1):
 
                 if b"stop" in buffer:
                     print("Stopping measurementloop")
-                    s.close()
                     return
             response = json.loads(buffer.decode().strip())
             print(f"Python response for point {delay}: {response}")

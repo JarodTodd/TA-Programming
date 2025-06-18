@@ -126,6 +126,7 @@ class Heatmap_Interface(QObject):
         self.stop_button.setText("Stop")
         self.stop_button.setEnabled(False)
         self.stop_button.clicked.connect(lambda: self.stop_measurement_signal.emit())
+        self.stop_button.clicked.connect(lambda: self.time_remaining(0))
         left_panel.addWidget(self.stop_button)
 
         self.total_steps.setText(f"100")
@@ -171,9 +172,12 @@ class Heatmap_Interface(QObject):
             widget.setMinimum(1)
             widget.setMaximum(999999)
             widget.setSingleStep(1)
-            self.scans_box.setValue(1)
-            self.integration_time_box.setValue(1000)
             widget.setMaximum(9999999)
+            self.scans_box.setValue(1)
+            self.scans_box.setToolTip("Number of scans has to be atleast 1.")
+            self.integration_time_box.setValue(1000)
+            self.integration_time_box.setRange(10, 3500)
+            self.integration_time_box.setToolTip("Number of shots has to be in between 10 and 3500.")
         elif isinstance(widget, QLineEdit):
             widget.setReadOnly(True)
             widget.setStyleSheet("background-color: lightgray;")
