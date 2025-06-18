@@ -244,10 +244,11 @@ class Heatmap_Interface(QObject):
             )
         print(f"Self.content = {self.content}")
         self.parsed_content_signal.emit(self.content)
-        self.time_remaining_timer(int((int(self.total_steps.text())*9/25) + 7))
+        self.time_remaining_timer(int((int(self.total_steps.text())*9/30) + 9))
         self.emit_metadata_signal()
         self.stop_button.setEnabled(True)
         self.startpopup.close()
+        self.startpopup.filename.setText("")
 
     def emit_metadata_signal(self):
         directory = self.startpopup.dir_path.text()
