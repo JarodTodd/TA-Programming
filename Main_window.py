@@ -7,7 +7,7 @@ from DLSWindow import *
 from dAwindow import *
 import time
 
-# Paths of the IronPython parts; command prompt file and our command file.
+# Paths of the IronPython parts; command prompt file and our command file
 ironpython_executable = r"C:\Users\PC032230\Documents\GitHub\TA-Programming\IronPython 3.4.2\net462\ipy.exe"
 script_path = r"C:\Users\PC032230\Documents\GitHub\TA-Programming\IronPythonDLS.py"
 
@@ -34,7 +34,7 @@ class MainApp(QMainWindow):
         # Start the graph thread
         self.dls_window.start_probe_thread()
 
-# Execute the entire GUI from a central location.
+# Execute the entire GUI from a central location
 if __name__ == "__main__":
     app = QApplication([])
     main_app = MainApp()
@@ -106,7 +106,7 @@ if __name__ == "__main__":
 
     worker.start_process_signal.connect(start_process)
 
-    # Function to handle button presses instead of delaytime lists.
+    # Function to handle button presses instead of delaytime lists
     def handle_button_press(content, orientation, shots, scans):
         print("Signal received")
         if len(content) == 1:

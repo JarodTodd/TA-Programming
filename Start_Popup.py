@@ -18,7 +18,8 @@ class StartPopup(QDialog):
             "Sample": QLineEdit(),
             "Solvent": QLineEdit(),
             "Excitation wavelength: nm": QLineEdit(),
-            "Path Length: ps": QLineEdit()
+            "Path Length: ps": QLineEdit(),
+            "Excitation Power: mW": QLineEdit()
         }
         self.line_edits = fields  # Store references to line edits in a dictionary
 
