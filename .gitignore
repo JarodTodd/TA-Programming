@@ -172,9 +172,6 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
-camera_output0.csv
-camera_output1.csv
-IronPythonDLS.py
 IronPython 3.4/IKVM.Reflection.dll
 IronPython 3.4/ipy.exe
 IronPython 3.4/ipy32.exe
@@ -198,13 +195,6 @@ IronPython 3.4/Scripts/easy_install.exe
 IronPython 3.4/Scripts/pip.exe
 IronPython 3.4/Scripts/pip3.4.exe
 IronPython 3.4/Scripts/pip3.exe
-camera_output3.csv
-camera_output2.csv
-camera_output4.csv
-camera_output6.csv
-test_kineticcursor.py
-*.csv
-*.csv
-
 debug_log.txt
 Update Meeting.pptx
+fileloctests

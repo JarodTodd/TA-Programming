@@ -27,12 +27,8 @@ if result != 0:
     sys.stderr.write(f"Failed to open instrument on {instrument}. Error code: {result}\n")
     sys.exit(1)
 
-def Connect():
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect(('localhost', 9999))  # Change to your server address and port
-    s.close()
 
-def StartUp():
+def Initialize():
     errorcode = myDLS.TS()[2]
     state = myDLS.TS()[3]
     if errorcode == "00000":
@@ -70,20 +66,23 @@ def MeasurementLoop(delays, scans=1):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect(('localhost', 9999))
     last_item = 0
-    reference = myDLS.RF_Get()[1]
+    reference = myDLS.RF_Get()[1] * 10**9 * 8 / c
+    pos = myDLS.PA_Get()[1]  * 10**9 * 8 / c
+    difference = pos - reference
     while myDLS.TS()[3] not in ["46", "47", "48", "49"]:
         print("Sleeping for Reference")
         time.sleep(0.05)
-    myDLS.PA_Set(reference)
-    reference = myDLS.PA_Get()[1] * 10**9 * 8 / c
+
     print(delays)
-    print("Moved to Reference")  # Set position to reference before starting measurements
 
     # Multiply delays for the number of scans
     repeated_delays = delays * scans
 
     for delay in repeated_delays:
-        pos = delay - last_item
+        if last_item == 0:
+            pos = delay - difference
+        else:
+            pos = delay - last_item
         print(pos, delay, last_item)
         while myDLS.TS()[3] not in ["46", "47", "48", "49"]:
             print("Controller not ready, waiting...")  
@@ -111,6 +110,7 @@ def MeasurementLoop(delays, scans=1):
         else:
             print(f"Skipping point {delay} due to hardware state.")
     s.close()
+    s = None
 
 def DisableReady():
     state = myDLS.TS()[3]
@@ -199,10 +199,9 @@ if __name__ == "__main__":
         command = sys.argv[1]
         try:
             if command == "Initialize":
-                StartUp()
+                Initialize()
             elif command == "MovePositive":
                 MoveRelative(100)  # Adjust value if needed
-                print("Moved to positive position.")
             elif command == "MoveNegative":
                 MoveRelative(-100)
             elif command == "Disable":
@@ -235,8 +234,7 @@ if __name__ == "__main__":
                 GetReference()
             elif command == "StartGUI":
                 StartGUI()
-            elif command == "Connect":
-                Connect()
+
             else:
                 sys.stderr.write(f"Unknown command: {command}\n")
         except Exception as e:
