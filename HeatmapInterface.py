@@ -126,7 +126,7 @@ class Heatmap_Interface(QObject):
         self.stop_button.setText("Stop")
         self.stop_button.setEnabled(False)
         self.stop_button.clicked.connect(lambda: self.stop_measurement_signal.emit())
-        self.stop_button.clicked.connect(lambda: self.time_remaining(0))
+        self.stop_button.clicked.connect(lambda: self.time_remaining_timer(0))
         left_panel.addWidget(self.stop_button)
 
         self.total_steps.setText(f"100")
