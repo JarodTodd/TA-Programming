@@ -27,12 +27,8 @@ if result != 0:
     sys.stderr.write(f"Failed to open instrument on {instrument}. Error code: {result}\n")
     sys.exit(1)
 
-def Connect():
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect(('localhost', 9999))  # Change to your server address and port
-    s.close()
 
-def StartUp():
+def Initialize():
     errorcode = myDLS.TS()[2]
     state = myDLS.TS()[3]
     if errorcode == "00000":
@@ -203,10 +199,9 @@ if __name__ == "__main__":
         command = sys.argv[1]
         try:
             if command == "Initialize":
-                StartUp()
+                Initialize()
             elif command == "MovePositive":
                 MoveRelative(100)  # Adjust value if needed
-                print("Moved to positive position.")
             elif command == "MoveNegative":
                 MoveRelative(-100)
             elif command == "Disable":
@@ -239,8 +234,7 @@ if __name__ == "__main__":
                 GetReference()
             elif command == "StartGUI":
                 StartGUI()
-            elif command == "Connect":
-                Connect()
+
             else:
                 sys.stderr.write(f"Unknown command: {command}\n")
         except Exception as e:

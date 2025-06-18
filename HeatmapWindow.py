@@ -62,6 +62,8 @@ class HeatmapWindow(QWidget):
         self.grid_layout.addWidget(self.interface_widget, 1, 1)
 
         self.setLayout(self.grid_layout)
+
+        
     def update_current_delay(self, value):
         """Update the current delay values."""
         value = round(value, 2)

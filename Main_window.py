@@ -147,7 +147,7 @@ if __name__ == "__main__":
         app.quit()
 
     """This connects the stop button to the stop function for the worker thread."""
-    main_app.shot_delay_app.interface.stop_measurement_signal.connect(lambda: worker.stop())
+    main_app.shot_delay_app.interface.stop_measurement_signal.connect(lambda: worker.stop)
 
     # Start the worker thread
     worker.start()

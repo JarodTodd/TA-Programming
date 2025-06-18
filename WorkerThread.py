@@ -110,13 +110,7 @@ class MeasurementWorker(QThread):
         except Exception as e:
             print(f"Error in setup_socket: {e}")
             self.error_occurred.emit(str(e))
-        finally:
-            if argument == "Connect":
-                if hasattr(self, "conn"):
-                    self.conn.close()  # Ensure the connection is closed
-                if hasattr(self, "server_socket"):
-                    self.server_socket.close()  # Ensure the server socket is closed
-                    print("Server socket closed.")
+
 
 
     def receive_data_from_client(self):
@@ -330,11 +324,12 @@ class MeasurementWorker(QThread):
             self.process.waitForFinished()
         self.process = None
 
+
         self.quit()
         if not self.wait(5000):
             self.terminate()
             self.wait()
-        
+    
         print("Worker thread stopped.")
 
 
