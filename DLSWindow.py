@@ -37,6 +37,7 @@ class DLSWindow(QMainWindow):
         self.worker = MeasurementWorker("", "StartUp", 0, 0, 'localhost', 9999)
         self.worker.update_delay_bar_signal.connect(self.update_delay_bar)
         self.dA_window = dA_Window
+        self.dark_noise = None
 
         # Build GUI
         central_widget = QWidget()
@@ -270,12 +271,12 @@ class DLSWindow(QMainWindow):
 
     def correct_dark_noise(self):
         if self.probe_worker.data_processor.dark_noise_correction is None:
-            dark_noise = self.probe_inputs_avg
-            self.probe_worker.data_processor.dark_noise_correction = dark_noise
+            self.dark_noise = self.probe_inputs_avg
+            self.probe_worker.data_processor.dark_noise_correction = self.dark_noise
             self.dark_noise_button.setText("Remove dark noise correction")
         else:
-            self.probe_worker.data_processor.dark_noise_correction = None
-            self.probe_inputs_avg
+            self.dak_noise = None
+            self.probe_worker.data_processor.dark_noise_correction = self.dark_noise
             self.dark_noise_button.setText("Correct dark noise")
 
     """

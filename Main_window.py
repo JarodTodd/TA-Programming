@@ -112,6 +112,7 @@ if __name__ == "__main__":
 
         if isinstance(argument, list):
             # If argument is a list, start the worker thread (used for batch operations)
+            worker.data_processor.dark_noise_correction = main_app.dls_window.dark_noise #set dark noise level in the data_processor
             worker.start()
         elif isinstance(argument, str):
             # If argument is a string, run the IronPython script with the argument
