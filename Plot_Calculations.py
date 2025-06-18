@@ -138,6 +138,7 @@ class ComputeData():
         block = np.asarray(block)
 
         if self.dark_noise_correction is not None:
+            self.dark_noise_correction = self.dark_noise_correction[:, start_pixel:end_pixel]
             block = block - self.dark_noise_correction
 
         #Boolean masks for seperating states
