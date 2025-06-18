@@ -30,6 +30,7 @@ class MainApp(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("HamburgerPresserWorks (tm)")
+        self.setWindowIcon(QIcon("hamburger.ico"))
         self.setGeometry(100, 100, 800, 600)
 
         # Set up main tab widget and sub-windows
@@ -52,6 +53,8 @@ if __name__ == "__main__":
     app = QApplication([])
     main_app = MainApp()
     main_app.show()
+    main_app.setWindowIcon(QIcon("hamburger.ico"))
+
 
     # Initialize worker thread for measurements and communication
     worker = MeasurementWorker("", "StartUp", 0, 0, 'localhost', 9999)
