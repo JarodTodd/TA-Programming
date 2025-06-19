@@ -68,6 +68,9 @@ if __name__ == "__main__":
         main_app.shot_delay_app.ta_widgets.update_delay_stages, Qt.QueuedConnection
     )
 
+    #connect the wavelength popup window with the heatmap plots
+    main_app.shot_delay_app.interface.wavelengthpopup.wavelength_signal(main_app.shot_delay_app.ta_widgets.set_wavelength_mapping)
+
     # Control probe spectrum thread and update probe data during measurements
     worker.started.connect(main_app.dls_window.stop_probe_thread, Qt.QueuedConnection)
     worker.update_probe.connect(main_app.dls_window.update_probe_data, Qt.QueuedConnection)
