@@ -434,7 +434,7 @@ class MeasurementWorker(QThread):
         return blocks
     
 
-    def save_scan_file(self, directory, name, sample, solvent, pump, pathlength):
+    def save_scan_file(self, directory, name, sample, solvent, pump, pathlength, exc_power):
         if self.nos > 1:
             filename = f"{name}_Scan_{self.scans}.csv"
         else:
@@ -447,7 +447,7 @@ class MeasurementWorker(QThread):
             writer.writerow(['Sample', 'Solvent', 'Pump', 'Path Length', 'Excitation Power', 'Delay (ps)'] + [f'{i}' for i in range(1, len(self.averaged_probe_measurement[0]) - 1)])
             
             # Write metadata and the first row of measurement data in the next row
-            writer.writerow([sample, solvent, pump, pathlength, self.averaged_probe_measurement[0][0]] + list(self.averaged_probe_measurement[0][1:]))
+            writer.writerow([sample, solvent, pump, pathlength, exc_power, self.averaged_probe_measurement[0][0]] + list(self.averaged_probe_measurement[0][1:]))
             
             # Write the remaining rows of measurement data (excluding the first row already written)
             for row in self.averaged_probe_measurement[1:]:

@@ -5,6 +5,7 @@ from PySide6.QtWidgets import *
 from exponential_steps import *
 from Start_Popup import *
 import csv
+import numpy as np
 
 class Heatmap_Interface(QObject):
 
@@ -13,7 +14,7 @@ class Heatmap_Interface(QObject):
     stop_measurement_signal = Signal()
 
     """This signal transmits the metadata filled in in the pop-up window at measurement start."""
-    metadata_signal = Signal(str, str, str, str, float, float)
+    metadata_signal = Signal(str, str, str, str, float, float, float)
 
     """This signal emits the list of delay times after formatting them properly."""
     parsed_content_signal = Signal(list)
@@ -263,17 +264,22 @@ class Heatmap_Interface(QObject):
             solvent = "Unknown"
 
         if self.startpopup.line_edits["Excitation wavelength: nm"].text() == "":
-            excitation_wavelength = None
+            excitation_wavelength = np.nan
         else:
             excitation_wavelength = float(self.startpopup.line_edits["Excitation wavelength: nm"].text())
 
         if self.startpopup.line_edits["Path Length: ps"].text() == "":
-            path_length = None
+            path_length = np.nan
         else:
             path_length = float(self.startpopup.line_edits["Path Length: ps"].text())
 
+        if self.startpopup.line_edits["Excitation Power: mW"].text() == "":
+            excitation_power = np.nan
+        else:
+            excitation_power = float(self.startpopup.line_edits["Excitation Power: mW"].text())
+
         # Emit the signal with the collected values
-        self.metadata_signal.emit(directory, filename, sample, solvent, excitation_wavelength, path_length)
+        self.metadata_signal.emit(directory, filename, sample, solvent, excitation_wavelength, path_length, excitation_power)
 
     def time_remaining_timer(self, t):
         self.remaining_time = t
