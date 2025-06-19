@@ -5,6 +5,37 @@ from PySide6.QtCore import *
 from PySide6.QtWidgets import QCheckBox
 pg.setConfigOptions(useOpenGL=True, imageAxisOrder='row-major')
 
+class ScaledAxis(pg.AxisItem):
+    """
+    AxisItem that, when `self.values` is None, shows raw x-values;
+    otherwise rounds each tick to an int, clips to [0..len(values)-1],
+    and uses values[idx] as the label.
+    """
+    def __init__(self, orientation="bottom"):
+        super().__init__(orientation=orientation)
+        self.values = None
+
+    def set_values(self, array):
+        """Supply a 1D array / list of physical values, same length as pixels."""
+        self.values = np.asarray(array, float)
+        # force a redraw by pyqtgrap
+        self.update()
+
+    def clear_values(self):
+        """Returns to pixel labeling."""
+        self.values = None
+        self.update()
+
+    def tickStrings(self, tick_positions, scale, spacing):
+        """Sets pixel or wavelength ticks"""
+        x = np.asarray(tick_positions)
+        if self.values is None: # no wavelenghts lavel each tick by pixel
+            labels = x
+        else: # apply pixel to wavelength transformation
+            idx = np.clip(np.rint(x).astype(int), 0, len(self.values)-1)
+            labels = self.values[idx]
+        return [f"{v:.0f}" for v in labels]
+
 
 class TAPlotWidget(QObject):
     """
@@ -21,6 +52,9 @@ class TAPlotWidget(QObject):
         
         self.sync_from_hline = False
         self.sync_from_pixel = False
+
+        #pixel to wavelenght calibration
+        self.wavelenghts = None
 
         # data at inital heatmap draw
         self.delay_times   = np.asarray(delay_times,  dtype=float)
@@ -41,12 +75,17 @@ class TAPlotWidget(QObject):
         self.canvas_heatmap = pg.PlotWidget(parent)
         self.delay_axis = pg.AxisItem(orientation='left')
         self.delay_axis.setStyle(showValues=False, tickLength=-5)
-        self.delay_axis.setPen(None) 
-        self.canvas_heatmap.setAxisItems({'left': self.delay_axis})
+        self.delay_axis.setPen(None)
+
+        # wavelength calibration
+        self.heatmap_wavelength_axis = ScaledAxis(orientation='bottom')
+        self.canvas_heatmap.setAxisItems({'left': self.delay_axis, 'bottom': self.heatmap_wavelength_axis}) 
+
+        # bottom axis: start in pixel units
         self.canvas_heatmap.setLabels(left="Delay / ps", bottom="Pixel index")
         self.canvas_heatmap.getViewBox().setMouseEnabled(x=True, y=True)
-        self.canvas_heatmap.setLimits(xMin=0, xMax=1024, yMin=-9000, yMax=9000)  
-
+        self.canvas_heatmap.setLimits(xMin=0, xMax=1024, yMin=-9000, yMax=9000)
+ 
         # create heatmap ImageItem
         self.mesh = pg.ImageItem(self.active_matrix, axisOrder='row-major')
         self.mesh.setRect(QRectF(self.pixel_indices.min(), self.delay_times.min(),self.pixel_indices.size, self.delay_times.max() - self.delay_times.min()))
@@ -82,6 +121,11 @@ class TAPlotWidget(QObject):
 
         # plot2
         self.canvas_plot2 = HoverPlotWidget(parent)
+
+        # wavelength calibration
+        self.plot2_wavelength_axis = ScaledAxis(orientation='bottom')
+        self.canvas_plot2.setAxisItems({'bottom': self.plot2_wavelength_axis})
+
         self.canvas_plot2.setLabels(left="ΔA", bottom="Pixel index")
         self.canvas_plot2.setLimits(xMin=0, xMax=1024, yMin=-1, yMax=1)
         self.plot2_avg = self.canvas_plot2.plot([], [], pen=pg.mkPen('r', width=1), name="Avg")
@@ -232,8 +276,12 @@ class TAPlotWidget(QObject):
         # update plot 1: delay dependent spectra at selected pixel index
         self.plot1_avg.setData(self.delay_times, self.delta_A_matrix_avg[:, pixel_idx])
         self.plot1_cur.setData(self.delay_times, self.delta_A_matrix_current[:, pixel_idx])
-        self.canvas_plot1.setTitle(f"pixel: {pixel_idx}")
         self.vline_pl1.setValue(self.delay_times[delay_idx])
+        if self.wavelenghts is None:
+            self.canvas_plot1.setTitle(f"pixel: {pixel_idx}")
+        else:
+            wavelength = self.wavelenghts[pixel_idx]
+            self.canvas_plot1.setTitle(f"λ: {wavelength:.0f} nm")
 
         # update plot 2: pixel dependent spectra at selected delay index
         self.plot2_avg.setData(self.pixel_indices, self.delta_A_matrix_avg[delay_idx, :])
@@ -404,7 +452,33 @@ class TAPlotWidget(QObject):
         self.vline_heatmap.setValue(self.vline_pl2.value())
 
         # update secondary plots with correct values
-        self.update_secondary() 
+        self.update_secondary()
+
+    """Helper functions: wavelenght calibration"""
+    def set_wavelength_mapping(self, wavelengths, label="Wavelength / nm"):
+        """
+        Switch both x-axes to show `wavelengths[i]` at pixel i.
+        """
+        self.wavelenghts = wavelengths
+        
+        self.heatmap_wavelength_axis.set_values(wavelengths)
+        self.plot2_wavelength_axis.set_values(wavelengths)
+        self.canvas_heatmap.setLabel('bottom', label)
+        self.canvas_plot2.setLabel('bottom', label)
+        self.update_secondary()        # refresh titles, cursors, etc.
+
+    def reset_to_pixel_axis(self, label="Pixel index"):
+        """
+        Drop the wavelength lookup, back to raw pixel numbers.
+        """
+
+        self.wavelenghts = None
+
+        self.heatmap_wavelength_axis.clear_values()
+        self.plot2_wavelength_axis.clear_values()
+        self.canvas_heatmap.setLabel('bottom', label)
+        self.canvas_plot2.setLabel('bottom', label)
+        self.update_secondary()
 
 
 # ========= HoverPlotWidget Class =========
