@@ -59,7 +59,6 @@ def generate_timepoints(t_start, t_end, num_points, t0=0):
             timepoints = np.concatenate((pre_dense, new_list)) # Add the background and other steps together into one list
             timepoints.sort()
             timepoints = [value for value in timepoints]
-            np.savetxt("time_points.txt", timepoints, fmt="%s")
             return timepoints
 
         # Recalculate the number of remaining points after duplication and flipping,
