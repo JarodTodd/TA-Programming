@@ -206,7 +206,6 @@ class MeasurementWorker(QThread):
             self.setup_socket(f"MeasurementLoop {content} {scans}")
             while self._is_running:
                 while b"\n" not in self.buffer:
-                    print("KLFJEASIFHIHEA")
                     chunk = self.conn.recv(1024)
                     if not chunk:
                         print("Connection closed.")
@@ -231,7 +230,6 @@ class MeasurementWorker(QThread):
         finally:
             self.conn.close()
             self.server_socket.close()
-            print("HAMKDALEJF")
 
 
 
@@ -308,7 +306,7 @@ class MeasurementWorker(QThread):
                 print(f"Error saving partial scan data: {e}")
 
         # Save average of all scans if more than one scan
-        if hasattr(self, "measurement_average") and getattr(self, "scans") > 1 and self.measurement_average:
+        if hasattr(self, "measurement_average") and self.nos > 1 and self.measurement_average:
             try:
                 self.save_avg_file(
                     getattr(self, "directory", ""),

@@ -4,6 +4,7 @@ from PySide6.QtGui import *
 from PySide6.QtWidgets import *
 from exponential_steps import *
 from Start_Popup import *
+from Wavelength_Popup import *
 import csv
 import numpy as np
 
@@ -23,6 +24,7 @@ class Heatmap_Interface(QObject):
     def __init__(self):
         super().__init__()
         self.startpopup = StartPopup()
+        self.wavelengthpopup = WavelengthPopUp()
         self.content = []
 
     def setupUi(self, Interface):
@@ -117,7 +119,7 @@ class Heatmap_Interface(QObject):
         self.start_button = QPushButton()
         self.start_button.setText("Start Measurement")
         self.start_button.setEnabled(False)
-        self.start_button.clicked.connect(self.open_popup)
+        self.start_button.clicked.connect(self.open_start_popup)
         self.startpopup.real_start_button.clicked.connect(self.on_start_button_clicked)
 
 
@@ -149,6 +151,9 @@ class Heatmap_Interface(QObject):
         self.tabWidget.currentChanged.connect(lambda: self.on_tab_change())
 
         hbox = QHBoxLayout()
+        self.wavelength_button = QPushButton("Wavelength Calibration")
+        self.wavelength_button.clicked.connect(self.open_wavelength_popup)
+        hbox.addWidget(self.wavelength_button)
         self.progressbar = QProgressBar()
         self.progressbar.setMinimum(0)
         self.progressbar.setMaximum(8672666)
@@ -203,9 +208,11 @@ class Heatmap_Interface(QObject):
         except ValueError:
             print("NONONO")
 
-    def open_popup(self):
+    def open_start_popup(self):
         self.startpopup.exec()
 
+    def open_wavelength_popup(self):
+        self.wavelengthpopup.exec()
 
     def on_start_button_clicked(self):
         if self.tabWidget.currentIndex() == 0:
@@ -329,11 +336,11 @@ class Heatmap_Interface(QObject):
                 if fileName.endswith(".csv"):
                     with open(fileName, "r") as file:
                         reader = csv.DictReader(file)
-                        # Find the index of 'Pixel_1' and only keep columns up to and including it
-                        if "Pixel_1" in reader.fieldnames:
-                            pixel_idx = reader.fieldnames.index("Pixel_1")
+                        # Find the index of '1' for the first pixel and only keep columns up to and including it
+                        if "1" in reader.fieldnames:
+                            pixel_idx = reader.fieldnames.index("1")
                             columns = reader.fieldnames[:pixel_idx + 1]
-                            columns = [col if col != "Pixel_1" else "Pixels" for col in columns]
+                            columns = [col if col != "1" else "Pixels" for col in columns]
                         else:
                             columns = reader.fieldnames
                         metadata += f"Columns: {', '.join(columns)}\n"
