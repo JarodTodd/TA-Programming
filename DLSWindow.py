@@ -365,7 +365,10 @@ class DLSWindow(QMainWindow):
         # create a new worker thread for probe data acquisition                  
         self.probe_worker = ProbeThread(shots)
         # share this thread instance with the dA window (allows dA plot to update)
-        self.dA_window.probe_worker = self.probe_worker   
+        self.dA_window.probe_worker = self.probe_worker 
+
+        #set dark noise. shape: None / List
+        self.probe_worker.data_processor.dark_noise_correction = self.dark_noise  
 
         # Signal Wiring:
         # GUI → Worker: user enables/disables outlier rejection for probe/dA
