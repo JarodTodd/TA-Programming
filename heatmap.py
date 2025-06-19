@@ -213,6 +213,7 @@ class TAPlotWidget(QObject):
         self.canvas_heatmap.setLimits(xMin = 0, xMax = 1024, yMin = self.delay_times.min(), yMax = self.delay_times.max())
         self.canvas_plot1.setLimits(xMin = self.delay_times.min(), xMax = self.delay_times.max(), yMin= -1, yMax = 1)
         self.mesh.setRect(QRectF(self.pixel_indices.min(), self.delay_times.min(), self.pixel_indices.size, self.delay_times.max() - self.delay_times.min()))
+        self.vb.setRange(xRange=(self.pixel_indices.min(),self.pixel_indices.min()), yRange=(self.delay_times.min(),self.delay_times.max()))
 
         # refresh heatmap 
         self.refresh_heatmap()
