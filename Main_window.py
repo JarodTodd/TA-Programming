@@ -143,6 +143,8 @@ if __name__ == "__main__":
         """
         if len(content) == 1:
             content = content[0]
+        if content == "GoToReference":
+            main_app.shot_delay_app.update_current_delay(main_app.shot_delay_app.t_0)
         worker.update_command(content, orientation, shots, scans)
         start_process(content)
 

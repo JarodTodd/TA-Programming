@@ -146,13 +146,14 @@ class MeasurementWorker(QThread):
         self._shots = shots
         self._scans = scans
 
-    def update_metadata(self, directory, filename, sample, solvent, pump, pathlength):
+    def update_metadata(self, directory, filename, sample, solvent, pump, pathlength, exc_power):
         self.directory = directory
         self.filename = filename
         self.sample = sample
         self.solvent = solvent
         self.pump = pump
         self.pathlength = pathlength
+        self.exc_power = exc_power
 
     @Slot(str)
     def run(self):
@@ -419,10 +420,10 @@ class MeasurementWorker(QThread):
         """When a scan is completed, save the data to a CSV file in the format:
         Delay, Probe_Avg (per pixel)"""
         if delay_relative == self.content[-1]:
-            self.save_scan_file(self.directory, self.filename, self.sample, self.solvent, self.pump, self.pathlength)
+            self.save_scan_file(self.directory, self.filename, self.sample, self.solvent, self.pump, self.pathlength, self.exc_power)
 
             if self.nos == self.scans and self.nos > 1:
-                self.save_avg_file(self.directory, self.filename, self.sample, self.solvent, self.pump, self.pathlength)
+                self.save_avg_file(self.directory, self.filename, self.sample, self.solvent, self.pump, self.pathlength, self.exc_power)
  
             if self.scans != self.nos:
                 self.reset_currentMatrix.emit() 

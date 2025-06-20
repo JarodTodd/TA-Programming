@@ -99,7 +99,10 @@ class HeatmapWindow(QWidget):
         self.dAwindow.rel_pos_line.setText(f"{round(value-self.t_0, 2)}")
         self.dAwindow.move_target_box.setValue(value)
         self.DLSWindow.delay_bar.setValue(value)
-        self.interface.progressbar.setValue(value)
+        self.DLSWindow.delay_bar.setFormat(f"{value}/8672.66")
+        self.interface.progressbar.setValue(value*1000)
+        self.interface.current_delay.setText(f"{value}")
+        self.interface.progresslabel.setText(f"{round(value,2)}/8672.66")
 
     def update_current_step(self, step, scans):
         """

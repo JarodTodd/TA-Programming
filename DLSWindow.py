@@ -172,9 +172,9 @@ class DLSWindow(QMainWindow):
         hbox3.addWidget(self.delay_label)
         self.delay_bar = QProgressBar()
         self.delay_bar.setMinimum(0)
-        self.delay_bar.setMaximum(8672)  # max picoseconds delay
+        self.delay_bar.setMaximum(8672.66)  # max picoseconds delay
         self.delay_bar.setValue(0)
-        self.delay_bar.setFormat(f"/8672")
+        self.delay_bar.setFormat(f"/8672.66")
 
         hbox3.addWidget(self.delay_bar)
         right_layout.addLayout(hbox3)
@@ -448,7 +448,7 @@ class DLSWindow(QMainWindow):
 
                 # update the delay bar visually in the GUI
                 self.delay_bar_update.emit(current_bar_value + value)
-                self.delay_bar.setFormat(f"{int(current_bar_value + value)}/8672")
+                self.delay_bar.setFormat(f"{round(current_bar_value + value, 2)}/8672.66")
             else:
                 raise ValueError("Value is out of range.")
             
@@ -463,7 +463,7 @@ class DLSWindow(QMainWindow):
         """
         value = max(0, min(value, self.delay_bar.maximum()))
         self.delay_bar.setValue(int(value))
-        self.delay_bar.setFormat(f"{int(value)}/8672")
+        self.delay_bar.setFormat(f"{round(value,2)}/8672.66")
         pass
 
     def show_error_message(self, error_message):
