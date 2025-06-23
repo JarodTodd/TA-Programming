@@ -225,6 +225,7 @@ class DLSWindow(QMainWindow):
     def update_probe_data(self, avg_row):
         """
         Updates the local veriable probe_input_avg with the latest probe spectrum for export
+        and updates the probe plot with the current data
         """
         self.probe_inputs_avg = avg_row
         self.probe_curve.setData(self.probe_inputs_avg)       
