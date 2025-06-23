@@ -1,1 +1,3 @@
-Moved to absolute position: 134.90698084057252 mm
+Attempting to connect to the server...
+Connected to the server.
+Position: 5200.7789201955175, Reference: 3600.0105112717683

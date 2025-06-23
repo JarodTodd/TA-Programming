@@ -36,34 +36,37 @@ def generate_timepoints(t_start, t_end, num_points, t0=0):
             pre_dense.append(time)
             time += 0.5
     pre_dense = np.array(pre_dense)
+    n_pre = len(pre_dense)
 
-    # Remove the background steps from the step total to not generate "extra" steps
-    # If you want to remove the recalculation with the "background" steps remove the len
-    remaining = num_points - len(pre_dense)
+    # If pre-dense region already fills or exceeds the requested number of points, just return the first num_points
+    if n_pre >= num_points:
+        timepoints = pre_dense[:num_points]
+        timepoints.sort()
+        timepoints = [float(value) for value in timepoints]
+        return timepoints
 
-    # Generate the time points from 0 to the end time on a log scale
-    # Logspace starts at 1 and ends at end time + 1
-    # afterwards it is shifted by -1 to make it start at 0 instead of 1
-    log_post = np.logspace(np.log10(1), np.log10(t_end + 1), remaining, endpoint=False) - 1
-    times = log_post
-
-    # This converges the list of points to be the given amount of steps after adding the points from -1 to 0 ps
+    # Now solve for n_log such that n_pre + n_log + n_dup = num_points
+    # n_dup is the number of points in (0, 1] (which will be duplicated and flipped negative)
+    # n_log is the number of log-spaced points (including those in (0, 1])
+    n_log = num_points - n_pre
     while True:
+        # Generate the time points from 0 to the end time on a log scale
+        # Logspace starts at 1 and ends at end time + 1
+        # afterwards it is shifted by -1 to make it start at 0 instead of 1
+        log_post = np.logspace(np.log10(1), np.log10(t_end + 1), n_log, endpoint=False) - 1
+        times = log_post
         # Duplicate and flip the points from 0 to 1 ps.
         duplicated_section = -np.flip(times[(times > 0) & (times <= 0.99)])
-        new_list = np.concatenate((times, duplicated_section))
+        total = n_pre + len(times) + len(duplicated_section)
+        if total == num_points:
+            break
+        # Adjust n_log accordingly
+        n_log += num_points - total
 
-        # If the length of the list has converged to the necessary time points return the list
-        if len(new_list) == remaining:
-            False
-            timepoints = np.concatenate((pre_dense, new_list)) # Add the background and other steps together into one list
-            timepoints.sort()
-            timepoints = [value for value in timepoints]
-            return timepoints
+    # Add the background and other steps together into one list
+    timepoints = np.concatenate((pre_dense, times, duplicated_section))
+    timepoints.sort()
+    timepoints = [float(value) for value in timepoints]
 
-        # Recalculate the number of remaining points after duplication and flipping,
-        # then regenerate the log-spaced region to try to converge to the desired total number of points.
-        remaining_length = num_points - len(duplicated_section)
-        log_post = np.logspace(np.log10(1), np.log10(t_end + 1), remaining_length) - 1 if t_end > t0 else np.array([])
+    return timepoints
 
-        times = log_post  

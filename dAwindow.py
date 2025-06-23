@@ -3,6 +3,7 @@ from PySide6.QtCore import *
 from PySide6.QtGui import *
 from WorkerThread import *
 import pyqtgraph as pg
+import csv
 
 
 class dA_Window(QWidget):
@@ -35,7 +36,7 @@ class dA_Window(QWidget):
         self.dA_plot = pg.PlotWidget()
         self.dA_plot.setTitle("dA Spectrum")
         self.dA_plot.setLabel('left', 'dA')
-        self.dA_plot.setLabel('bottom', 'Pixel index')
+        self.dA_plot.setLabel('bottom', 'Wavelength (nm)')
         self.dA_plot.setBackground('w')
         self.dA_plot.getViewBox().enableAutoRange(False, False)
         self.dA_plot.setContentsMargins(0, 0, 0, 0)
@@ -101,6 +102,7 @@ class dA_Window(QWidget):
 
         # Save button
         self.save_data_button = QPushButton("Save Intensity Data")
+        self.save_data_button.clicked.connect(self.save_dA_button)
         self.left_layout.addWidget(self.save_data_button)
         # Right layout
         right_layout = QHBoxLayout()
@@ -216,15 +218,30 @@ class dA_Window(QWidget):
         self.verticalSlider.setValue(0)
 
     def eventFilter(self, obj, event):
+        if not hasattr(self, "_key_timer"):
+            self._key_timer = QTimer(self)
+            self._key_timer.setSingleShot(True)
+            self._key_timer.timeout.connect(self.emit_slider_signal)
+        if not hasattr(self, "_key_held"):
+            self._key_held = False
+
         if event.type() == QEvent.KeyPress:
-            if event.key() == Qt.Key_Up:
-                self.verticalSlider.setValue(self.verticalSlider.value() + 1000)
+            if event.key() in (Qt.Key_Up, Qt.Key_Down):
+                if not self._key_held:
+                    self._key_held = True
+                    if event.key() == Qt.Key_Up:
+                        self.verticalSlider.setValue(self.verticalSlider.value() + 1000)
+                    elif event.key() == Qt.Key_Down:
+                        self.verticalSlider.setValue(self.verticalSlider.value() - 1000)
+                    self._key_timer.start(500)
                 return True
-            elif event.key() == Qt.Key_Down:
-                self.verticalSlider.setValue(self.verticalSlider.value() - 1000)
+        elif event.type() == QEvent.KeyRelease:
+            if event.key() in (Qt.Key_Up, Qt.Key_Down):
+                if self._key_held:
+                    self._key_held = False
+                    self._key_timer.start(0)
                 return True
         return super().eventFilter(obj, event)
-    
 
     def emit_slider_signal(self):
         # Add a dummy variable to the function so it doesn't emit signals everytime the slider is updated 
@@ -260,7 +277,36 @@ class dA_Window(QWidget):
             self.pos_change_signal.emit(value)
 
 
+    def save_dA_button(self):
+        """
+        Saves the currently displayed probe spectrum as a CSV file.
+        """
+        
+        try:
+            # Open a file dialog to choose the save location and filename
+            filename, _ = QFileDialog.getSaveFileName(
+                self,
+                "Save Probe Data",
+                "",
+                "CSV files (*.csv);;All Files (*)"
+            )
 
+            # If the user cancels the dialog, filename will be an empty string
+            if not filename:
+                print("Save operation cancelled.")
+                return
+
+            # Write the current probe data to the selected file
+            with open(filename, 'w', newline='') as csvfile:
+                writer = csv.writer(csvfile)
+                writer.writerow(["Index", "Average"])
+                for i, (avg) in enumerate(zip(self.dA_inputs_avg)):
+                    writer.writerow([i, avg])
+
+            print(f"dA data saved successfully to {filename}.")
+
+        except Exception as e:
+            self.show_error_message(f"Failed to save dA data: {e}")
 
     def redraw_dA_plot(self):
         self.update_dA_graph(self.dA_inputs_avg)

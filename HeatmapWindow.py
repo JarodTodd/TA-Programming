@@ -24,7 +24,6 @@ class HeatmapWindow(QWidget):
         super().__init__()
         self.setWindowTitle("Camera Interface")
         self.DLSWindow = dls_window
-        self.worker = MeasurementWorker("", "StartUp", 0, 0, 'localhost', 9999)
         self.interface = Heatmap_Interface()
         self.dAwindow = dA_Window
         self.pos = 0
@@ -100,7 +99,6 @@ class HeatmapWindow(QWidget):
         self.dAwindow.move_target_box.setValue(value)
         self.DLSWindow.delay_bar.setValue(value)
         self.DLSWindow.delay_bar.setFormat(f"{value}/8672.66")
-        self.interface.progressbar.setValue(value*1000)
         self.interface.current_delay.setText(f"{value}")
         self.interface.progresslabel.setText(f"{round(value,2)}/8672.66")
 

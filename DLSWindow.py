@@ -4,6 +4,7 @@ from PySide6.QtGui import *
 import pyqtgraph as pg
 from WorkerThread import *
 from dAwindow import *
+import csv
 
 class DLSWindow(QMainWindow):
     """
@@ -34,8 +35,6 @@ class DLSWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle("Delayline GUI")
         self.probe_worker = ProbeThread()
-        self.worker = MeasurementWorker("", "StartUp", 0, 0, 'localhost', 9999)
-        self.worker.update_delay_bar_signal.connect(self.update_delay_bar)
         self.dA_window = dA_Window
         self.dark_noise = None
 
@@ -257,7 +256,6 @@ class DLSWindow(QMainWindow):
                 return
 
             # Write the current probe data to the selected file
-            import csv
             with open(filename, 'w', newline='') as csvfile:
                 writer = csv.writer(csvfile)
                 writer.writerow(["Index", "Average"])
@@ -481,7 +479,3 @@ class DLSWindow(QMainWindow):
     def GoToReference(self):
         self.run_command_signal.emit("GoToReference", "ButtonPress", 0, 0)
     
-    def closeEvent(self, event):
-        self.worker_thread.stop()  # Stop the worker thread
-        self.worker_thread.wait()  # Ensure the thread has finished
-        event.accept()  # Accept the close event

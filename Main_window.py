@@ -158,6 +158,9 @@ if __name__ == "__main__":
         """
         Cleanly stop the worker thread and any running processes when the GUI closes.
         """
+
+        worker.stop()
+
         # Disconnect process signals and terminate process if running
         if worker.process:
             try:
@@ -171,7 +174,7 @@ if __name__ == "__main__":
                 worker.process.terminate()
                 worker.process.waitForFinished()
 
-        worker.stop()
+
         # Stop probe spectrum thread
         main_app.dls_window.stop_probe_thread()
 
@@ -189,5 +192,5 @@ if __name__ == "__main__":
     # Ensure worker and threads are stopped when application exits
     app.aboutToQuit.connect(stop_worker)
 
-    # Run the application event loop
+    # Run the application
     app.exec()
