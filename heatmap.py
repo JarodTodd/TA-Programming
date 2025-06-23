@@ -84,7 +84,7 @@ class TAPlotWidget(QObject):
         # bottom axis: start in pixel units
         self.canvas_heatmap.setLabels(left="Delay / ps", bottom="Pixel index")
         self.canvas_heatmap.getViewBox().setMouseEnabled(x=True, y=True)
-        self.canvas_heatmap.setLimits(xMin=0, xMax=1024, yMin=-9000, yMax=9000)
+        self.canvas_heatmap.setLimits(xMin=0, xMax=1024, yMin=-0, yMax=1)
  
         # create heatmap ImageItem
         self.mesh = pg.ImageItem(self.active_matrix, axisOrder='row-major')
@@ -213,6 +213,7 @@ class TAPlotWidget(QObject):
         self.canvas_heatmap.setLimits(xMin = 0, xMax = 1024, yMin = self.delay_times.min(), yMax = self.delay_times.max())
         self.canvas_plot1.setLimits(xMin = self.delay_times.min(), xMax = self.delay_times.max(), yMin= -1, yMax = 1)
         self.mesh.setRect(QRectF(self.pixel_indices.min(), self.delay_times.min(), self.pixel_indices.size, self.delay_times.max() - self.delay_times.min()))
+        self.vb.setRange(xRange=(self.pixel_indices.min(),self.pixel_indices.min()), yRange=(self.delay_times.min(),self.delay_times.max()))
 
         # refresh heatmap 
         self.refresh_heatmap()
@@ -281,7 +282,7 @@ class TAPlotWidget(QObject):
             self.canvas_plot1.setTitle(f"pixel: {pixel_idx}")
         else:
             wavelength = self.wavelenghts[pixel_idx]
-            self.canvas_plot1.setTitle(f"λ: {wavelength:.0f} nm")
+            self.canvas_plot1.setTitle(f"λ: {float(wavelength):.0f} nm")
 
         # update plot 2: pixel dependent spectra at selected delay index
         self.plot2_avg.setData(self.pixel_indices, self.delta_A_matrix_avg[delay_idx, :])

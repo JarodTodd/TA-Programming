@@ -146,13 +146,14 @@ class MeasurementWorker(QThread):
         self._shots = shots
         self._scans = scans
 
-    def update_metadata(self, directory, filename, sample, solvent, pump, pathlength):
+    def update_metadata(self, directory, filename, sample, solvent, pump, pathlength, exc_power):
         self.directory = directory
         self.filename = filename
         self.sample = sample
         self.solvent = solvent
         self.pump = pump
         self.pathlength = pathlength
+        self.exc_power = exc_power
 
     @Slot(str)
     def run(self):
@@ -283,10 +284,19 @@ class MeasurementWorker(QThread):
 
         # Notify the client to stop, if connection exists
         try:
-            if hasattr(self, "conn") and self.conn:
-                stop_message = {"command": "stop"}
-                self.conn.sendall((json.dumps(stop_message) + "\n").encode())
-                print("Sent stop command to client.")
+            if hasattr(self, "conn") and self.conn is not None:
+                # Check if socket is still open
+                try:
+                    if self.conn.fileno() != -1:
+                        stop_message = {"command": "stop"}
+                        self.conn.sendall((json.dumps(stop_message) + "\n").encode())
+                        print("Sent stop command to client.")
+                    else:
+                        pass
+                except OSError as e:
+                    print(f"Socket error: {e}")
+            else:
+                print("No valid connection to send stop command.")
         except Exception as e:
             print(f"Error sending stop command to client: {e}")
 
@@ -299,7 +309,8 @@ class MeasurementWorker(QThread):
                     getattr(self, "sample", ""),
                     getattr(self, "solvent", ""),
                     getattr(self, "pump", ""),
-                    getattr(self, "pathlength", "")
+                    getattr(self, "pathlength", ""),
+                    getattr(self, "exc_power", "")
                 )
                 print("Partial scan data saved before stopping.")
             except Exception as e:
@@ -314,7 +325,8 @@ class MeasurementWorker(QThread):
                     getattr(self, "sample", ""),
                     getattr(self, "solvent", ""),
                     getattr(self, "pump", ""),
-                    getattr(self, "pathlength", "")
+                    getattr(self, "pathlength", ""),
+                    getattr(self, "exc_power", "")
                 )
                 print("Partial average scan data saved before stopping.")
             except Exception as e:
@@ -372,8 +384,8 @@ class MeasurementWorker(QThread):
             self.ref = data.get("reference", 0)
 
             # Emit signals to update the GUI
-            self.update_delay_bar_signal.emit(self.position)
             self.update_ref_signal.emit(self.ref)
+            self.update_delay_bar_signal.emit(self.position)
 
         except Exception as e:
             print(f"Error in start_gui: {e}")
@@ -419,10 +431,10 @@ class MeasurementWorker(QThread):
         """When a scan is completed, save the data to a CSV file in the format:
         Delay, Probe_Avg (per pixel)"""
         if delay_relative == self.content[-1]:
-            self.save_scan_file(self.directory, self.filename, self.sample, self.solvent, self.pump, self.pathlength)
+            self.save_scan_file(self.directory, self.filename, self.sample, self.solvent, self.pump, self.pathlength, self.exc_power)
 
             if self.nos == self.scans and self.nos > 1:
-                self.save_avg_file(self.directory, self.filename, self.sample, self.solvent, self.pump, self.pathlength)
+                self.save_avg_file(self.directory, self.filename, self.sample, self.solvent, self.pump, self.pathlength, self.exc_power)
  
             if self.scans != self.nos:
                 self.reset_currentMatrix.emit() 
@@ -449,12 +461,12 @@ class MeasurementWorker(QThread):
             
             # Write the remaining rows of measurement data (excluding the first row already written)
             for row in self.averaged_probe_measurement[1:]:
-                writer.writerow([None, None, None, None, row[0]] + list(row[1:]))  # Convert tuple to list for concatenation
+                writer.writerow([None, None, None, None, None, row[0]] + list(row[1:]))  # Convert tuple to list for concatenation
         
         print(f"Saved measurement data to {filepath}")
         self.measurement_average.append(np.array([list(row[1:]) for row in self.averaged_probe_measurement]))  # Exclude delay time for averaging
 
-    def save_avg_file(self, directory, name, sample, solvent, pump, pathlength):
+    def save_avg_file(self, directory, name, sample, solvent, pump, pathlength, exc_power):
         # Allow averaging even if scans have different lengths (pad with NaN)
         if not self.measurement_average:
             print("No scans to average.")
@@ -484,15 +496,17 @@ class MeasurementWorker(QThread):
             writer = csv.writer(file)
 
             # Write metadata and measurement headers in the same row
-            writer.writerow(['Sample', 'Solvent', 'Pump', 'Path Length', 'Delay (ps)'] + [f'{i}' for i in range(1, num_pixels + 1)])
+            writer.writerow(['Sample', 'Solvent', 'Pump', 'Path Length', 'Excitation Power', 'Delay (ps)'] + [f'{i}' for i in range(1, num_pixels + 1)])
 
             # Write metadata and the first row of measurement data in the next row
             delay = self.content[0] if len(self.content) > 0 else None
-            writer.writerow([sample, solvent, pump, pathlength, delay] + avg_all_scans[0].tolist())
+            writer.writerow([sample, solvent, pump, pathlength, delay, exc_power] + avg_all_scans[0].tolist())
 
             # Write the averaged data for each delay (excluding the first row already written)
             for i, row in enumerate(avg_all_scans[1:], start=1):
                 delay = self.content[i] if i < len(self.content) else None
-                writer.writerow([None, None, None, None, delay] + row.tolist())
+                writer.writerow([None, None, None, None, None, delay] + row.tolist())
         self.stop_button.emit()
+        self.averaged_probe_measurement = []
+        self.measurement_average = []
         print(f"Saved averaged measurement data to {filepath}")

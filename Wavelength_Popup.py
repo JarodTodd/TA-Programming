@@ -56,17 +56,49 @@ class WavelengthPopUp(QDialog):
                     print(self.wavelengths)
                     self.load_button.setEnabled(True)
                 else:
+                    self.load_button.setEnabled(False)
                     raise ImportError("This .csv file is not compatible.")
             elif selected_file.lower().endswith(".txt"):
-                # Example for .txt: expects first line to start with "Wavelengths"
                 with open(selected_file, "r", encoding="utf-8") as f:
-                    first_line = f.readline().strip().split(",")
-                if first_line and first_line[0] == "Wavelengths":
-                    self.wavelengths = first_line[1:]
-                    print(self.wavelengths)
-                    self.load_button.setEnabled(True)
+                    lines = [line.strip() for line in f if line.strip()]
+                    print(lines[0])
+                if not lines:
+                    msg = "The file is empty."
+                    print(msg)
+                    raise ImportError(msg)
+                allowed_prefixes = [
+                    "Wavelengths", "wavelength", "Wavelength", "wavelengths",
+                    "Wavelengths (nm)", "wavelength (nm)", "Wavelength (nm)", "wavelengths (nm)"
+                ]
+                if not any(lines[0].startswith(prefix) for prefix in allowed_prefixes):
+                    msg = 'First line does not start with "Wavelengths", "wavelength", "Wavelength", "wavelengths", "Wavelengths (nm)", "wavelength (nm)", "Wavelength (nm)", "wavelengths (nm)". Zuig mn ballen ik heb het ook nog fool proof gemaakt Arschloch.'
+                    print(msg)
+                    raise ImportError(msg)
+                # Handle both one-line and multi-line formats
+                if len(lines) == 1:
+                    first_line = lines[0].split(",")
+                    if len(first_line) <= 1 or not any(w.strip() for w in first_line[1:]):
+                        msg = "No wavelengths found after 'Wavelengths' in the first line."
+                        print(msg)
+                        raise ImportError(msg)
+                    self.wavelengths = [w.strip() for w in first_line[1:] if w.strip()]
                 else:
-                    raise ImportError("This .txt file is not compatible.")
+                    self.wavelengths = [
+                        l.replace(",", "").strip()
+                        for l in lines[1:]
+                        if l.replace(",", "").strip() != ""
+                    ]
+                    if not self.wavelengths:
+                        msg = "No wavelengths found in lines after 'Wavelengths'."
+                        print(msg)
+                        raise ImportError(msg)
+                    print("Wavelengths loaded:", self.wavelengths)
+                    self.wavelength_signal.emit(self.wavelengths)
+                    self.load_button.setEnabled(True)
+                # else:
+                #     self.load_button.setEnabled(False)
+                #     raise ImportError("This .txt file is not compatible.")
+                    
                 
     def load_button_pressed(self):
         self.wavelength_signal.emit(self.wavelengths)

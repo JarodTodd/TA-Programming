@@ -35,8 +35,6 @@ class DLSWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle("Delayline GUI")
         self.probe_worker = ProbeThread()
-        self.worker = MeasurementWorker("", "StartUp", 0, 0, 'localhost', 9999)
-        self.worker.update_delay_bar_signal.connect(self.update_delay_bar)
         self.dA_window = dA_Window
         self.dark_noise = None
 
@@ -173,9 +171,9 @@ class DLSWindow(QMainWindow):
         hbox3.addWidget(self.delay_label)
         self.delay_bar = QProgressBar()
         self.delay_bar.setMinimum(0)
-        self.delay_bar.setMaximum(8672)  # max picoseconds delay
+        self.delay_bar.setMaximum(8672.66)  # max picoseconds delay
         self.delay_bar.setValue(0)
-        self.delay_bar.setFormat(f"/8672")
+        self.delay_bar.setFormat(f"/8672.66")
 
         hbox3.addWidget(self.delay_bar)
         right_layout.addLayout(hbox3)
@@ -365,7 +363,10 @@ class DLSWindow(QMainWindow):
         # create a new worker thread for probe data acquisition                  
         self.probe_worker = ProbeThread(shots)
         # share this thread instance with the dA window (allows dA plot to update)
-        self.dA_window.probe_worker = self.probe_worker   
+        self.dA_window.probe_worker = self.probe_worker 
+
+        #set dark noise. shape: None / List
+        self.probe_worker.data_processor.dark_noise_correction = self.dark_noise  
 
         # Signal Wiring:
         # GUI → Worker: user enables/disables outlier rejection for probe/dA
@@ -445,7 +446,7 @@ class DLSWindow(QMainWindow):
 
                 # update the delay bar visually in the GUI
                 self.delay_bar_update.emit(current_bar_value + value)
-                self.delay_bar.setFormat(f"{int(current_bar_value + value)}/8672")
+                self.delay_bar.setFormat(f"{round(current_bar_value + value, 2)}/8672.66")
             else:
                 raise ValueError("Value is out of range.")
             
@@ -460,7 +461,7 @@ class DLSWindow(QMainWindow):
         """
         value = max(0, min(value, self.delay_bar.maximum()))
         self.delay_bar.setValue(int(value))
-        self.delay_bar.setFormat(f"{int(value)}/8672")
+        self.delay_bar.setFormat(f"{round(value,2)}/8672.66")
         pass
 
     def show_error_message(self, error_message):
@@ -478,7 +479,3 @@ class DLSWindow(QMainWindow):
     def GoToReference(self):
         self.run_command_signal.emit("GoToReference", "ButtonPress", 0, 0)
     
-    def closeEvent(self, event):
-        self.worker_thread.stop()  # Stop the worker thread
-        self.worker_thread.wait()  # Ensure the thread has finished
-        event.accept()  # Accept the close event
