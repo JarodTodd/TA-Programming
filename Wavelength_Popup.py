@@ -30,7 +30,6 @@ class WavelengthPopUp(QDialog):
         # Connect button to file dialog
         self.file_button.clicked.connect(self.select_file)
 
-
         # Load button
         self.load_button = QPushButton("Load")
         self.load_button.setEnabled(False)
@@ -45,65 +44,99 @@ class WavelengthPopUp(QDialog):
         if file_dialog.exec():
             selected_file = file_dialog.selectedFiles()[0]
             self.file_path.setText(selected_file)
-            if selected_file.lower().endswith(".csv"):
-                # Read the header row from the CSV file
-                with open(selected_file, "r", encoding="utf-8") as f:
-                    header = f.readline().strip().split(",")
-                if "Delay (ps)" in header:
-                    # Wavelengths are all columns after "Delay (ps)"
-                    delay_index = header.index("Delay (ps)")
-                    self.wavelengths = header[delay_index + 1 :]
-                    print(self.wavelengths)
-                    self.load_button.setEnabled(True)
-                else:
-                    self.load_button.setEnabled(False)
-                    raise ImportError("This .csv file is not compatible.")
-            elif selected_file.lower().endswith(".txt"):
-                with open(selected_file, "r", encoding="utf-8") as f:
-                    lines = [line.strip() for line in f if line.strip()]
-                    print(lines[0])
-                if not lines:
-                    msg = "The file is empty."
-                    print(msg)
-                    raise ImportError(msg)
-                allowed_prefixes = [
-                    "Wavelengths", "wavelength", "Wavelength", "wavelengths",
-                    "Wavelengths (nm)", "wavelength (nm)", "Wavelength (nm)", "wavelengths (nm)"
-                ]
-                if not any(lines[0].startswith(prefix) for prefix in allowed_prefixes):
-                    msg = 'First line does not start with "Wavelengths", "wavelength", "Wavelength", "wavelengths", "Wavelengths (nm)", "wavelength (nm)", "Wavelength (nm)", "wavelengths (nm)". Zuig mn ballen ik heb het ook nog fool proof gemaakt Arschloch.'
-                    print(msg)
-                    raise ImportError(msg)
-                # Handle both one-line and multi-line formats
-                if len(lines) == 1:
+            try:
+                if selected_file.lower().endswith(".csv"):
+                    # Read the header row from the CSV file
+                    with open(selected_file, "r", encoding="utf-8") as f:
+                        header = f.readline().strip().split(",")
+                    if "Delay (ps)" in header:
+                        # Wavelengths are all columns after "Delay (ps)"
+                        delay_index = header.index("Delay (ps)")
+                        self.wavelengths = header[delay_index + 1 :]
+                        print(self.wavelengths)
+                        self.load_button.setEnabled(True)
+                    else:
+                        self.load_button.setEnabled(False)
+                        self.show_error_message("This .csv file is not compatible.")
+                elif selected_file.lower().endswith(".txt"):
+                    with open(selected_file, "r", encoding="utf-8") as f:
+                        lines = [line.strip() for line in f if line.strip()]
+                        print(lines[0])
+                    if not lines:
+                        msg = "The file is empty."
+                        print(msg)
+                        self.show_error_message(msg)
+                        return
                     first_line = lines[0].split(",")
-                    if len(first_line) <= 1 or not any(w.strip() for w in first_line[1:]):
-                        msg = "No wavelengths found after 'Wavelengths' in the first line."
-                        print(msg)
-                        raise ImportError(msg)
-                    self.wavelengths = [w.strip() for w in first_line[1:] if w.strip()]
-                else:
-                    self.wavelengths = [
-                        l.replace(",", "").strip()
-                        for l in lines[1:]
-                        if l.replace(",", "").strip() != ""
-                    ]
-                    if not self.wavelengths:
-                        msg = "No wavelengths found in lines after 'Wavelengths'."
-                        print(msg)
-                        raise ImportError(msg)
-                    print("Wavelengths loaded:", self.wavelengths)
-                    self.wavelength_signal.emit(self.wavelengths)
+                    if not first_line or not isinstance(first_line[0], str) or not first_line[0].strip():
+                        msg = "The first item before the first comma must be a non-empty string."
+                        self.show_error_message(msg)
+                        return
+                    # Check that all items after the first are floats or ints
+                    numeric_values = []
+                    for item in first_line[1:]:
+                        item = item.strip()
+                        if not item:
+                            continue
+                        try:
+                            val = float(item)
+                            numeric_values.append(item)
+                        except ValueError:
+                            msg = f"Value '{item}' after the first comma is not a valid number."
+                            self.show_error_message(msg)
+                            return
+                    if len(lines) == 1:
+                        if not numeric_values:
+                            msg = "No numeric wavelengths found after the first string."
+                            print(msg)
+                            self.show_error_message(msg)
+                            return
+                        self.wavelengths = numeric_values
+                    else:
+                        # For multi-line, expect first item of each line to be string, rest to be numbers
+                        self.wavelengths = []
+                        for l in lines[1:]:
+                            parts = l.split(",")
+                            for item in parts:
+                                item = item.strip()
+                                if not item:
+                                    continue
+                                try:
+                                    float(item)
+                                    self.wavelengths.append(item)
+                                except ValueError:
+                                    continue  # skip non-numeric
+                        if not self.wavelengths:
+                            msg = "No numeric data found after the first string."
+                            print(msg)
+                            self.show_error_message(msg)
+                            return
+                        print("Wavelengths loaded:", self.wavelengths)
+                        self.wavelength_signal.emit(self.wavelengths)
                     self.load_button.setEnabled(True)
-                # else:
-                #     self.load_button.setEnabled(False)
-                #     raise ImportError("This .txt file is not compatible.")
+            except Exception as e:
+                self.show_error_message(str(e))
                     
-                
     def load_button_pressed(self):
         self.wavelength_signal.emit(self.wavelengths)
         self.close()
 
+    def show_error_message(self, error_message):
+        """
+        Display an error message dialog.
+
+        Args:
+            error_message (str): The error message to display.
+        """
+        msgbox = QMessageBox()
+        msgbox.setWindowTitle("Error")
+        msgbox.setText("An error occurred:")
+        msgbox.setInformativeText(error_message)
+        msgbox.setIcon(QMessageBox.Critical)
+        msgbox.setStandardButtons(QMessageBox.Ok)
+        msgbox.exec()
+
+        
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = WavelengthPopUp()

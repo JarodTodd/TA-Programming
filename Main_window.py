@@ -81,7 +81,6 @@ if __name__ == "__main__":
     # Update delay sliders, progress bars, and reference time
     worker.update_delay_bar_signal.connect(main_app.shot_delay_app.update_current_delay)
     worker.update_delay_bar_signal.connect(main_app.dls_window.update_delay_bar)
-    worker.update_delay_bar_signal.connect(main_app.shot_delay_app.interface.update_progress_bar)
     worker.update_ref_signal.connect(main_app.shot_delay_app.update_t0)
     main_app.dls_window.delay_bar_update.connect(main_app.shot_delay_app.update_current_delay)
     worker.current_step_signal.connect(main_app.shot_delay_app.update_current_step)

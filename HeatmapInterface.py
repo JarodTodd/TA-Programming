@@ -304,13 +304,6 @@ class Heatmap_Interface(QObject):
             self.timer.stop()
             self.time_remaining.setText("00:00")
 
-    def update_progress_bar(self, value):
-        value = max(0, min(value, self.progressbar.maximum()))
-        value = value*1000
-        self.progressbar.setValue(int(value))
-        self.progresslabel.setText(f"{round(value/1000, 2)}/8672.66")
-        pass
-
     def change_steps(self):
         # Ensure that the correct amount of total steps is shown
         if self.tabWidget.currentIndex() == 0:

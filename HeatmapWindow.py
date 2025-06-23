@@ -83,7 +83,6 @@ class HeatmapWindow(QWidget):
         """
         value = round(value, 2)
         self.pos = value
-        self.interface.current_delay.setText(f"{value}")
         slider_value = int(value * 1000 - self.t_0 * 1000)
         self.dAwindow.verticalSlider.setValue(slider_value)
         max_range = int(8672666 - self.t_0 * 1000)
@@ -99,8 +98,9 @@ class HeatmapWindow(QWidget):
         self.dAwindow.move_target_box.setValue(value)
         self.DLSWindow.delay_bar.setValue(value)
         self.DLSWindow.delay_bar.setFormat(f"{value}/8672.66")
-        self.interface.current_delay.setText(f"{value}")
-        self.interface.progresslabel.setText(f"{round(value,2)}/8672.66")
+        self.interface.current_delay.setText(f"{round(value-self.t_0,2)}")
+        self.interface.progresslabel.setText(f"{round(value-self.t_0,2)}/{round(8672.66-self.t_0)}")
+        self.interface.probressbar.setValue(slider_value)
 
     def update_current_step(self, step, scans):
         """
