@@ -64,9 +64,7 @@ if __name__ == "__main__":
     # Update heatmap and graphs when new data arrives
     worker.plot_row_update.connect(main_app.shot_delay_app.ta_widgets.update_row, Qt.QueuedConnection)
     worker.reset_currentMatrix.connect(main_app.shot_delay_app.ta_widgets.reset_currentMatrix, Qt.QueuedConnection)
-    main_app.shot_delay_app.interface.parsed_content_signal.connect(
-        main_app.shot_delay_app.ta_widgets.update_delay_stages, Qt.QueuedConnection
-    )
+    main_app.shot_delay_app.interface.parsed_content_signal.connect(main_app.shot_delay_app.ta_widgets.update_delay_stages, Qt.QueuedConnection)
 
     # Control probe spectrum thread and update probe data during measurements
     worker.started.connect(main_app.dls_window.stop_probe_thread, Qt.QueuedConnection)

@@ -4,6 +4,7 @@ from PySide6.QtGui import *
 import pyqtgraph as pg
 from WorkerThread import *
 from dAwindow import *
+import csv
 
 class DLSWindow(QMainWindow):
     """
@@ -257,7 +258,6 @@ class DLSWindow(QMainWindow):
                 return
 
             # Write the current probe data to the selected file
-            import csv
             with open(filename, 'w', newline='') as csvfile:
                 writer = csv.writer(csvfile)
                 writer.writerow(["Index", "Average"])
