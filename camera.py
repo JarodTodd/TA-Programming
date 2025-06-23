@@ -86,7 +86,7 @@ def	camera(number_of_shots, delay_number):
 	settings.camera_settings[drvno].CAMCNT = 1
 	settings.camera_settings[drvno].PIXEL = 1088
 	settings.camera_settings[drvno].dma_buffer_size_in_scans = number_of_shots
-	settings.camera_settings[drvno].stime_in_microsec = number_of_shots
+	settings.camera_settings[drvno].stime_in_microsec = number_of_shots * 2
 	settings.camera_settings[drvno].btime_in_microsec = 100000
 	settings.camera_settings[drvno].fft_mode = 1
 	settings.camera_settings[drvno].FFT_LINES = 128
