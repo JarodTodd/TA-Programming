@@ -31,7 +31,7 @@ class ComputeData():
 
     def OutlierRejection_probe(self, block, range_start: int | None = None, range_end:   int | None = None):
         """
-        Rejects outliers for the real-time probe specrtra in the DLSWindow. 
+        Rejects outliers for the real-time probe specrtra in the Probewindow. 
         """
         block = np.asarray(block)
 
