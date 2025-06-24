@@ -5,6 +5,7 @@ from WorkerThread import *
 from HeatmapWindow import *
 from DLSWindow import *
 from dAwindow import *
+from error_popup import *
 import time
 
 # Paths of the IronPython parts; command prompt file and our command file
@@ -87,7 +88,7 @@ if __name__ == "__main__":
     main_app.dA_window.pos_change_signal.connect(main_app.shot_delay_app.update_current_delay)
 
     # Display error messages from any part of the application
-    worker.error_occurred.connect(main_app.shot_delay_app.show_error_message)
+    worker.error_occurred.connect(show_error_message)
 
     # Enable/disable stop button appropriately
     worker.stop_button.connect(main_app.shot_delay_app.interface.disable_stop_button)

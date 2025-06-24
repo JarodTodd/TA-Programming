@@ -5,6 +5,7 @@
 from ctypes import *
 # matplotlib is used for the data plot
 import csv
+from error_popup import *
 
 def	camera(number_of_shots, delay_number):
 
@@ -122,18 +123,22 @@ def	camera(number_of_shots, delay_number):
 	status = dll.DLLInitDriver(ptr_number_of_boards)
 	# Check the status code after each DLL call. When it is not 0, which means there is no error, an exception is raised. The error message will be displayed and the script will stop.
 	if(status != 0):
+		show_error_message(dll.DLLConvertErrorCodeToMsg(status))
 		raise BaseException(dll.DLLConvertErrorCodeToMsg(status))
 	# Initialize the PCIe board.
 	status = dll.DLLInitBoard()
 	if(status != 0):
+		show_error_message(dll.DLLConvertErrorCodeToMsg(status))
 		raise BaseException(dll.DLLConvertErrorCodeToMsg(status))
 	# Set all settings with the earlier created settings struct
 	status = dll.DLLSetGlobalSettings(settings)
 	if(status != 0):
+		show_error_message(dll.DLLConvertErrorCodeToMsg(status))
 		raise BaseException(dll.DLLConvertErrorCodeToMsg(status))
 	# Initialize the measurement. The settings from the step before will be used for this.
 	status = dll.DLLInitMeasurement()
 	if(status != 0):
+		show_error_message(dll.DLLConvertErrorCodeToMsg(status))
 		raise BaseException(dll.DLLConvertErrorCodeToMsg(status))
 
 	if use_blocking_call:
@@ -172,6 +177,7 @@ def	camera(number_of_shots, delay_number):
 	ptr_block_buffer = pointer(block_buffer)
 	status = dll.DLLCopyOneBlock(drvno, 1, ptr_block_buffer)
 	if(status != 0):
+		show_error_message(dll.DLLConvertErrorCodeToMsg(status))
 		raise BaseException(dll.DLLConvertErrorCodeToMsg(status))
 	
 	# with open(f"camera_output{delay_number}.csv", mode="w", newline="") as file:
@@ -209,6 +215,7 @@ def	camera(number_of_shots, delay_number):
 	# Exit the driver
 	status = dll.DLLExitDriver()
 	if(status != 0):
+		show_error_message(dll.DLLConvertErrorCodeToMsg(status))
 		raise BaseException(dll.DLLConvertErrorCodeToMsg(status))
 	
 	return block_buffer

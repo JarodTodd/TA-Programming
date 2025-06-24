@@ -100,7 +100,7 @@ class HeatmapWindow(QWidget):
         self.DLSWindow.delay_bar.setFormat(f"{value}/8672.66")
         self.interface.current_delay.setText(f"{round(value-self.t_0,2)}")
         self.interface.progresslabel.setText(f"{round(value-self.t_0,2)}/{round(8672.66-self.t_0)}")
-        self.interface.probressbar.setValue(slider_value)
+        self.interface.progressbar.setValue(value)
 
     def update_current_step(self, step, scans):
         """
@@ -139,21 +139,6 @@ class HeatmapWindow(QWidget):
             self.dAwindow.verticalSlider.setRange(-250000, int(8672666 - self.t_0 * 1000))
             self.dAwindow.abs_pos_line.setText(f"{self.t_0}")
             self.dAwindow.rel_pos_line.setText(f"{0}")
-
-    def show_error_message(self, error_message):
-        """
-        Display an error message dialog.
-
-        Args:
-            error_message (str): The error message to display.
-        """
-        msgbox = QMessageBox()
-        msgbox.setWindowTitle("Error")
-        msgbox.setText("An error occurred:")
-        msgbox.setInformativeText(error_message)
-        msgbox.setIcon(QMessageBox.Critical)
-        msgbox.setStandardButtons(QMessageBox.Ok)
-        msgbox.exec()
 
     @Slot(float, float, float)
     def update_graph(self, delaytimes, dA_inputs_avg):

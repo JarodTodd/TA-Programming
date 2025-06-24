@@ -15,19 +15,32 @@ class StartPopup(QDialog):
 
         # Labels and LineEdits
         fields = {
-            "Sample": QLineEdit(),
-            "Solvent": QLineEdit(),
-            "Excitation wavelength: nm": QLineEdit(),
-            "Path Length: ps": QLineEdit(),
-            "Excitation Power: mW": QLineEdit()
+            "Sample:": QLineEdit(),
+            "Solvent:": QLineEdit(),
+            "Excitation wavelength:": {"value": QLineEdit(), "unit": QLineEdit()},
+            "Path Length:": {"value": QLineEdit(), "unit": QLineEdit()},
+            "Excitation Power:": {"value": QLineEdit(), "unit": QLineEdit()}
         }
         self.line_edits = fields  # Store references to line edits in a dictionary
 
         for label_text, line_edit in fields.items():
             layout1 = QHBoxLayout()
             layout1.addWidget(QLabel(label_text))
-            layout1.addWidget(line_edit)
+            if isinstance(line_edit, dict):
+                layout1.addWidget(line_edit["value"])
+                le_unit = line_edit["unit"]
+                le_unit.setMaximumWidth(80)
+                le_unit.setPlaceholderText("Unit")
+                le_unit.setStyleSheet("background-color: lightgray;")
+                layout1.addWidget(le_unit)
+            else:
+                layout1.addWidget(line_edit)
             layout.addLayout(layout1)
+
+        self.notes_label = QLabel("Additional Notes:")
+        self.notes_box = QTextEdit()
+        layout.addWidget(self.notes_label)
+        layout.addWidget(self.notes_box)
 
         hbox = QHBoxLayout()
         self.filename_label = QLabel("Filename:")
@@ -84,6 +97,18 @@ class StartPopup(QDialog):
         filename_valid = self.filename.text().strip() not in ("", ".csv")
         directory_valid = self.dir_path.text().strip() != ""
         self.real_start_button.setEnabled(filename_valid and directory_valid)
+
+    def get_metadata(self):
+        sample = self.line_edits["Sample:"].text()
+        solvent = self.line_edits["Solvent:"].text()
+        exc_wl = self.line_edits["Excitation wavelength:"]["value"].text()
+        exc_wl_unit = self.line_edits["Excitation wavelength:"]["unit"].text()
+        path_len = self.line_edits["Path Length:"]["value"].text()
+        path_len_unit = self.line_edits["Path Length:"]["unit"].text()
+        exc_power = self.line_edits["Excitation Power:"]["value"].text()
+        exc_power_unit = self.line_edits["Excitation Power:"]["unit"].text()
+        notes = self.notes_box.text()
+        return sample, solvent, exc_wl, exc_wl_unit, path_len, path_len_unit, exc_power, exc_power_unit, notes
 
 
 if __name__ == "__main__":

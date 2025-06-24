@@ -5,6 +5,7 @@ from PySide6.QtWidgets import *
 from exponential_steps import *
 from Start_Popup import *
 from Wavelength_Popup import *
+from error_popup import *
 import csv
 import numpy as np
 
@@ -15,7 +16,7 @@ class Heatmap_Interface(QObject):
     stop_measurement_signal = Signal()
 
     """This signal transmits the metadata filled in in the pop-up window at measurement start."""
-    metadata_signal = Signal(str, str, str, str, float, float, float)
+    metadata_signal = Signal(str, str, str, str, float, str, float, str, float, str, str)
 
     """This signal emits the list of delay times after formatting them properly."""
     parsed_content_signal = Signal(list)
@@ -215,6 +216,8 @@ class Heatmap_Interface(QObject):
         self.wavelengthpopup.exec()
 
     def on_start_button_clicked(self):
+        if self.emit_metadata_signal() is False:
+            return
         if self.tabWidget.currentIndex() == 0:
             try:
                 start = self.start_from_box.value()
@@ -227,7 +230,7 @@ class Heatmap_Interface(QObject):
                             self.content[i] = float(self.content[i])
                     elif self.step_option_box.currentText() == "Linear":
                         if steps < 2:
-                            self.show_error_message("Number of steps must be at least 2.")
+                            show_error_message("Number of steps must be at least 2.")
                             return
                         self.content = list(np.linspace(start, finish, steps))
                     self.trigger_worker_run.emit(
@@ -237,12 +240,12 @@ class Heatmap_Interface(QObject):
                         self.scans_box.value()
                     )
                 else:
-                    self.show_error_message("Start and end time must be different and steps > 1.")
+                    show_error_message("Start and end time must be different and steps > 1.")
             except Exception as e:
-                self.show_error_message(f"Error generating timepoints: {e}")
+                show_error_message(f"Error generating timepoints: {e}")
         if self.tabWidget.currentIndex() == 1:
             if not self.content:
-                self.show_error_message("No measurement steps defined. Please upload a file or enter values.")
+                show_error_message("No measurement steps defined. Please upload a file or enter values.")
                 return
             self.trigger_worker_run.emit(
                 self.content,
@@ -257,36 +260,48 @@ class Heatmap_Interface(QObject):
         self.stop_button.setEnabled(True)
         self.startpopup.close()
         self.startpopup.filename.setText("")
-
     def emit_metadata_signal(self):
         directory = self.startpopup.dir_path.text()
         filename = self.startpopup.filename.text().removesuffix(".csv")
+        sample, solvent, excitation_wavelength, exc_wl_unit, path_length, path_len_unit, excitation_power, exc_power_unit, notes = self.startpopup.get_metadata()
 
-        sample = self.startpopup.line_edits["Sample"].text()
+        missing_units = []
+
         if sample == "":
             sample = "Unknown"
 
-        solvent = self.startpopup.line_edits["Solvent"].text()
         if solvent == "":
             solvent = "Unknown"
 
-        if self.startpopup.line_edits["Excitation wavelength: nm"].text() == "":
+        if excitation_wavelength == "":
             excitation_wavelength = np.nan
+            exc_wl_unit = "nm"
         else:
-            excitation_wavelength = float(self.startpopup.line_edits["Excitation wavelength: nm"].text())
-
-        if self.startpopup.line_edits["Path Length: ps"].text() == "":
+            if excitation_wavelength != "" and exc_wl_unit == "":
+                missing_units.append("excitation wavelength")
+        if path_length == "":
             path_length = np.nan
+            path_len_unit = "mm"
         else:
-            path_length = float(self.startpopup.line_edits["Path Length: ps"].text())
-
-        if self.startpopup.line_edits["Excitation Power: mW"].text() == "":
+            if path_length != "" and path_len_unit == "":
+                missing_units.append("path length")
+        if excitation_power == "":
             excitation_power = np.nan
+            exc_power_unit = "mW"
         else:
-            excitation_power = float(self.startpopup.line_edits["Excitation Power: mW"].text())
+            if excitation_power != "" and exc_power_unit == "":
+                missing_units.append("excitation power")
+
+        if missing_units:
+            show_error_message(f"The unit(s) for the following field(s) are not given: {', '.join(missing_units)}.")
+            return False
 
         # Emit the signal with the collected values
-        self.metadata_signal.emit(directory, filename, sample, solvent, excitation_wavelength, path_length, excitation_power)
+        self.metadata_signal.emit(directory, filename, sample, solvent, 
+                                  excitation_wavelength, exc_wl_unit, 
+                                  path_length, path_len_unit, 
+                                  excitation_power, exc_power_unit, notes)
+        return True
 
     def time_remaining_timer(self, t):
         self.remaining_time = t
@@ -372,7 +387,7 @@ class Heatmap_Interface(QObject):
                     self.finish_time_box.setValue(self.content[-1])
 
             except Exception as e:
-                self.show_error_message(f"Failed to load file: {e}")
+                show_error_message(f"Failed to load file: {e}")
 
     def update_start_from_content(self, value):
         if hasattr(self, "content") and self.content:
@@ -402,14 +417,6 @@ class Heatmap_Interface(QObject):
                 self.start_from_box.setValue(self.content[0])
                 self.finish_time_box.setValue(self.content[-1])
             
-    def show_error_message(self, error_message):
-        msgbox = QMessageBox()
-        msgbox.setWindowTitle("Error")
-        msgbox.setText("An error occurred:")
-        msgbox.setInformativeText(error_message)
-        msgbox.setIcon(QMessageBox.Critical)
-        msgbox.setStandardButtons(QMessageBox.Ok)
-        msgbox.exec()
 
     def disable_stop_button(self):
         self.stop_button.setEnabled(False)
