@@ -155,9 +155,8 @@ class Heatmap_Interface(QObject):
         self.wavelength_button = QPushButton("Wavelength Calibration")
         self.wavelength_button.clicked.connect(self.open_wavelength_popup)
         hbox.addWidget(self.wavelength_button)
-        self.progressbar = QProgressBar()
-        self.progressbar.setMinimum(0)
-        self.progressbar.setMaximum(8672666)
+        self.progressbar = MarkedProgressBar()
+        self.progressbar.setRange(0, 8672666)
         self.progressbar.setTextVisible(False)
         self.progresslabel = QLabel(f"/8672.66")
         hbox.addWidget(self.progressbar)
@@ -423,6 +422,29 @@ class Heatmap_Interface(QObject):
 
     def disable_stop_button(self):
         self.stop_button.setEnabled(False)
+
+
+class MarkedProgressBar(QProgressBar):
+    def __init__(self, *args, marker_value=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.marker_value = marker_value
+
+    def set_marker(self, value):
+        self.marker_value = value
+        self.update()
+
+    def paintEvent(self, event):
+        super().paintEvent(event)
+        if self.marker_value is not None:
+            painter = QPainter(self)
+            pen = QPen(QColor("red"), 2)
+            painter.setPen(pen)
+            min_val, max_val = self.minimum(), self.maximum()
+            if max_val > min_val:
+                ratio = (self.marker_value - min_val) / (max_val - min_val)
+                x = int(ratio * self.width())
+                painter.drawLine(x, 0, x, self.height())
+            painter.end()
 
 
 

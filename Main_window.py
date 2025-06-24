@@ -32,7 +32,6 @@ class MainApp(QMainWindow):
         super().__init__()
         self.setWindowTitle("HamburgerPresserWorks (tm)")
         self.setWindowIcon(QIcon("hamburger.ico"))
-        self.setGeometry(100, 100, 800, 600)
 
         # Set up main tab widget and sub-windows
         self.tabs = QTabWidget()
@@ -48,6 +47,9 @@ class MainApp(QMainWindow):
 
         # Start background thread for probe spectrum updates
         self.probe_window.start_graph_thread()
+
+        # Show maximized after all widgets are set up
+        self.showMaximized()
 
 # Execute the entire GUI from a central location
 if __name__ == "__main__":
@@ -153,6 +155,7 @@ if __name__ == "__main__":
     def set_wavelength_calibration(wavelengths, unit):
         main_app.heatmap_window.ta_widgets.set_wavelength_mapping(wavelengths, unit)
         main_app.probe_window.set_wavelength_mapping(wavelengths, unit)
+        worker.wavelength_change(wavelengths)
 
     #connect the wavelength popup window with the heatmap plots
     main_app.heatmap_window.interface.wavelengthpopup.wavelength_signal.connect(set_wavelength_calibration, Qt.QueuedConnection)
