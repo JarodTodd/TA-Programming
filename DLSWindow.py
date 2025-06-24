@@ -66,8 +66,8 @@ class DLSWindow(QMainWindow):
         self.probe_curve = self.probe_avg_graph.plot([], pen='r')
 
         # wavelength calibration probe plot
-        self.probeplot_wavelength_axis = ScaledAxis(orientation='bottom')
-        self.probe_avg_graph.setAxisItems({'bottom': self.probeplot_wavelength_axis}) 
+        self.probe_wavelength_axis = ScaledAxis(orientation='bottom')
+        self.probe_avg_graph.setAxisItems({'bottom': self.probe_wavelength_axis}) 
 
         # vertical, draggable guide-lines that define the outlier rejection range
         self.range_line_left  = pg.InfiniteLine(pos=0, angle=90, movable=True, pen=pg.mkPen(color='#C0D5DC', width=1))
@@ -502,5 +502,5 @@ class DLSWindow(QMainWindow):
         # clear the mapping
         self.probe_wavelength_axis.clear_values()
         # reset the label
-        self.probe_avg_graph.setLabel('bottom', 'Pixel index')
+        self.probe_avg_graph.setLabel('bottom', label)
     

@@ -67,9 +67,6 @@ if __name__ == "__main__":
     worker.reset_currentMatrix.connect(main_app.shot_delay_app.ta_widgets.reset_currentMatrix, Qt.QueuedConnection)
     main_app.shot_delay_app.interface.parsed_content_signal.connect(main_app.shot_delay_app.ta_widgets.update_delay_stages, Qt.QueuedConnection)
 
-    #connect the wavelength popup window with the heatmap plots
-    main_app.shot_delay_app.interface.wavelengthpopup.wavelength_signal.connect(set_wavelength_calibration, Qt.QueuedConnection)
-
     # Control probe spectrum thread and update probe data during measurements
     worker.started.connect(main_app.dls_window.stop_probe_thread, Qt.QueuedConnection)
     worker.update_probe.connect(main_app.dls_window.update_probe_data, Qt.QueuedConnection)
@@ -157,7 +154,9 @@ if __name__ == "__main__":
         main_app.shot_delay_app.ta_widgets.set_wavelength_mapping(wavelengths, unit)
         main_app.dls_window.set_wavelength_mapping(wavelengths, unit)
 
-
+    #connect the wavelength popup window with the heatmap plots
+    main_app.shot_delay_app.interface.wavelengthpopup.wavelength_signal.connect(set_wavelength_calibration, Qt.QueuedConnection)
+    
     def stop_worker():
         """
         Cleanly stop the worker thread and any running processes when the GUI closes.

@@ -82,7 +82,7 @@ class TAPlotWidget(QObject):
         self.canvas_heatmap.setAxisItems({'left': self.delay_axis, 'bottom': self.heatmap_wavelength_axis}) 
 
         # bottom axis: start in pixel units
-        self.canvas_heatmap.setLabels(left="Delay / ps", bottom="Pixel index")
+        self.canvas_heatmap.setLabels(left="Delay (ps)", bottom="Pixel index")
         self.canvas_heatmap.getViewBox().setMouseEnabled(x=True, y=True)
         self.canvas_heatmap.setLimits(xMin=0, xMax=1024, yMin=-0, yMax=1)
  
@@ -114,7 +114,7 @@ class TAPlotWidget(QObject):
         #==Secondary plots creation==
         # plot1
         self.canvas_plot1 = HoverPlotWidget(parent)
-        self.canvas_plot1.setLabels(left="ΔA", bottom="Delay / ps")
+        self.canvas_plot1.setLabels(left="ΔA", bottom="Delay (ps)")
         self.canvas_plot1.setLimits(xMin=-8700, xMax=8700, yMin = -1, yMax=1)
         self.plot1_avg = self.canvas_plot1.plot([], [], pen=pg.mkPen('r', width=1), name="Avg")
         self.plot1_cur = self.canvas_plot1.plot([], [], pen=pg.mkPen(width=1), name="Current")
@@ -461,12 +461,11 @@ class TAPlotWidget(QObject):
         Switch both x-axes to show `wavelengths[i]` at pixel i.
         """
         self.wavelenghts = wavelengths
-        label = unit
         
         self.heatmap_wavelength_axis.set_values(wavelengths)
         self.plot2_wavelength_axis.set_values(wavelengths)
-        self.canvas_heatmap.setLabel('bottom', label)
-        self.canvas_plot2.setLabel('bottom', label)
+        self.canvas_heatmap.setLabel('bottom', unit)
+        self.canvas_plot2.setLabel('bottom', unit)
         self.update_secondary()        # refresh titles, cursors, etc.
 
     def reset_to_pixel_axis(self, label="Pixel index"):

@@ -115,7 +115,7 @@ class WavelengthPopUp(QDialog):
                             show_error_message(msg)
                             return
                         print("Wavelengths loaded:", self.wavelengths)
-                        self.wavelength_signal.emit(self.wavelengths)
+                        self.wavelength_signal.emit(self.wavelengths, self.unit)
                     self.load_button.setEnabled(True)
             except Exception as e:
                 show_error_message(str(e))
