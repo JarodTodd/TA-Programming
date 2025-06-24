@@ -4,6 +4,7 @@ from PySide6.QtGui import *
 from WorkerThread import *
 import pyqtgraph as pg
 import csv
+from error_popup import *
 
 
 class dA_Window(QWidget):
@@ -306,7 +307,7 @@ class dA_Window(QWidget):
             print(f"dA data saved successfully to {filename}.")
 
         except Exception as e:
-            self.show_error_message(f"Failed to save dA data: {e}")
+            show_error_message(f"Failed to save dA data: {e}")
 
     def redraw_dA_plot(self):
         self.update_dA_graph(self.dA_inputs_avg)

@@ -5,6 +5,7 @@ import pyqtgraph as pg
 from WorkerThread import *
 from dAwindow import *
 import csv
+from error_popup import *
 
 class DLSWindow(QMainWindow):
     """
@@ -217,7 +218,7 @@ class DLSWindow(QMainWindow):
             if shots <= 3:
                 raise ValueError
         except ValueError:
-            self.show_error_message("Please enter an integer >= 4.")
+            show_error_message("Please enter an integer >= 4.")
             return
         self.restart_probe_thread(shots)
 
@@ -266,7 +267,7 @@ class DLSWindow(QMainWindow):
             print(f"Probe data saved successfully to {filename}.")
 
         except Exception as e:
-            self.show_error_message(f"Failed to save probe data: {e}")
+            show_error_message(f"Failed to save probe data: {e}")
 
     def correct_dark_noise(self):
         if self.probe_worker.data_processor.dark_noise_correction is None:
@@ -452,9 +453,9 @@ class DLSWindow(QMainWindow):
                 raise ValueError("Value is out of range.")
             
         except ValueError as ve:
-            self.show_error_message(str(ve))
+            show_error_message(str(ve))
         except Exception as e:
-            self.show_error_message(str(e))
+            show_error_message(str(e))
 
     def update_delay_bar(self, value):
         """
@@ -465,14 +466,6 @@ class DLSWindow(QMainWindow):
         self.delay_bar.setFormat(f"{round(value,2)}/8672.66")
         pass
 
-    def show_error_message(self, error_message):
-        msgbox = QMessageBox()
-        msgbox.setWindowTitle("Error")
-        msgbox.setText("An error occurred:")
-        msgbox.setInformativeText(error_message)
-        msgbox.setIcon(QMessageBox.Critical)
-        msgbox.setStandardButtons(QMessageBox.Ok)
-        msgbox.exec()
 
     def SetReference(self):
         self.run_command_signal.emit("SetReference", "ButtonPress", 0, 0)
