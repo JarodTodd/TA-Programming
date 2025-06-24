@@ -99,7 +99,12 @@ class TAPlotWidget(QObject):
         self.cbar = pg.ColorBarItem(values=(0, 1))
         self.cbar.setColorMap(cmap)
         self.cbar.setImageItem(self.mesh) 
-        plot_item.layout.addItem(self.cbar, 2, 2)     
+        
+        # remove Qt's build in padding spacer to make space for the heatmap's colorbar
+        if plot_item.layout.itemAt(2, 2) is not None:
+            plot_item.layout.removeItem(plot_item.layout.itemAt(2, 2)    )           
+        # add heatmap colorbar
+        plot_item.layout.addItem(self.cbar, 2, 2)                
 
         # create cursor for the heatmap
         self.vline_heatmap = pg.InfiniteLine(angle=90, movable=True, pen=self.cursor_heatmap)
