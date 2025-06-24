@@ -151,7 +151,8 @@ class ComputeData():
         # Probe spectra
         if self.outlier_rejection_probe == True:
             probe = self.OutlierRejection_probe(probe)
-        if len(probe) == 0:
+
+        if len(probe) == 0: # all shots got rejected
             self.probe_spectrum_avg = np.zeros_like(self.probe_spectrum_avg)
         else:
             self.probe_spectrum_avg = np.mean(probe, axis=0)
@@ -165,16 +166,17 @@ class ComputeData():
             self.delta_A_matrix_avg = np.zeros_like(self.delta_A_matrix_avg)
             return self.probe_spectrum_avg, self.delta_A_matrix_avg
             
-        # use only fully paired shots (truncate longer block if mismatched)
-        n_pairs = min(len(pump_off_dA), len(pump_on_dA))
+        # warn for mismatched pump-off and pump-on states
+        if len(pump_off_dA) != len(pump_on_dA):
+            print("Pump-off pump-on shots not of equal size")
         
-        #Pair shots and compute delta A
+        # pair shots and compute delta A
         with np.errstate(divide='ignore', invalid='ignore'):
-            ratio = np.divide(pump_on_dA[:n_pairs], pump_off_dA[:n_pairs])
-            ratio[ratio <= 0] = np.nan  # avoid -inf from log(0) or log of negative values
+            ratio = np.divide(pump_on_dA, pump_off_dA)
+            ratio[ratio <= 0] = np.nan  # Avoid -inf from log(0) or log(negative)
             delta_A = -np.log(ratio)
           
-        #Average delta_A per shot
+        # average delta_A per shot
         self.delta_A_matrix_avg = np.mean(delta_A, axis=0)
         
         return self.probe_spectrum_avg, self.delta_A_matrix_avg
