@@ -115,9 +115,7 @@ class DLSWindow(QMainWindow):
         # add widgets
         outlier_group.setLayout(outlier_layout)
         left_layout.addWidget(outlier_group)
-        outlier_group.setLayout(outlier_layout)
-        left_layout.addWidget(outlier_group)
-
+       
         # initially disable outlier rejection
         self.toggle_outlier_rejection(False)
         

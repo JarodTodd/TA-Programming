@@ -97,8 +97,6 @@ class dA_Window(QWidget):
         outlier_group.setLayout(outlier_layout)
         self.left_layout.addWidget(outlier_group)
 
-        outlier_group.setLayout(outlier_layout)
-        self.left_layout.addWidget(outlier_group)
         self.toggle_outlier_rejection(False)
 
         # Save button
