@@ -4,12 +4,13 @@ from PySide6.QtGui import *
 from PySide6.QtWidgets import *
 
 class WavelengthPopUp(QDialog):
-    wavelength_signal = Signal(list)
+    wavelength_signal = Signal(list, str)
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Add Details")
         self.init_ui()
         self.wavelengths = []
+        self.unit = ""
 
     def init_ui(self):
         layout = QVBoxLayout()
@@ -72,6 +73,7 @@ class WavelengthPopUp(QDialog):
                         msg = "The first item before the first comma must be a non-empty string."
                         self.show_error_message(msg)
                         return
+                    self.unit = first_line[0].strip()  
                     # Check that all items after the first are floats or ints
                     numeric_values = []
                     for item in first_line[1:]:
@@ -118,7 +120,7 @@ class WavelengthPopUp(QDialog):
                 self.show_error_message(str(e))
                     
     def load_button_pressed(self):
-        self.wavelength_signal.emit(self.wavelengths)
+        self.wavelength_signal.emit(self.wavelengths, self.unit)
         self.close()
 
     def show_error_message(self, error_message):

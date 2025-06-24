@@ -456,11 +456,12 @@ class TAPlotWidget(QObject):
         self.update_secondary()
 
     """Helper functions: wavelenght calibration"""
-    def set_wavelength_mapping(self, wavelengths, label="Wavelength / nm"):
+    def set_wavelength_mapping(self, wavelengths, unit):
         """
         Switch both x-axes to show `wavelengths[i]` at pixel i.
         """
         self.wavelenghts = wavelengths
+        label = unit
         
         self.heatmap_wavelength_axis.set_values(wavelengths)
         self.plot2_wavelength_axis.set_values(wavelengths)
