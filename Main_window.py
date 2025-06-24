@@ -3,7 +3,7 @@ from PySide6.QtCore import *
 from PySide6.QtGui import *
 from WorkerThread import *
 from HeatmapWindow import *
-from dAwindow import *
+from Probewindow import *
 from dAwindow import *
 from error_popup import *
 import time
