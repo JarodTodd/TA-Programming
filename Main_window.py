@@ -74,7 +74,7 @@ if __name__ == "__main__":
     worker.started.connect(main_app.dls_window.stop_probe_thread, Qt.QueuedConnection)
     worker.update_probe.connect(main_app.dls_window.update_probe_data, Qt.QueuedConnection)
     worker.finished.connect(main_app.dls_window.start_probe_thread, Qt.QueuedConnection)
-
+  
     # Keep dA spectrum updated in dAWindow
     main_app.dls_window.probe_worker.dA_update.connect(main_app.dA_window.update_dA_graph, Qt.QueuedConnection)
     worker.update_dA.connect(main_app.dA_window.update_dA_graph, Qt.QueuedConnection)

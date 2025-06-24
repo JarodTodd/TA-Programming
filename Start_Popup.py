@@ -107,9 +107,23 @@ class StartPopup(QDialog):
         path_len_unit = self.line_edits["Path Length:"]["unit"].text()
         exc_power = self.line_edits["Excitation Power:"]["value"].text()
         exc_power_unit = self.line_edits["Excitation Power:"]["unit"].text()
-        notes = self.notes_box.text()
+        notes = self.notes_box.toPlainText()
         return sample, solvent, exc_wl, exc_wl_unit, path_len, path_len_unit, exc_power, exc_power_unit, notes
 
+    def clear_fields(self):
+        # Clear all line edits
+        for key, widget in self.line_edits.items():
+            if isinstance(widget, dict):
+                widget["value"].clear()
+                widget["unit"].clear()
+            else:
+                widget.clear()
+        self.notes_box.clear()
+        self.filename.blockSignals(True)
+        self.filename.setText("")
+        self.filename.blockSignals(False)
+        self.dir_path.clear()
+        self.real_start_button.setEnabled(False)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

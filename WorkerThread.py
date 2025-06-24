@@ -38,6 +38,7 @@ class ProbeThread(QThread):
         super().__init__(parent)
         self.shots = shots
         self.running = True
+        self.scan_complete = False
         self.data_processor = ComputeData()
     
     def run(self):
@@ -305,7 +306,7 @@ class MeasurementWorker(QThread):
             print(f"Error sending stop command to client: {e}")
 
         # Save current scan data if available
-        if hasattr(self, "averaged_probe_measurement") and self.averaged_probe_measurement:
+        if hasattr(self, "averaged_probe_measurement") and self.averaged_probe_measurement and self.scan_complete is False:
             try:
                 self.save_scan_file(
                     getattr(self, "directory", ""),
@@ -322,7 +323,7 @@ class MeasurementWorker(QThread):
                 print(f"Error saving partial scan data: {e}")
 
         # Save average of all scans if more than one scan
-        if hasattr(self, "measurement_average") and self.nos > 1 and self.measurement_average:
+        if hasattr(self, "measurement_average") and self.nos > 1 and self.measurement_average and self.scan_complete is False:
             try:
                 self.save_avg_file(
                     getattr(self, "directory", ""),
@@ -408,7 +409,7 @@ class MeasurementWorker(QThread):
         pos -= self.last_item
         if delay_relative == self.content[0]:
             self.averaged_probe_measurement = []
-        
+        self.scan_complete = False
         self.barvalue += pos
 
         self.update_delay_bar_signal.emit(self.barvalue)
@@ -437,10 +438,10 @@ class MeasurementWorker(QThread):
         """When a scan is completed, save the data to a CSV file in the format:
         Delay, Probe_Avg (per pixel)"""
         if delay_relative == self.content[-1]:
-            self.save_scan_file(self.directory, self.filename, self.sample, self.solvent, self.pump, self.pathlength, self.exc_power)
-
+            self.save_scan_file(self.directory, self.filename, self.sample, self.solvent, self.pump, self.pathlength, self.exc_power, self.notes)
+            self.scan_complete = True
             if self.nos == self.scans and self.nos > 1:
-                self.save_avg_file(self.directory, self.filename, self.sample, self.solvent, self.pump, self.pathlength, self.exc_power)
+                self.save_avg_file(self.directory, self.filename, self.sample, self.solvent, self.pump, self.pathlength, self.exc_power, self.notes)
  
             if self.scans != self.nos:
                 self.reset_currentMatrix.emit() 

@@ -258,8 +258,11 @@ class Heatmap_Interface(QObject):
         self.time_remaining_timer(int((int(self.total_steps.text())*9/30) + 9))
         self.emit_metadata_signal()
         self.stop_button.setEnabled(True)
+        self.startpopup.clear_fields()
         self.startpopup.close()
-        self.startpopup.filename.setText("")
+        
+
+
     def emit_metadata_signal(self):
         directory = self.startpopup.dir_path.text()
         filename = self.startpopup.filename.text().removesuffix(".csv")
