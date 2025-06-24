@@ -9,8 +9,8 @@ class ComputeData():
     def __init__(self):
         # Initialize variables for delta_a_block
         self.blocks = None
-        self.probe_spectrum_avg = None
-        self.delta_A_matrix_avg = None
+        self.probe_spectrum = None
+        self.delta_A = None
 
         # Initialize variables for outlier rejection
         self.outlier_rejection_dA = False      # toggle outlier rejection on/off
@@ -131,7 +131,7 @@ class ComputeData():
         self.range_start_dA, self.range_end_dA = sorted((int(start), int(end)))
 
 
-    def delta_a_block(self, block, start_pixel=12, end_pixel=1035):
+    def compute_spectra(self, block, start_pixel=12, end_pixel=1035):
         """
         Function for computing probe spectra and dA spectra
         """
@@ -153,9 +153,9 @@ class ComputeData():
             probe = self.OutlierRejection_probe(probe)
 
         if len(probe) == 0: # all shots got rejected
-            self.probe_spectrum_avg = np.zeros_like(self.probe_spectrum_avg)
+            self.probe_spectrum = np.zeros_like(self.probe_spectrum)
         else:
-            self.probe_spectrum_avg = np.mean(probe, axis=0)
+            self.probe_spectrum = np.mean(probe, axis=0)
 
 
         # dA calulations from pump‑on and pump‑off states
@@ -163,8 +163,8 @@ class ComputeData():
             pump_off_dA, pump_on_dA = self.OutlierRejection_dA(pump_off_dA, pump_on_dA)
 
         if len(pump_off_dA) == 0 or len(pump_on_dA) == 0:
-            self.delta_A_matrix_avg = np.zeros_like(self.delta_A_matrix_avg)
-            return self.probe_spectrum_avg, self.delta_A_matrix_avg
+            self.delta_A = np.zeros_like(self.delta_A)
+            return self.probe_spectrum, self.delta_A
             
         # warn for mismatched pump-off and pump-on states
         if len(pump_off_dA) != len(pump_on_dA):
@@ -177,6 +177,6 @@ class ComputeData():
             delta_A = -np.log(ratio)
           
         # average delta_A per shot
-        self.delta_A_matrix_avg = np.mean(delta_A, axis=0)
+        self.delta_A = np.mean(delta_A, axis=0)
         
-        return self.probe_spectrum_avg, self.delta_A_matrix_avg
+        return self.probe_spectrum, self.delta_A

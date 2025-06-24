@@ -7,7 +7,7 @@ import csv
 from error_popup import *
 
 
-class dA_Window(QWidget):
+class dAwindow(QWidget):
     run_command_signal = Signal(str, str, int, int)
     dA_switch_outlier_rejection = Signal(bool)
     dA_deviation_threshold_changed = Signal(float)
@@ -363,7 +363,7 @@ class dA_Window(QWidget):
 if __name__ == "__main__":
     import sys
     app = QApplication(sys.argv)
-    ui = dA_Window()
+    ui = dAwindow()
     ui.show()
     sys.exit(app.exec())
     sys.exit(app.exec())

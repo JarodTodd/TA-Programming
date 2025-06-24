@@ -13,7 +13,7 @@ import os
 ironpython_executable = r"C:\Users\PC026453\Documents\TA-Programming\IronPython 3.4\ipy.exe"
 script_path = r"C:\Users\PC026453\Documents\TA-Programming\IronPythonDLS.py"
 
-class ProbeThread(QThread):
+class GraphThread(QThread):
     """
     QThread subclass that captures raw camera data, processes it,
     and emits signals with averaged probe and dA data as numpy arrays.
@@ -49,11 +49,11 @@ class ProbeThread(QThread):
             block_2d_array = np.array(block_buffer).reshape(self.shots, 1088)
 
             # process data: compute probe and dA averages
-            probe_avg, dA_average = self.data_processor.delta_a_block(block_2d_array)
+            probe_spectrum, delta_A = self.data_processor.compute_spectra(block_2d_array)
 
             # Emit processed data and rejection stats to visualize them in the GUI
-            self.probe_update.emit(probe_avg)
-            self.dA_update.emit(dA_average)
+            self.probe_update.emit(probe_spectrum)
+            self.dA_update.emit(delta_A)
             self.probe_rejected.emit(self.data_processor.rejected_probe)
             self.dA_rejected.emit(self.data_processor.rejected_dA)
     
@@ -417,7 +417,7 @@ class MeasurementWorker(QThread):
         block_2d_array = np.array(block_buffer).reshape(number_of_shots, 1088)
         blocks.append(block_2d_array)
 
-        probe_avg, dA_avg = self.data_processor.delta_a_block(block_2d_array)
+        probe_avg, dA_avg = self.data_processor.compute_spectra(block_2d_array)
         self.averaged_probe_measurement.append((delay_relative, *probe_avg))
         delaytime = delay_relative                                     
         # last‑shot ΔA row

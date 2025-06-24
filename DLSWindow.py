@@ -8,7 +8,7 @@ import csv
 from heatmap import ScaledAxis
 from error_popup import *
 
-class DLSWindow(QMainWindow):
+class Probewindow(QMainWindow):
     """
     Main application window for Delay-Line Scan (DLS) control and live probe plotting.
 
@@ -32,11 +32,11 @@ class DLSWindow(QMainWindow):
 
     def __init__(self, dA_Window):
         """
-        Qt constructor — build UI, wire signals and launch first ProbeThread.
+        Qt constructor — build UI, wire signals and launch the GraphThread.
         """
         super().__init__()
         self.setWindowTitle("Delayline GUI")
-        self.probe_worker = ProbeThread()
+        self.graph_worker = GraphThread()
         self.dA_window = dA_Window
         self.dark_noise = None
 
@@ -55,19 +55,19 @@ class DLSWindow(QMainWindow):
         left_layout.addWidget(self.shot_input)  
 
         # create probe plot
-        self.probe_avg_graph = pg.PlotWidget()
-        left_layout.addWidget(self.probe_avg_graph)
-        self.probe_avg_graph.setTitle("Probe")
-        self.probe_avg_graph.setLabel('left', 'Intensity (counts)')
-        self.probe_avg_graph.setLabel('bottom', 'Pixel index')
-        self.probe_avg_graph.setBackground('w')
-        self.probe_avg_graph.scene().sigMouseClicked.connect(lambda event: self.dA_window.on_click(event, self.probe_avg_graph))
-        self.probe_avg_graph.setLimits(xMin=0, xMax=1074, yMin=0, yMax=16500)
-        self.probe_curve = self.probe_avg_graph.plot([], pen='r')
+        self.probe_graph = pg.PlotWidget()
+        left_layout.addWidget(self.probe_graph)
+        self.probe_graph.setTitle("Probe")
+        self.probe_graph.setLabel('left', 'Intensity (counts)')
+        self.probe_graph.setLabel('bottom', 'Pixel index')
+        self.probe_graph.setBackground('w')
+        self.probe_graph.scene().sigMouseClicked.connect(lambda event: self.dA_window.on_click(event, self.probe_graph))
+        self.probe_graph.setLimits(xMin=0, xMax=1074, yMin=0, yMax=16500)
+        self.probe_curve = self.probe_graph.plot([], pen='r')
 
         # wavelength calibration probe plot
         self.probe_wavelength_axis = ScaledAxis(orientation='bottom')
-        self.probe_avg_graph.setAxisItems({'bottom': self.probe_wavelength_axis}) 
+        self.probe_graph.setAxisItems({'bottom': self.probe_wavelength_axis}) 
 
         # vertical, draggable guide-lines that define the outlier rejection range
         self.range_line_left  = pg.InfiniteLine(pos=0, angle=90, movable=True, pen=pg.mkPen(color='#C0D5DC', width=1))
@@ -82,10 +82,10 @@ class DLSWindow(QMainWindow):
         for line in (self.range_line_left, self.range_line_right):
             line.setVisible(False)                             
             line.sigPositionChanged.connect(self.probe_outlier_range_changed)
-            self.probe_avg_graph.addItem(line)
+            self.probe_graph.addItem(line)
    
         # saves current probe data for save option
-        self.probe_inputs_avg = []
+        self.probe_inputs = []
 
         # Outlier rejection controls
         outlier_group = QGroupBox()
@@ -120,7 +120,7 @@ class DLSWindow(QMainWindow):
         self.toggle_outlier_rejection(False)
         
         # start probe thread 
-        self.start_probe_thread()
+        self.start_graph_thread()
 
         # Button to save current probe average to CSV
         self.save_probe_button = QPushButton("Save Probe Data")
@@ -201,7 +201,7 @@ class DLSWindow(QMainWindow):
         central_widget.setLayout(central_layout)
 
         # placeholder: worker thread will be created in start_probe_thread()
-        self.probe_worker: ProbeThread | None = None
+        self.graph_worker: GraphThread | None = None
 
 
     """
@@ -223,7 +223,7 @@ class DLSWindow(QMainWindow):
         except ValueError:
             show_error_message("Please enter an integer >= 4.")
             return
-        self.restart_probe_thread(shots)
+        self.restart_graph_thread(shots)
 
     @Slot(object, object)                          
     def update_probe_data(self, avg_row):
@@ -231,11 +231,11 @@ class DLSWindow(QMainWindow):
         Updates the local veriable probe_input_avg with the latest probe spectrum for export
         and updates the probe plot with the current data
         """
-        self.probe_inputs_avg = avg_row
-        self.probe_curve.setData(self.probe_inputs_avg)       
+        self.probe_inputs = avg_row
+        self.probe_curve.setData(self.probe_inputs)       
 
     @Slot(object, object)
-    def update_probe_avg_graph(self, avg_row):
+    def update_probe_graph(self, avg_row):
         """
         Calls the update_dA_graph function in dAWindow to update the dA graph with the latest values
         """
@@ -264,7 +264,7 @@ class DLSWindow(QMainWindow):
             with open(filename, 'w', newline='') as csvfile:
                 writer = csv.writer(csvfile)
                 writer.writerow(["Index", "Average"])
-                for i, (avg) in enumerate(zip(self.probe_inputs_avg)):
+                for i, (avg) in enumerate(zip(self.probe_inputs)):
                     writer.writerow([i, avg])
 
             print(f"Probe data saved successfully to {filename}.")
@@ -273,13 +273,13 @@ class DLSWindow(QMainWindow):
             show_error_message(f"Failed to save probe data: {e}")
 
     def correct_dark_noise(self):
-        if self.probe_worker.data_processor.dark_noise_correction is None:
-            self.dark_noise = self.probe_inputs_avg
-            self.probe_worker.data_processor.dark_noise_correction = self.dark_noise
+        if self.graph_worker.data_processor.dark_noise_correction is None:
+            self.dark_noise = self.probe_inputs
+            self.graph_worker.data_processor.dark_noise_correction = self.dark_noise
             self.dark_noise_button.setText("Remove dark noise correction")
         else:
             self.dark_noise = None
-            self.probe_worker.data_processor.dark_noise_correction = self.dark_noise
+            self.graph_worker.data_processor.dark_noise_correction = self.dark_noise
             self.dark_noise_button.setText("Correct dark noise")
 
     """
@@ -317,7 +317,7 @@ class DLSWindow(QMainWindow):
     def emit_deviation_change(self, value: float):
         """
         This method is called when the user adjusts the spinbox controlling
-        the threshold.
+        the outlier rejection threshold.
         """
         self.deviation_threshold_changed.emit(value)
 
@@ -345,8 +345,8 @@ class DLSWindow(QMainWindow):
             self.range_line_right.setValue(1023)
 
         # forward to the data-processor running in the worker thread
-        if self.probe_worker and self.probe_worker.data_processor:
-            self.probe_worker.data_processor.update_outlier_range(start, end)
+        if self.graph_worker and self.graph_worker.data_processor:
+            self.graph_worker.data_processor.update_outlier_range(start, end)
     
     @Slot(float)
     def update_rejected_percentage(self, percent: float) -> None:
@@ -354,45 +354,45 @@ class DLSWindow(QMainWindow):
         self.rejected_value.setText(f"{percent:.1f}")
 
 
-    """Helper functions: ProbeThread"""
+    """Helper functions: GraphThread"""
 
-    def start_probe_thread(self, shots: int = 1000):
-        """Create and launch the single ProbeThread.  
+    def start_graph_thread(self, shots: int = 1000):
+        """Create and launch the single GraphThread.  
         Call this exactly once from MainApp after all tabs exist
         """
 
         # avoid creating multiple threads — only start if one doesn't exist
-        if self.probe_worker is not None:
+        if self.graph_worker is not None:
             return
 
         # create a new worker thread for probe data acquisition                  
-        self.probe_worker = ProbeThread(shots)
+        self.graph_worker = GraphThread(shots)
         # share this thread instance with the dA window (allows dA plot to update)
-        self.dA_window.probe_worker = self.probe_worker 
+        self.dA_window.probe_worker = self.graph_worker 
 
         #set dark noise. shape: None / List
-        self.probe_worker.data_processor.dark_noise_correction = self.dark_noise  
+        self.graph_worker.data_processor.dark_noise_correction = self.dark_noise  
 
         # Signal Wiring:
         # GUI → Worker: user enables/disables outlier rejection for probe/dA
-        self.switch_outlier_rejection.connect(self.probe_worker.data_processor.toggle_outlier_rejection_probe, Qt.QueuedConnection)
-        self.dA_window.dA_switch_outlier_rejection.connect(self.probe_worker.data_processor.toggle_outlier_rejection_dA, Qt.QueuedConnection)
+        self.switch_outlier_rejection.connect(self.graph_worker.data_processor.toggle_outlier_rejection_probe, Qt.QueuedConnection)
+        self.dA_window.dA_switch_outlier_rejection.connect(self.graph_worker.data_processor.toggle_outlier_rejection_dA, Qt.QueuedConnection)
         # GUI → Worker: threshold value changes
-        self.deviation_threshold_changed.connect(self.probe_worker.data_processor.deviation_change, Qt.QueuedConnection)
-        self.dA_window.dA_deviation_threshold_changed.connect(self.probe_worker.data_processor.dA_deviation_change, Qt.QueuedConnection)
+        self.deviation_threshold_changed.connect(self.graph_worker.data_processor.deviation_change, Qt.QueuedConnection)
+        self.dA_window.dA_deviation_threshold_changed.connect(self.graph_worker.data_processor.dA_deviation_change, Qt.QueuedConnection)
          # Worker → GUI: send updated probe or dA data to UI
-        self.probe_worker.probe_update.connect(self.update_probe_data, Qt.QueuedConnection)
-        self.probe_worker.dA_update.connect(self.update_probe_avg_graph, Qt.QueuedConnection)
+        self.graph_worker.probe_update.connect(self.update_probe_data, Qt.QueuedConnection)
+        self.graph_worker.dA_update.connect(self.update_probe_graph, Qt.QueuedConnection)
         # Worker → GUI: update how many shots were rejected by outlier logic
-        self.probe_worker.probe_rejected.connect(self.update_rejected_percentage, Qt.QueuedConnection)
-        self.probe_worker.dA_rejected.connect(self.dA_window.update_rejected_percentage, Qt.QueuedConnection)
+        self.graph_worker.probe_rejected.connect(self.update_rejected_percentage, Qt.QueuedConnection)
+        self.graph_worker.dA_rejected.connect(self.dA_window.update_rejected_percentage, Qt.QueuedConnection)
         
         # Start the thread
-        self.probe_worker.start()
+        self.graph_worker.start()
 
-    def restart_probe_thread(self, shots: int):
+    def restart_graph_thread(self, shots: int):
         """
-        Restart the ProbeThread with a new shot value.
+        Restart the GraphThread with a new shot value.
         """
 
         # save current state of outlier rejection checkboxes before stopping thread
@@ -400,10 +400,10 @@ class DLSWindow(QMainWindow):
         outlier_rejection_dA = self.dA_window.outlier_checkbox.isChecked()
 
         # stop the existing thread, but keep the outlier rejection enabled after restart
-        self.stop_probe_thread(False)
+        self.stop_graph_thread(False)
 
         # start thread
-        self.start_probe_thread(shots)
+        self.start_graph_thread(shots)
 
          # restore the outlier rejection states
         if outlier_rejection_probe:
@@ -411,12 +411,12 @@ class DLSWindow(QMainWindow):
         if outlier_rejection_dA:
             self.dA_window.toggle_outlier_rejection(True)
 
-    def stop_probe_thread(self, hard_stop: bool = True):
+    def stop_graph_thread(self, hard_stop: bool = True):
         """
-        Stop the currently running ProbeThread
+        Stop the currently running GraphThread
         """
 
-        if self.probe_worker is not None:
+        if self.graph_worker is not None:
             # disconent singals to ensure signals don't reach a dying thread
             self.switch_outlier_rejection.disconnect()    
             self.dA_window.dA_switch_outlier_rejection.disconnect()
@@ -428,9 +428,9 @@ class DLSWindow(QMainWindow):
                 self.dA_window.toggle_outlier_rejection(False)
 
             # stop thread
-            self.probe_worker.stop()
-            self.probe_worker.wait()
-            self.probe_worker = None
+            self.graph_worker.stop()
+            self.graph_worker.wait()
+            self.graph_worker = None
 
     
     """Helper functions: delay line control"""
@@ -486,7 +486,7 @@ class DLSWindow(QMainWindow):
 
         self.wavelenghts = wavelengths
         # set label
-        self.probe_avg_graph.setLabel('bottom', unit)
+        self.probe_graph.setLabel('bottom', unit)
         # create ampping
         self.probe_wavelength_axis.set_values(wavelengths)
    
@@ -500,5 +500,5 @@ class DLSWindow(QMainWindow):
         # clear the mapping
         self.probe_wavelength_axis.clear_values()
         # reset the label
-        self.probe_avg_graph.setLabel('bottom', label)
+        self.probe_graph.setLabel('bottom', label)
     

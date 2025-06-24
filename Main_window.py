@@ -18,14 +18,14 @@ class MainApp(QMainWindow):
     This class initializes the main GUI window, sets up the tabbed interface,
     and manages the integration of sub-windows for different application features:
     - Main Window (HeatmapWindow)
-    - Probe Spectrum (DLSWindow)
+    - Probe Spectrum (DLSW)
     - dA Spectrum (dA_Window)
     It also starts a background thread to update the probe spectrum in real time.
     Attributes:
         tabs (QTabWidget): The main tab widget containing all sub-windows.
         dA_window (dA_Window): The window for dA Spectrum analysis.
-        dls_window (DLSWindow): The window for Probe Spectrum analysis.
-        shot_delay_app (HeatmapWindow): The main window for heatmap visualization.
+        probe_window (Probe_Window): The window for Probe Spectrum analysis.
+        heatmap_window (Heatmap_Window): The main window for heatmap visualization.
 
     """
     def __init__(self):
@@ -37,17 +37,17 @@ class MainApp(QMainWindow):
         # Set up main tab widget and sub-windows
         self.tabs = QTabWidget()
         self.setCentralWidget(self.tabs)
-        self.dA_window = dA_Window()
-        self.dls_window = DLSWindow(self.dA_window)
-        self.shot_delay_app = HeatmapWindow(self.dls_window, self.dA_window)
+        self.dA_window = dAwindow()
+        self.probe_window = Probewindow(self.dA_window)
+        self.heatmap_window = Heatmapwindow(self.probe_window, self.dA_window)
 
         # Add application tabs
-        self.tabs.addTab(self.shot_delay_app, "Main Window")
-        self.tabs.addTab(self.dls_window, "Probe Spectrum")
-        self.tabs.addTab(self.dA_window, "dA Spectrum")
+        self.tabs.addTab(self.heatmap_window, "Heat map Window")
+        self.tabs.addTab(self.probe_window, "Probe Window")
+        self.tabs.addTab(self.dA_window, "dA Window")
 
         # Start background thread for probe spectrum updates
-        self.dls_window.start_probe_thread()
+        self.probe_window.start_graph_thread()
 
 # Execute the entire GUI from a central location
 if __name__ == "__main__":
@@ -63,32 +63,32 @@ if __name__ == "__main__":
     # --- Signal connections for updating UI and data ---
 
     # Update heatmap and graphs when new data arrives
-    worker.plot_row_update.connect(main_app.shot_delay_app.ta_widgets.update_row, Qt.QueuedConnection)
-    worker.reset_currentMatrix.connect(main_app.shot_delay_app.ta_widgets.reset_currentMatrix, Qt.QueuedConnection)
-    main_app.shot_delay_app.interface.parsed_content_signal.connect(main_app.shot_delay_app.ta_widgets.update_delay_stages, Qt.QueuedConnection)
+    worker.plot_row_update.connect(main_app.heatmap_window.ta_widgets.update_row, Qt.QueuedConnection)
+    worker.reset_currentMatrix.connect(main_app.heatmap_window.ta_widgets.reset_currentMatrix, Qt.QueuedConnection)
+    main_app.heatmap_window.interface.parsed_content_signal.connect(main_app.heatmap_window.ta_widgets.update_delay_stages, Qt.QueuedConnection)
 
     # Control probe spectrum thread and update probe data during measurements
-    worker.started.connect(main_app.dls_window.stop_probe_thread, Qt.QueuedConnection)
-    worker.update_probe.connect(main_app.dls_window.update_probe_data, Qt.QueuedConnection)
-    worker.finished.connect(main_app.dls_window.start_probe_thread, Qt.QueuedConnection)
+    worker.started.connect(main_app.probe_window.stop_graph_thread, Qt.QueuedConnection)
+    worker.update_probe.connect(main_app.probe_window.update_probe_data, Qt.QueuedConnection)
+    worker.finished.connect(main_app.probe_window.start_graph_thread, Qt.QueuedConnection)
   
     # Keep dA spectrum updated in dAWindow
-    main_app.dls_window.probe_worker.dA_update.connect(main_app.dA_window.update_dA_graph, Qt.QueuedConnection)
+    main_app.probe_window.graph_worker.dA_update.connect(main_app.dA_window.update_dA_graph, Qt.QueuedConnection)
     worker.update_dA.connect(main_app.dA_window.update_dA_graph, Qt.QueuedConnection)
 
     # Update delay sliders, progress bars, and reference time
-    worker.update_delay_bar_signal.connect(main_app.shot_delay_app.update_current_delay)
-    worker.update_delay_bar_signal.connect(main_app.dls_window.update_delay_bar)
-    worker.update_ref_signal.connect(main_app.shot_delay_app.update_t0)
-    main_app.dls_window.delay_bar_update.connect(main_app.shot_delay_app.update_current_delay)
-    worker.current_step_signal.connect(main_app.shot_delay_app.update_current_step)
-    main_app.dA_window.pos_change_signal.connect(main_app.shot_delay_app.update_current_delay)
+    worker.update_delay_bar_signal.connect(main_app.heatmap_window.update_current_delay)
+    worker.update_delay_bar_signal.connect(main_app.probe_window.update_delay_bar)
+    worker.update_ref_signal.connect(main_app.heatmap_window.update_t0)
+    main_app.probe_window.delay_bar_update.connect(main_app.heatmap_window.update_current_delay)
+    worker.current_step_signal.connect(main_app.heatmap_window.update_current_step)
+    main_app.dA_window.pos_change_signal.connect(main_app.heatmap_window.update_current_delay)
 
     # Display error messages from any part of the application
     worker.error_occurred.connect(show_error_message)
 
     # Enable/disable stop button appropriately
-    worker.stop_button.connect(main_app.shot_delay_app.interface.disable_stop_button)
+    worker.stop_button.connect(main_app.heatmap_window.interface.disable_stop_button)
 
     # --- Process management for IronPython commands ---
 
@@ -110,7 +110,7 @@ if __name__ == "__main__":
 
         if isinstance(argument, list):
             # If argument is a list, start the worker thread (used for batch operations)
-            worker.data_processor.dark_noise_correction = main_app.dls_window.dark_noise #set dark noise level in the data_processor
+            worker.data_processor.dark_noise_correction = main_app.probe_window.dark_noise #set dark noise level in the data_processor
             worker.start()
         elif isinstance(argument, str):
             # If argument is a string, run the IronPython script with the argument
@@ -139,23 +139,23 @@ if __name__ == "__main__":
         if len(content) == 1:
             content = content[0]
         if content == "GoToReference":
-            main_app.shot_delay_app.update_current_delay(main_app.shot_delay_app.t_0)
+            main_app.heatmap_window.update_current_delay(main_app.heatmap_window.t_0)
         worker.update_command(content, orientation, shots, scans)
         start_process(content)
 
     # Connect measurement start signals from all relevant UI components
-    main_app.dls_window.run_command_signal.connect(handle_button_press)
-    main_app.shot_delay_app.interface.trigger_worker_run.connect(handle_button_press)
+    main_app.probe_window.run_command_signal.connect(handle_button_press)
+    main_app.heatmap_window.interface.trigger_worker_run.connect(handle_button_press)
     main_app.dA_window.run_command_signal.connect(handle_button_press)
-    main_app.shot_delay_app.interface.metadata_signal.connect(worker.update_metadata)
+    main_app.heatmap_window.interface.metadata_signal.connect(worker.update_metadata)
 
     # this function calls the set_wavelength_mapping for both the Heatmap window and the Probe window.
     def set_wavelength_calibration(wavelengths, unit):
-        main_app.shot_delay_app.ta_widgets.set_wavelength_mapping(wavelengths, unit)
-        main_app.dls_window.set_wavelength_mapping(wavelengths, unit)
+        main_app.heatmap_window.ta_widgets.set_wavelength_mapping(wavelengths, unit)
+        main_app.probe_window.set_wavelength_mapping(wavelengths, unit)
 
     #connect the wavelength popup window with the heatmap plots
-    main_app.shot_delay_app.interface.wavelengthpopup.wavelength_signal.connect(set_wavelength_calibration, Qt.QueuedConnection)
+    main_app.heatmap_window.interface.wavelengthpopup.wavelength_signal.connect(set_wavelength_calibration, Qt.QueuedConnection)
     
     def stop_worker():
         """
@@ -179,7 +179,7 @@ if __name__ == "__main__":
 
 
         # Stop probe spectrum thread
-        main_app.dls_window.stop_probe_thread()
+        main_app.probe_window.stop_graph_thread()
 
         # Process remaining GUI events and quit application
         QCoreApplication.processEvents()
@@ -187,7 +187,7 @@ if __name__ == "__main__":
         app.quit()
 
     """This connects the stop button to the stop function for the worker thread."""
-    main_app.shot_delay_app.interface.stop_measurement_signal.connect(lambda: worker.stop())
+    main_app.heatmap_window.interface.stop_measurement_signal.connect(lambda: worker.stop())
 
     # Start the worker thread
     worker.start()

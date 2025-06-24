@@ -8,7 +8,7 @@ from dAwindow import *
 import numpy as np                      
 from heatmap import TAPlotWidget
 
-class HeatmapWindow(QWidget):
+class Heatmapwindow(QWidget):
     """
     Window for displaying and interacting with the heatmap and related controls.
     """
