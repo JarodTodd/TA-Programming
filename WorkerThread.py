@@ -39,6 +39,7 @@ class ProbeThread(QThread):
         self.shots = shots
         self.running = True
         self.scan_complete = False
+        self.wavelengths = [f'{i}' for i in range(1, 1023)]
         self.data_processor = ComputeData()
     
     def run(self):
@@ -159,6 +160,9 @@ class MeasurementWorker(QThread):
         self.exc_power = exc_power
         self.exc_power_unit = power_unit
         self.notes = notes
+
+    def wavelength_change(self, wavelengths):
+        self.wavelengths = wavelengths
 
     @Slot(str)
     def run(self):
@@ -461,7 +465,7 @@ class MeasurementWorker(QThread):
             writer = csv.writer(file)
             
             # Write metadata and measurement headers in the same row
-            writer.writerow(['Sample', 'Solvent', f'Pump ({self.pump_unit})', f'Path Length ({self.pathlength_unit})', f'Excitation Power({self.exc_power_unit})', 'Notes', 'Delay (ps)'] + [f'{i}' for i in range(1, len(self.averaged_probe_measurement[0]) - 1)])
+            writer.writerow(['Sample', 'Solvent', f'Pump ({self.pump_unit})', f'Path Length ({self.pathlength_unit})', f'Excitation Power({self.exc_power_unit})', 'Notes', 'Delay (ps)'] + [f'{i}' for i in self.wavelengths])
             
             # Write metadata and the first row of measurement data in the next row
             writer.writerow([sample, solvent, pump, pathlength, exc_power, notes, self.averaged_probe_measurement[0][0]] + list(self.averaged_probe_measurement[0][1:]))
@@ -472,6 +476,10 @@ class MeasurementWorker(QThread):
         
         print(f"Saved measurement data to {filepath}")
         self.measurement_average.append(np.array([list(row[1:]) for row in self.averaged_probe_measurement]))  # Exclude delay time for averaging
+
+        # Make sure the stop button gets disabled after the measurement is done.
+        if self.nos == 1:
+            self.stop_button.emit()
 
     def save_avg_file(self, directory, name, sample, solvent, pump, pathlength, exc_power, notes):
         # Allow averaging even if scans have different lengths (pad with NaN)
@@ -503,7 +511,7 @@ class MeasurementWorker(QThread):
             writer = csv.writer(file)
 
             # Write metadata and measurement headers in the same row
-            writer.writerow(['Sample', 'Solvent', f'Pump ({self.pump_unit})', f'Path Length ({self.pathlength_unit})', f'Excitation Power({self.exc_power_unit})', 'Notes', 'Delay (ps)'] + [f'{i}' for i in range(1, num_pixels + 1)])
+            writer.writerow(['Sample', 'Solvent', f'Pump ({self.pump_unit})', f'Path Length ({self.pathlength_unit})', f'Excitation Power({self.exc_power_unit})', 'Notes', 'Delay (ps)'] + [f'{i}' for i in self.wavelengths])
 
             # Write metadata and the first row of measurement data in the next row
             delay = self.content[0] if len(self.content) > 0 else None

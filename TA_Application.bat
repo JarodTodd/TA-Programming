@@ -6,5 +6,3 @@ cd /d C:\Users\PC032230\Documents\GitHub\TA-Programming
 
 REM Run the main application
 python Main_window.py
-
-pause
