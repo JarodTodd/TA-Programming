@@ -5,6 +5,7 @@ import pyqtgraph as pg
 from WorkerThread import *
 from dAwindow import *
 import csv
+from heatmap import ScaledAxis
 from error_popup import *
 
 class DLSWindow(QMainWindow):
@@ -63,6 +64,10 @@ class DLSWindow(QMainWindow):
         self.probe_avg_graph.scene().sigMouseClicked.connect(lambda event: self.dA_window.on_click(event, self.probe_avg_graph))
         self.probe_avg_graph.setLimits(xMin=0, xMax=1074, yMin=0, yMax=16500)
         self.probe_curve = self.probe_avg_graph.plot([], pen='r')
+
+        # wavelength calibration probe plot
+        self.probeplot_wavelength_axis = ScaledAxis(orientation='bottom')
+        self.probe_avg_graph.setAxisItems({'bottom': self.probeplot_wavelength_axis}) 
 
         # vertical, draggable guide-lines that define the outlier rejection range
         self.range_line_left  = pg.InfiniteLine(pos=0, angle=90, movable=True, pen=pg.mkPen(color='#C0D5DC', width=1))
@@ -472,4 +477,30 @@ class DLSWindow(QMainWindow):
 
     def GoToReference(self):
         self.run_command_signal.emit("GoToReference", "ButtonPress", 0, 0)
+
+
+    """Helper functions: wavelenght calibration probe plot"""
+
+    def set_wavelength_mapping(self, wavelengths, unit):
+        """
+        Map pixel index → wavelength for the probe plot.
+        """
+
+        self.wavelenghts = wavelengths
+        # set label
+        self.probe_avg_graph.setLabel('bottom', unit)
+        # create ampping
+        self.probe_wavelength_axis.set_values(wavelengths)
+   
+
+    def reset_to_pixel_axis(self, label="Pixel index"):
+        """
+        Drop the wavelength lookup, back to raw pixel numbers.
+        """
+
+        self.wavelenghts = None
+        # clear the mapping
+        self.probe_wavelength_axis.clear_values()
+        # reset the label
+        self.probe_avg_graph.setLabel('bottom', 'Pixel index')
     
