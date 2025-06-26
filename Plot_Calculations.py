@@ -176,7 +176,7 @@ class ComputeData():
             ratio[ratio <= 0] = np.nan  # Avoid -inf from log(0) or log(negative)
             delta_A = -np.log(ratio)
           
-        # average delta_A per shot
+        # average delta_A over all shots per pixel
         self.delta_A = np.mean(delta_A, axis=0)
         
         return self.probe_spectrum, self.delta_A

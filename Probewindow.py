@@ -235,7 +235,7 @@ class Probewindow(QMainWindow):
         self.probe_curve.setData(self.probe_inputs)       
 
     @Slot(object, object)
-    def update_probe_graph(self, avg_row):
+    def update_dA_graph(self, avg_row):
         """
         Calls the update_dA_graph function in dAWindow to update the dA graph with the latest values
         """
@@ -382,7 +382,7 @@ class Probewindow(QMainWindow):
         self.dA_window.dA_deviation_threshold_changed.connect(self.graph_worker.data_processor.dA_deviation_change, Qt.QueuedConnection)
          # Worker → GUI: send updated probe or dA data to UI
         self.graph_worker.probe_update.connect(self.update_probe_data, Qt.QueuedConnection)
-        self.graph_worker.dA_update.connect(self.update_probe_graph, Qt.QueuedConnection)
+        self.graph_worker.dA_update.connect(self.update_dA_graph, Qt.QueuedConnection)
         # Worker → GUI: update how many shots were rejected by outlier logic
         self.graph_worker.probe_rejected.connect(self.update_rejected_percentage, Qt.QueuedConnection)
         self.graph_worker.dA_rejected.connect(self.dA_window.update_rejected_percentage, Qt.QueuedConnection)
