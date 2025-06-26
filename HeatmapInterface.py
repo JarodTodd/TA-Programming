@@ -155,10 +155,10 @@ class Heatmap_Interface(QObject):
         self.wavelength_button = QPushButton("Wavelength Calibration")
         self.wavelength_button.clicked.connect(self.open_wavelength_popup)
         hbox.addWidget(self.wavelength_button)
-        self.progressbar = MarkedProgressBar()
-        self.progressbar.setRange(0, 8672666)
-        self.progressbar.setTextVisible(False)
-        self.progresslabel = QLabel(f"/8672.66")
+        self.progressbar = QProgressBar()
+        self.progressbar.setRange(0, 100)
+        self.progressbar.setTextVisible(True)
+        self.progressbar.setValue(0)
         hbox.addWidget(self.progressbar)
         hbox.addWidget(self.progresslabel)
 
@@ -255,6 +255,7 @@ class Heatmap_Interface(QObject):
         print(f"Self.content = {self.content}")
         self.parsed_content_signal.emit(self.content)
         self.time_remaining_timer(int((int(self.total_steps.text())*9/30) + 9))
+        self.progressbar.setMaximum(int(self.total_steps.text()))
         self.emit_metadata_signal()
         self.stop_button.setEnabled(True)
         self.startpopup.clear_fields()
@@ -423,34 +424,7 @@ class Heatmap_Interface(QObject):
     def disable_stop_button(self):
         self.stop_button.setEnabled(False)
 
-
-class MarkedProgressBar(QProgressBar):
-    def __init__(self, *args, marker_value=None, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.marker_value = marker_value
-
-    def set_marker(self, value):
-        self.marker_value = value
-        self.update()
-
-    def paintEvent(self, event):
-        super().paintEvent(event)
-        if self.marker_value is not None:
-            painter = QPainter(self)
-            pen = QPen(QColor("red"), 2)
-            painter.setPen(pen)
-            min_val, max_val = self.minimum(), self.maximum()
-            if max_val > min_val:
-                ratio = (self.marker_value - min_val) / (max_val - min_val)
-                x = int(ratio * self.width())
-                painter.drawLine(x, 0, x, self.height())
-            painter.end()
-
-
-
 if __name__ == "__main__":
-    import sys
-
     app = QApplication(sys.argv)
     Bottom_right = QWidget()
     ui = Heatmap_Interface()

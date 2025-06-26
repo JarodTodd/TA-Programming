@@ -45,7 +45,7 @@ class Probewindow(QMainWindow):
         self.setCentralWidget(central_widget)
 
 
-        #==== LEFT COLUMN: Local shots, Pobe plot & outlier rejection =====#
+        #==== LEFT COLUMN: Local shots, Probe plot & outlier rejection =====#
         left_layout = QVBoxLayout()
 
         # input box: local shots for probe & dA windows
@@ -173,7 +173,7 @@ class Probewindow(QMainWindow):
         hbox3 = QHBoxLayout()
         self.delay_label = QLabel("Delay (ps):", self)
         hbox3.addWidget(self.delay_label)
-        self.delay_bar = QProgressBar()
+        self.delay_bar = MarkedProgressBar()
         self.delay_bar.setMinimum(0)
         self.delay_bar.setMaximum(8672.66)  # max picoseconds delay
         self.delay_bar.setValue(0)
@@ -502,3 +502,24 @@ class Probewindow(QMainWindow):
         # reset the label
         self.probe_graph.setLabel('bottom', label)
     
+class MarkedProgressBar(QProgressBar):
+    def __init__(self, *args, marker_value=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.marker_value = marker_value
+
+    def set_marker(self, value):
+        self.marker_value = value
+        self.update()
+
+    def paintEvent(self, event):
+        super().paintEvent(event)
+        if self.marker_value is not None:
+            painter = QPainter(self)
+            pen = QPen(QColor("red"), 2)
+            painter.setPen(pen)
+            min_val, max_val = self.minimum(), self.maximum()
+            if max_val > min_val:
+                ratio = (self.marker_value - min_val) / (max_val - min_val)
+                x = int(ratio * self.width())
+                painter.drawLine(x, 0, x, self.height())
+            painter.end()
