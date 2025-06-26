@@ -13,17 +13,17 @@ class Heatmapwindow(QWidget):
     Window for displaying and interacting with the heatmap and related controls.
     """
 
-    def __init__(self, dls_window, dA_Window):
+    def __init__(self, Probe_Window, dA_Window):
         """
         Initialize the HeatmapWindow.
 
         Args:
-            dls_window: Reference to the DLS window.
+            Probe_Window: Reference to the DLS window.
             dA_Window: Reference to the dA window.
         """
         super().__init__()
         self.setWindowTitle("Camera Interface")
-        self.DLSWindow = dls_window
+        self.Probewindow = Probe_Window
         self.interface = Heatmap_Interface()
         self.dAwindow = dA_Window
         self.pos = 0
@@ -96,8 +96,8 @@ class Heatmapwindow(QWidget):
         self.dAwindow.abs_pos_line.setText(f"{value}")
         self.dAwindow.rel_pos_line.setText(f"{round(value-self.t_0, 2)}")
         self.dAwindow.move_target_box.setValue(value)
-        self.DLSWindow.delay_bar.setValue(value)
-        self.DLSWindow.delay_bar.setFormat(f"{value}/8672.66")
+        self.Probewindow.delay_bar.setValue(value)
+        self.Probewindow.delay_bar.setFormat(f"{value}/8672.66")
         self.interface.current_delay.setText(f"{round(value-self.t_0,2)}")
         self.interface.progresslabel.setText(f"{round(value-self.t_0,2)}/{round(8672.66-self.t_0)}")
         self.interface.progressbar.setValue(value*1000)
@@ -112,6 +112,7 @@ class Heatmapwindow(QWidget):
         """
         self.interface.current_step.setText(str(step))
         self.interface.current_scan.setText(str(scans))
+        self.interface.progressbar.setValue(step)
 
     def update_t0(self, t_0):
         """
@@ -122,7 +123,8 @@ class Heatmapwindow(QWidget):
         """
         self.t_0 = round(t_0, 2)
         self.interface.t0_line.setText(f"{self.t_0}")
-        self.interface.progressbar.set_marker(self.t_0*1000)
+        self.Probewindow.progressbar.set_marker(self.t_0*1000)
+
         self.dAwindow.t_0 = self.t_0
         self.dAwindow.t0_spinbox.setValue(self.t_0)
         slider_value = int(self.pos * 1000 - self.t_0 * 1000)
