@@ -160,7 +160,7 @@ class Heatmap_Interface(QObject):
         self.progressbar.setTextVisible(True)
         self.progressbar.setValue(0)
         hbox.addWidget(self.progressbar)
-        hbox.addWidget(self.progresslabel)
+
 
         full_layout.addLayout(hbox)
 

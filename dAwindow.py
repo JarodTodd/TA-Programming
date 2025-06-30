@@ -108,8 +108,7 @@ class dAwindow(QWidget):
         main_layout.addLayout(right_layout)
 
 
-        self.verticalSlider = QSlider(Qt.Vertical, marker_value=0)
-        self.verticalSlider.set_marker(0)
+        self.verticalSlider = QSlider(Qt.Vertical)
         self.verticalSlider.setRange(0, 8672666)
         self.verticalSlider.setSingleStep(2)
         self.verticalSlider.setTickInterval(250000)
