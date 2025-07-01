@@ -29,6 +29,9 @@ class ComputeData():
 
         self.dark_noise_correction = None
 
+        # Probe plot display toggle: only probe pump-off or probe pump-on and pump-off
+        self.probe_toggle = "pump_off"
+
     def OutlierRejection_probe(self, block, range_start: int | None = None, range_end:   int | None = None):
         """
         Rejects outliers for the real-time probe specrtra in the Probewindow. 
@@ -138,7 +141,10 @@ class ComputeData():
         block = np.asarray(block)
 
         #Boolean masks for seperating states
-        probe = block[block[:, 2] < 49152,  start_pixel:end_pixel]
+        if self.probe_toggle == "pump-off":
+            probe = block[block[:, 2] < 49152,  start_pixel:end_pixel] #filter pump-off states
+        if self.probe_toggle == "pump-off+pump-on":
+            probe = block[start_pixel:end_pixel] #show probe spectrum regardless of the pump state
 
         pump_off_dA = block[block[:, 2] < 49152,  start_pixel:end_pixel]
         pump_on_dA = block[block[:, 2] >= 49152, start_pixel:end_pixel]

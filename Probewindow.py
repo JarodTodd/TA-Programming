@@ -5,7 +5,7 @@ import pyqtgraph as pg
 from WorkerThread import *
 from dAwindow import *
 import csv
-from heatmap import ScaledAxis
+from heatmap import ScaledAxis, HoverPlotWidget
 from error_popup import *
 
 class Probewindow(QMainWindow):
@@ -55,7 +55,7 @@ class Probewindow(QMainWindow):
         left_layout.addWidget(self.shot_input)  
 
         # create probe plot
-        self.probe_graph = pg.PlotWidget()
+        self.probe_graph = HoverPlotWidget(self)
         left_layout.addWidget(self.probe_graph)
         self.probe_graph.setTitle("Probe")
         self.probe_graph.setLabel('left', 'Intensity (counts)')
@@ -64,6 +64,13 @@ class Probewindow(QMainWindow):
         self.probe_graph.scene().sigMouseClicked.connect(lambda event: self.dA_window.on_click(event, self.probe_graph))
         self.probe_graph.setLimits(xMin=0, xMax=1074, yMin=0, yMax=16500)
         self.probe_curve = self.probe_graph.plot([], pen='r')
+
+        # hoverbox settings probe plot
+        self.probe_graph._checkbox1.setText("pump-off")
+        self.probe_graph._checkbox2.setText("pump-off + pump-on")
+        self.probe_graph._checkbox1.toggled.connect(self._on_checkbox1_toggled)
+        self.probe_graph._checkbox2.toggled.connect(self._on_checkbox2_toggled)
+        self.probe_graph._checkbox1.setChecked(True)
 
         # wavelength calibration probe plot
         self.probe_wavelength_axis = ScaledAxis(orientation='bottom')
@@ -281,6 +288,24 @@ class Probewindow(QMainWindow):
             self.dark_noise = None
             self.graph_worker.data_processor.dark_noise_correction = self.dark_noise
             self.dark_noise_button.setText("Correct dark noise")
+
+    # function for checkbox toggle in probe plot
+    def _on_checkbox1_toggled(self, checked):
+        if checked == False:
+            self.probe_graph._checkbox2.setChecked(True)
+        if checked:
+            self.probe_graph._checkbox2.setChecked(False)
+            self.graph_worker.data_processor.probe_toggle = "pump-off"
+            print(self.graph_worker.data_processor.probe_toggle)
+
+
+    def _on_checkbox2_toggled(self, checked):
+        if checked == False:
+            self.probe_graph._checkbox1.setChecked(True)
+        if checked:
+            self.probe_graph._checkbox1.setChecked(False)
+            self.graph_worker.data_processor.probe_toggle = "pump-off+pump-on"
+            print(self.graph_worker.data_processor.probe_toggle)
 
     """
     Helper functions: outlier rejection
