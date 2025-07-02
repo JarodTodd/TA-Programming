@@ -78,7 +78,7 @@ def	camera(number_of_shots, delay_number):
 	# Set all settings that are needed for the measurement. See EBST_CAM/shared_src/struct.h for details.
 	# You can find a description of all settings here: https://entwicklungsburo-stresing.github.io/structmeasurement__settings.html
 	settings.board_sel = 1
-	settings.nos = number_of_shots
+	settings.nos = number_of_shots * 2
 	settings.nob = 2
 	settings.camera_settings[drvno].sti_mode = 1
 	settings.camera_settings[drvno].bti_mode = 4
@@ -86,8 +86,8 @@ def	camera(number_of_shots, delay_number):
 	settings.camera_settings[drvno].CAMERA_SYSTEM = 2
 	settings.camera_settings[drvno].CAMCNT = 1
 	settings.camera_settings[drvno].PIXEL = 1088
-	settings.camera_settings[drvno].dma_buffer_size_in_scans = number_of_shots
-	settings.camera_settings[drvno].stime_in_microsec = number_of_shots * 2
+	settings.camera_settings[drvno].dma_buffer_size_in_scans = number_of_shots * 2
+	settings.camera_settings[drvno].stime_in_microsec = number_of_shots
 	settings.camera_settings[drvno].btime_in_microsec = 100000
 	settings.camera_settings[drvno].fft_mode = 1
 	settings.camera_settings[drvno].FFT_LINES = 128
