@@ -55,7 +55,7 @@ def generate_timepoints(t_start, t_end, num_points, t0=0):
         # afterwards it is shifted by -1 to make it start at 0 instead of 1
         # Use a higher density near t0 (0) and lower density near t_end by squaring the linspace
         lin = np.linspace(0, 1, n_log, endpoint=False)
-        log_post = (t_end + 1) ** (lin ** 1.25) - 1
+        log_post = (t_end + 1) ** (lin ** 1.4) - 1
         times = log_post
         # Duplicate and flip the points from 0 to 1 ps.
         duplicated_section = -np.flip(times[(times > 0) & (times <= 0.99)])
